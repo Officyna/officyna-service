@@ -7,7 +7,6 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-import java.time.LocalDateTime;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -48,26 +47,5 @@ public class GlobalExceptionHandler {
                         HttpStatus.INTERNAL_SERVER_ERROR.value(),
                         "Internal server error. Please try again later."
                 ));
-    }
-
-    // --- Error response record ---
-    public record ErrorResponse(
-            int status,
-            String message,
-            Map<String, String> errors,
-            LocalDateTime timestamp
-    ) {
-        public static ErrorResponse of(int status, String message) {
-            return new ErrorResponse(status, message, null, LocalDateTime.now());
-        }
-
-        public static ErrorResponse ofValidation(Map<String, String> errors) {
-            return new ErrorResponse(
-                    HttpStatus.BAD_REQUEST.value(),
-                    "Validation failed",
-                    errors,
-                    LocalDateTime.now()
-            );
-        }
     }
 }
