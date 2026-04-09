@@ -1,6 +1,7 @@
 package br.com.officyna.administrative.vehicle.domain.mapper;
 
-import br.com.officyna.customer.domain.CustomerEntity;
+
+import br.com.officyna.administrative.customer.domain.CustomerEntity;
 import br.com.officyna.administrative.vehicle.api.resources.VehicleRequest;
 import br.com.officyna.administrative.vehicle.api.resources.VehicleResponse;
 import br.com.officyna.administrative.vehicle.domain.VehicleEntity;
