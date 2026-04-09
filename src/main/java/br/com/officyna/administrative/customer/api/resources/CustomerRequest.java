@@ -1,6 +1,6 @@
-package br.com.officyna.customer.api.resources;
+package br.com.officyna.administrative.customer.api.resources;
 
-import br.com.officyna.customer.domain.CustomerType;
+import br.com.officyna.administrative.customer.domain.CustomerType;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;

@@ -1,9 +1,10 @@
 package br.com.officyna.administrative.customer.api.controller;
 
-import br.com.officyna.customer.api.CustomerApi;
-import br.com.officyna.customer.api.resources.CustomerRequest;
-import br.com.officyna.customer.api.resources.CustomerResponse;
-import br.com.officyna.customer.domain.service.CustomerService;
+
+import br.com.officyna.administrative.customer.api.CustomerApi;
+import br.com.officyna.administrative.customer.api.resources.CustomerRequest;
+import br.com.officyna.administrative.customer.api.resources.CustomerResponse;
+import br.com.officyna.administrative.customer.domain.service.CustomerService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

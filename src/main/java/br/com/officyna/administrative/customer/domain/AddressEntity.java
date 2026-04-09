@@ -1,4 +1,4 @@
-package br.com.officyna.customer.domain;
+package br.com.officyna.administrative.customer.domain;
 
 import lombok.*;
 
