@@ -29,7 +29,7 @@ public class ServiceOrderEntity {
 
     private List<LaborList> laborsList;
 
-    private List<SupplyLyst> supplyList;
+    private List<SupplyList> supplyList;
 
     @Setter(NONE)
     @CreatedDate

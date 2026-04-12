@@ -2,18 +2,18 @@ package br.com.officyna.serviceorder.domain;
 
 import lombok.*;
 
-import java.time.LocalDateTime;
+import java.math.BigDecimal;
 
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class SupplyLyst {
+public class SupplyList {
 
     private String supplyId;
 
-    private LocalDateTime startDate;
+    private Integer supplyQuantity;
 
-    private LocalDateTime endDate;
+    private BigDecimal totalSupplyValue;
 }
