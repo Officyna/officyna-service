@@ -19,17 +19,18 @@ public class SecurityConfig {
             .sessionManagement(s -> s
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
-                // Swagger público
-                .requestMatchers(
-                    "/swagger-ui/**",
-                    "/swagger-ui.html",
-                    "/api-docs/**",
-                    "/api-docs"
-                ).permitAll()
-                // Health check público
-                .requestMatchers("/actuator/health").permitAll()
-                // Todo o resto autenticado
-                .anyRequest().authenticated()
+//                // Swagger público
+//                .requestMatchers(
+//                    "/swagger-ui/**",
+//                    "/swagger-ui.html",
+//                    "/api-docs/**",
+//                    "/api-docs"
+//                ).permitAll()
+//                // Health check público
+//                .requestMatchers("/actuator/health").permitAll()
+//                // Todo o resto autenticado
+//                .anyRequest().authenticated()
+                            .anyRequest().permitAll()
             )
             .build();
     }
