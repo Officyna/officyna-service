@@ -1,4 +1,4 @@
-package br.com.officyna.serviceorder.domain;
+package br.com.officyna.serviceorder.domain.enums;
 
 import lombok.Getter;
 

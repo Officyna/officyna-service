@@ -1,63 +1,58 @@
 package br.com.officyna.serviceorder.domain.mapper;
 
-import br.com.officyna.serviceorder.api.resources.ServiceOrderRequest;
+import br.com.officyna.serviceorder.api.resources.ExistServiceOrderRequest;
+import br.com.officyna.serviceorder.api.resources.NewServiceOrderRequest;
 import br.com.officyna.serviceorder.api.resources.ServiceOrderResponse;
-import br.com.officyna.serviceorder.domain.LaborList;
-import br.com.officyna.serviceorder.domain.ServiceOrderEntity;
-import br.com.officyna.serviceorder.domain.SupplyList;
+import br.com.officyna.serviceorder.domain.dto.CustomerDTO;
+import br.com.officyna.serviceorder.domain.dto.LaborsDTO;
+import br.com.officyna.serviceorder.domain.dto.MechanicDTO;
+import br.com.officyna.serviceorder.domain.dto.VehicleDTO;
+import br.com.officyna.serviceorder.domain.enitity.ServiceOrderEntity;
+import br.com.officyna.serviceorder.domain.enums.ServiceOrderStatus;
 import org.springframework.stereotype.Component;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.List;
-
-import static br.com.officyna.serviceorder.domain.ServiceOrderStatus.RECEBIDA;
 
 @Component
 public class ServiceOrderMapper {
 
-    public ServiceOrderEntity toEntity(ServiceOrderRequest request){
+    public ServiceOrderEntity toCreateEntity(NewServiceOrderRequest request, VehicleDTO vehicle, CustomerDTO customer, LaborsDTO labors, ServiceOrderStatus status){
         ServiceOrderEntity entity = ServiceOrderEntity.builder()
-                .vehicleId(request.getVehicleId())
-                .customerId(request.getCustomerId())
+                .vehicle(vehicle)
+                .customer(customer)
                 .informationText(request.getInformationText())
-                .laborsList(this.getLaborsList(request.getLaborIds()))
-                .supplyList(this.getSupplyLists(request.getSupplyIds()))
-                .status(RECEBIDA)
+                .labors(labors)
+                .status(status)
                 .build();
-        entity.setStatusDate(RECEBIDA);
+        entity.setStatusDate(status);
         return entity;
     }
 
-    private List<LaborList> getLaborsList(List<String> laborsList){
-        /*TODO: Implementar construcao da lista de serviços dentro da O.S
-        * A O.S recebe a lista de IDs e busca os serviços e vincula os preços ou
-        * recebe os serviços e os preços no request?*/
-        return null;
-    }
-
-    private List<SupplyList> getSupplyLists(List<String> supplyList){
-        /*TODO: Implementar construcao da lista de suprimentos dentro da O.S
-         *A O.S recebe a lista de IDs e busca os suprimentos e vincula os preços ou
-         *recebe os suprimentos e os preços no request?*/
-        return null;
+    public ServiceOrderEntity toUpdateEntity(ExistServiceOrderRequest request, ServiceOrderEntity entity, MechanicDTO mechanic){
+        entity.setInformationText(request.getInformationText());
+        entity.setMechanic(mechanic);
+        entity.setStatus(request.getStatus());
+        entity.setStatusDate(request.getStatus());
+        return entity;
     }
 
     public ServiceOrderResponse toResponse(ServiceOrderEntity entity){
-
-        return ServiceOrderResponse.builder()
-                .serviceOrderId(entity.getId())
-                .serviceOrderNumber(entity.getServiceOrderNumber().toString())
-                .customerId(entity.getCustomerId())
-                .vehicleId(entity.getVehicleId())
-                .laborList(entity.getLaborsList())
-                .supplyList(entity.getSupplyList())
-                .informationText(entity.getInformationText())
-                .serviceOrderStatus(entity.getStatus().getStatusName())
-                .statusDate(this.getStatusDateByLastStatus(entity))
-                .totalBudgetAmount(String.format("R$ %.2f", entity.getTotalBudgetAmount()))
-                .createdAt(this.formatLocalDateTime(entity.getCreatedAt()))
-                .build();
+        return new ServiceOrderResponse(
+                entity.getId(),
+                entity.getServiceOrderNumber().toString(),
+                entity.getCustomer(),
+                entity.getMechanic(),
+                entity.getVehicle(),
+                entity.getLabors(),
+                entity.getSupplys(),
+                entity.getInformationText(),
+                entity.getStatus().getStatusName(),
+                this.getStatusDateByLastStatus(entity),
+                this.formatMoney(entity.getTotalBudgetAmount()),
+                this.formatLocalDateTime(entity.getCreatedAt())
+        );
     }
 
     private String getStatusDateByLastStatus(ServiceOrderEntity entity){
@@ -70,7 +65,6 @@ public class ServiceOrderMapper {
             case EM_EXECUCAO -> statusDate = entity.getExecutionStartDate();
             case FINALIZADA, RECUSADA -> statusDate = entity.getFinalizationDate();
         }
-
         return this.formatLocalDateTime(statusDate);
     }
 
@@ -81,4 +75,9 @@ public class ServiceOrderMapper {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
         return dateTime.format(formatter);
     }
+
+    private String formatMoney(BigDecimal value){
+        return String.format("R$ %.2f", value);
+    }
+
 }

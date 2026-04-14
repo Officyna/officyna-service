@@ -16,7 +16,7 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 @Schema(description = "Dados para criação de Ordem de Serviço")
-public class ServiceOrderRequest {
+public class NewServiceOrderRequest {
 
     @Schema(description = "ID do Cliente", example = "60d5ecb8b392d40015f69e1a")
     @NotBlank(message = "ID do Cliente é obrigatório")
@@ -29,9 +29,6 @@ public class ServiceOrderRequest {
     @Schema(description = "Lista de IDs de Serviços (Mão de Obra)")
     @NotEmpty(message = "A ordem de serviço deve ter pelo menos um serviço")
     private List<String> laborIds;
-
-    @Schema(description = "Lista de IDs de Insumos")
-    private List<String> supplyIds;
 
     @Schema(description = "Texto de informação/observação do cliente ou diagnóstico inicial")
     @Size(max = 1000, message = "O texto de informação deve ter no máximo 1000 caracteres")

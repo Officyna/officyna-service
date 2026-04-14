@@ -1,4 +1,4 @@
-package br.com.officyna.serviceorder.domain;
+package br.com.officyna.serviceorder.domain.dto;
 
 import lombok.*;
 
@@ -10,11 +10,13 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class LaborList {
+public class LaborDetailDTO {
 
     private String laborId;
 
-    private BigDecimal laborValue;
+    private String name;
+
+    private BigDecimal laborPrice;
 
     private LocalDateTime startDate;
 

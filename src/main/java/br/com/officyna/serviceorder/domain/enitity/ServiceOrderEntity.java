@@ -1,15 +1,15 @@
-package br.com.officyna.serviceorder.domain;
+package br.com.officyna.serviceorder.domain.enitity;
 
+import br.com.officyna.serviceorder.domain.dto.*;
+import br.com.officyna.serviceorder.domain.enums.ServiceOrderStatus;
 import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.LastModifiedDate;
-import org.springframework.data.annotation.Transient;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.List;
 
 import static lombok.AccessLevel.NONE;
 
@@ -21,18 +21,22 @@ import static lombok.AccessLevel.NONE;
 @Builder
 public class ServiceOrderEntity {
 
+    public static final String SEQUENCE_NAME = "service_orders_sequence";
+
     @Id
     private String id;
 
     private Long serviceOrderNumber;
 
-    private String vehicleId;
+    private VehicleDTO vehicle;
 
-    private String customerId;
+    private CustomerDTO customer;
 
-    private List<LaborList> laborsList;
+    private MechanicDTO mechanic;
 
-    private List<SupplyList> supplyList;
+    private LaborsDTO labors;
+
+    private SupplyDTO supplys;
 
     private LocalDateTime registrationDate;
 
@@ -49,8 +53,6 @@ public class ServiceOrderEntity {
     private ServiceOrderStatus status;
 
     private String informationText;
-
-    private String mechanicId;
 
     private BigDecimal totalBudgetAmount;
 
@@ -76,7 +78,3 @@ public class ServiceOrderEntity {
         }
     }
 }
-
-
-
-

@@ -114,13 +114,13 @@ class LaborControllerTest {
     }
 
     private LaborRequest createRequest() {
-        return new LaborRequest("Troca de Óleo", "Troca de óleo e filtro", new BigDecimal("150.0"), 1);
+        return new LaborRequest("Troca de Óleo", "Troca de óleo e filtro", new BigDecimal("150.0"), 1, true);
     }
 
     private LaborResponse createResponse() {
         return new LaborResponse(
                 "123", "Troca de Óleo", "Troca de óleo e filtro",
                 new BigDecimal("150.0"), 1,
-                LocalDateTime.now(), LocalDateTime.now());
+                LocalDateTime.now(), LocalDateTime.now(), true);
     }
 }
