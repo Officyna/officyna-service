@@ -22,7 +22,6 @@ import jakarta.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -83,6 +82,18 @@ public class ServiceOrderService {
         return mapper.toResponse(repository.save(entity));
     }
 
+    public ServiceOrderResponse removeLaborFromServiceOrder(String id, String laborId) {
+        ServiceOrderEntity entity = repository.findById(id)
+                .orElseThrow(() -> NotFoundException.of("Service Order", id));
+        List<LaborDetailDTO> laborsDetails = entity.getLabors().getLaborsDetails();
+        laborsDetails.removeIf(labor -> labor.getLaborId().equals(laborId));
+        LaborsDTO labors = new LaborsDTO();
+        labors.setLaborsDetails(laborsDetails);
+        labors.calculateTotalLaborsAmount();
+        entity.setLabors(labors);
+        return mapper.toResponse(repository.save(entity));
+    }
+
     private VehicleDTO getVehicle(@NotBlank(message = "ID do Veículo é obrigatório") String id) {
         VehicleResponse response = vehicleService.findById(id);
         return new VehicleDTO(response.id(), response.plate(), response.brand(), response.model(), response.color());
@@ -119,14 +130,9 @@ public class ServiceOrderService {
                     .toList();
             allLabors.addAll(newLabors);
         }
-
-        BigDecimal totalAmount = allLabors.stream()
-                .map(LaborDetailDTO::getLaborPrice)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-
         LaborsDTO labors = new LaborsDTO();
         labors.setLaborsDetails(allLabors);
-        labors.setTotalLaborsAmount(totalAmount);
+        labors.calculateTotalLaborsAmount();
         return labors;
     }
 
@@ -142,4 +148,5 @@ public class ServiceOrderService {
         supply.setSupplysDetails(supplysDetails);
         return supply;
     }
+
 }

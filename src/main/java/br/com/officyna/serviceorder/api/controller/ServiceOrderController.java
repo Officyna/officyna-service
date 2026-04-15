@@ -6,6 +6,7 @@ import br.com.officyna.serviceorder.api.resources.IdListRequest;
 import br.com.officyna.serviceorder.api.resources.NewServiceOrderRequest;
 import br.com.officyna.serviceorder.api.resources.ServiceOrderResponse;
 import br.com.officyna.serviceorder.domain.service.ServiceOrderService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -15,10 +16,10 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 @RestController
+@RequiredArgsConstructor
 public class ServiceOrderController implements ServiceOrderApi {
 
-    @Autowired
-    private ServiceOrderService service;
+    private final ServiceOrderService service;
 
     @Override
     public ResponseEntity<List<ServiceOrderResponse>> findAll() {
@@ -43,6 +44,11 @@ public class ServiceOrderController implements ServiceOrderApi {
     @Override
     public ResponseEntity<ServiceOrderResponse> addLaborInServiceOrder(String id, List<IdListRequest> laborsIdList) {
         return ResponseEntity.ok(service.addLaborsInServiceOrder(id, laborsIdList));
+    }
+
+    @Override
+    public ResponseEntity<ServiceOrderResponse> removeLaborFromServiceOrder(String id, String laborId) {
+        return ResponseEntity.ok(service.removeLaborFromServiceOrder(id, laborId));
     }
 
     @Override
