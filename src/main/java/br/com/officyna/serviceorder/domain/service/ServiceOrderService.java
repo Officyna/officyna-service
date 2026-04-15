@@ -10,6 +10,7 @@ import br.com.officyna.administrative.vehicle.api.resources.VehicleResponse;
 import br.com.officyna.administrative.vehicle.domain.service.VehicleService;
 import br.com.officyna.infrastructure.exception.NotFoundException;
 import br.com.officyna.serviceorder.api.resources.ExistServiceOrderRequest;
+import br.com.officyna.serviceorder.api.resources.IdListRequest;
 import br.com.officyna.serviceorder.api.resources.NewServiceOrderRequest;
 import br.com.officyna.serviceorder.api.resources.ServiceOrderResponse;
 import br.com.officyna.serviceorder.domain.dto.*;
@@ -22,8 +23,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -55,7 +56,7 @@ public class ServiceOrderService {
     }
 
     public ServiceOrderResponse createServiceOrder(NewServiceOrderRequest request) {
-        LaborsDTO labors = this.addLabors(request.getLaborIds());
+        LaborsDTO labors = this.addLabors(request.getLaborIds(), List.of());
         CustomerDTO customer = this.getCustomer(request.getCustomerId());
         VehicleDTO vehicle = this.getVehicle(request.getVehicleId());
         ServiceOrderEntity entity = mapper.toCreateEntity(request, vehicle, customer, labors, ServiceOrderStatus.RECEBIDA);
@@ -72,6 +73,14 @@ public class ServiceOrderService {
 
     public void deleteServiceOrder(String id) {
         repository.deleteById(id);
+    }
+
+    public ServiceOrderResponse addLaborsInServiceOrder(String id, List<IdListRequest> laborsIdList){
+        ServiceOrderEntity entity = repository.findById(id)
+                .orElseThrow(() -> NotFoundException.of("Service Order", id));
+        LaborsDTO labors = this.addLabors(laborsIdList, entity.getLabors().getLaborsDetails());
+        entity.setLabors(labors);
+        return mapper.toResponse(repository.save(entity));
     }
 
     private VehicleDTO getVehicle(@NotBlank(message = "ID do Veículo é obrigatório") String id) {
@@ -98,24 +107,25 @@ public class ServiceOrderService {
         return new MechanicDTO(response.getId(), response.getName());
     }
 
-    private LaborsDTO addLabors(List<String> laborsList){
-        if (laborsList == null || laborsList.isEmpty()) {
-            return new LaborsDTO(List.of(), BigDecimal.ZERO);
+    private LaborsDTO addLabors(List<IdListRequest> laborsIdList, List<LaborDetailDTO> laborsDetails) {
+        List<LaborDetailDTO> allLabors = new ArrayList<>(laborsDetails != null ? laborsDetails : List.of());
+
+        if (laborsIdList != null && !laborsIdList.isEmpty()) {
+            List<LaborDetailDTO> newLabors = laborsIdList.stream()
+                    .map(id -> {
+                        LaborResponse response = laborService.findById(id.getId());
+                        return new LaborDetailDTO(response.id(), response.name(), response.price(), null, null);
+                    })
+                    .toList();
+            allLabors.addAll(newLabors);
         }
 
-        List<LaborDetailDTO> laborsDetails = laborsList.stream()
-                .map(id -> {
-                    LaborResponse response = laborService.findById(id);
-                    return new LaborDetailDTO(response.id(), response.name(), response.price(), null, null);
-                })
-                .collect(Collectors.toList());
-
-        BigDecimal totalAmount = laborsDetails.stream()
+        BigDecimal totalAmount = allLabors.stream()
                 .map(LaborDetailDTO::getLaborPrice)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         LaborsDTO labors = new LaborsDTO();
-        labors.setLaborsDetails(laborsDetails);
+        labors.setLaborsDetails(allLabors);
         labors.setTotalLaborsAmount(totalAmount);
         return labors;
     }

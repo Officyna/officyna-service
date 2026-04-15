@@ -1,6 +1,7 @@
 package br.com.officyna.serviceorder.api;
 
 import br.com.officyna.serviceorder.api.resources.ExistServiceOrderRequest;
+import br.com.officyna.serviceorder.api.resources.IdListRequest;
 import br.com.officyna.serviceorder.api.resources.NewServiceOrderRequest;
 import br.com.officyna.serviceorder.api.resources.ServiceOrderResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -91,6 +92,14 @@ public interface ServiceOrderApi {
             )
     })
     ResponseEntity<ServiceOrderResponse> updateServiceOrder(@Param("Service order ID") @PathVariable String id, @Valid ExistServiceOrderRequest request);
+
+
+    @PutMapping("/{id}/add-labors")
+    @Operation(summary = "Add labors to a Service order")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Labors added to the service order")
+    })
+    ResponseEntity<ServiceOrderResponse> addLaborInServiceOrder(@Param("Service order ID") String id, @RequestBody List<IdListRequest> laborsIdList);
 
     @DeleteMapping("/{id}")
     @Operation(summary = "Delete a Service order")

@@ -2,6 +2,7 @@ package br.com.officyna.serviceorder.api.controller;
 
 import br.com.officyna.serviceorder.api.ServiceOrderApi;
 import br.com.officyna.serviceorder.api.resources.ExistServiceOrderRequest;
+import br.com.officyna.serviceorder.api.resources.IdListRequest;
 import br.com.officyna.serviceorder.api.resources.NewServiceOrderRequest;
 import br.com.officyna.serviceorder.api.resources.ServiceOrderResponse;
 import br.com.officyna.serviceorder.domain.service.ServiceOrderService;
@@ -37,6 +38,11 @@ public class ServiceOrderController implements ServiceOrderApi {
     @Override
     public ResponseEntity<ServiceOrderResponse> updateServiceOrder(String id, ExistServiceOrderRequest request) {
         return ResponseEntity.ok(service.updateServiceOrder(id, request));
+    }
+
+    @Override
+    public ResponseEntity<ServiceOrderResponse> addLaborInServiceOrder(String id, List<IdListRequest> laborsIdList) {
+        return ResponseEntity.ok(service.addLaborsInServiceOrder(id, laborsIdList));
     }
 
     @Override
