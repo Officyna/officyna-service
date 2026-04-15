@@ -101,6 +101,13 @@ public interface ServiceOrderApi {
     })
     ResponseEntity<ServiceOrderResponse> addLaborInServiceOrder(@Param("Service order ID") String id, @RequestBody List<IdListRequest> laborsIdList);
 
+    @DeleteMapping("/{id}/labors/{laborId}")
+    @Operation(summary = "Delete labor from a Service order")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Labor removed from the service order")
+    })
+    ResponseEntity<ServiceOrderResponse> removeLaborFromServiceOrder(@Param("Service order ID") String id, @Param("Labor ID") String laborId);
+
     @DeleteMapping("/{id}")
     @Operation(summary = "Delete a Service order")
     @ApiResponses({
