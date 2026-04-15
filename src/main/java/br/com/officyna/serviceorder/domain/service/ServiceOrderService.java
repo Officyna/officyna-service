@@ -18,7 +18,7 @@ import br.com.officyna.serviceorder.domain.enums.ServiceOrderStatus;
 import br.com.officyna.serviceorder.domain.mapper.ServiceOrderMapper;
 import br.com.officyna.serviceorder.repository.ServiceOrderRepository;
 import jakarta.validation.constraints.NotBlank;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -26,25 +26,20 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
 public class ServiceOrderService {
 
-    @Autowired
-    private ServiceOrderRepository repository;
+    private final ServiceOrderRepository repository;
 
-    @Autowired
-    private LaborService laborService;
+    private final LaborService laborService;
 
-    @Autowired
-    private CustomerService customerService;
+    private final CustomerService customerService;
 
-    @Autowired
-    private VehicleService vehicleService;
+    private final VehicleService vehicleService;
 
-    @Autowired
-    private UserService userService;
+    private final UserService userService;
 
-    @Autowired
-    private ServiceOrderMapper mapper;
+    private final ServiceOrderMapper mapper;
 
     public List<ServiceOrderResponse> findAll() {
         return repository.findAll()
@@ -60,7 +55,7 @@ public class ServiceOrderService {
     }
 
     public ServiceOrderResponse createServiceOrder(NewServiceOrderRequest request) {
-        LaborsDTO labors = this.getLaborsList(request.getLaborIds());
+        LaborsDTO labors = this.addLabors(request.getLaborIds());
         CustomerDTO customer = this.getCustomer(request.getCustomerId());
         VehicleDTO vehicle = this.getVehicle(request.getVehicleId());
         ServiceOrderEntity entity = mapper.toCreateEntity(request, vehicle, customer, labors, ServiceOrderStatus.RECEBIDA);
@@ -103,7 +98,7 @@ public class ServiceOrderService {
         return new MechanicDTO(response.getId(), response.getName());
     }
 
-    private LaborsDTO getLaborsList(List<String> laborsList){
+    private LaborsDTO addLabors(List<String> laborsList){
         if (laborsList == null || laborsList.isEmpty()) {
             return new LaborsDTO(List.of(), BigDecimal.ZERO);
         }
@@ -125,7 +120,7 @@ public class ServiceOrderService {
         return labors;
     }
 
-    private SupplyDTO getSupplyLists(List<String> supplyList){
+    private SupplyDTO addSupplys(List<String> supplyList){
         /*TODO: Implementar construcao da lista de suprimentos dentro da O.S
          *A O.S recebe a lista de IDs e busca os suprimentos e vincula os preços ou
          *recebe os suprimentos e os preços no request?*/
