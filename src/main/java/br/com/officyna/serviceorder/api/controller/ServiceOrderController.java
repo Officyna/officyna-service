@@ -52,6 +52,16 @@ public class ServiceOrderController implements ServiceOrderApi {
     }
 
     @Override
+    public ResponseEntity<ServiceOrderResponse> addSupplyInServiceOrder(String id, List<IdListRequest> supplyIdList) {
+        return ResponseEntity.ok(service.addSupplyFromServiceOrder(id, supplyIdList));
+    }
+
+    @Override
+    public ResponseEntity<ServiceOrderResponse> removeSupplyFromServiceOrder(String id, String supplyId) {
+        return ResponseEntity.ok(service.removeSupplyFromServiceOrder(id, supplyId));
+    }
+
+    @Override
     public ResponseEntity<Void> deleteServiceOrder(String id) {
         service.deleteServiceOrder(id);
         return ResponseEntity.noContent().build();

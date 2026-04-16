@@ -101,12 +101,26 @@ public interface ServiceOrderApi {
     })
     ResponseEntity<ServiceOrderResponse> addLaborInServiceOrder(@Param("Service order ID") String id, @RequestBody List<IdListRequest> laborsIdList);
 
-    @DeleteMapping("/{id}/labors/{laborId}")
+    @DeleteMapping("/{id}/remove-labors/{laborId}")
     @Operation(summary = "Delete labor from a Service order")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Labor removed from the service order")
     })
     ResponseEntity<ServiceOrderResponse> removeLaborFromServiceOrder(@Param("Service order ID") String id, @Param("Labor ID") String laborId);
+
+    @PutMapping("/{id}/add-supply")
+    @Operation(summary = "Add supplys to a Service order")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Supplys added to the service order")
+    })
+    ResponseEntity<ServiceOrderResponse> addSupplyInServiceOrder(@Param("Service order ID") String id, @RequestBody List<IdListRequest> laborsIdList);
+
+    @DeleteMapping("/{id}/remove-supply/{supplyId}")
+    @Operation(summary = "Delete supplys from a Service order")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Supply removed from the service order")
+    })
+    ResponseEntity<ServiceOrderResponse> removeSupplyFromServiceOrder(@Param("Service order ID") String id, @Param("Supply ID") String supplyId);
 
     @DeleteMapping("/{id}")
     @Operation(summary = "Delete a Service order")

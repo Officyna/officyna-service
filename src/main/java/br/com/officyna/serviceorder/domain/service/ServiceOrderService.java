@@ -1,11 +1,5 @@
 package br.com.officyna.serviceorder.domain.service;
 
-import br.com.officyna.administrative.customer.api.resources.CustomerResponse;
-import br.com.officyna.administrative.customer.domain.service.CustomerService;
-import br.com.officyna.administrative.labor.api.resources.LaborResponse;
-import br.com.officyna.administrative.labor.domain.service.LaborService;
-import br.com.officyna.administrative.user.api.resources.UserResponse;
-import br.com.officyna.administrative.user.domain.service.UserService;
 import br.com.officyna.administrative.vehicle.api.resources.VehicleResponse;
 import br.com.officyna.administrative.vehicle.domain.service.VehicleService;
 import br.com.officyna.infrastructure.exception.NotFoundException;
@@ -22,7 +16,6 @@ import jakarta.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -31,13 +24,13 @@ public class ServiceOrderService {
 
     private final ServiceOrderRepository repository;
 
-    private final LaborService laborService;
+    private final LaborSelectionService laborSelectionService;
 
-    private final CustomerService customerService;
+    private final SupplySelectionService supplySelectionService;
+
+    private final CustomerAndMecnichalService customerAndMecnichalService;
 
     private final VehicleService vehicleService;
-
-    private final UserService userService;
 
     private final ServiceOrderMapper mapper;
 
@@ -49,14 +42,12 @@ public class ServiceOrderService {
     }
 
     public ServiceOrderResponse findById(String id) {
-        ServiceOrderEntity entity = repository.findById(id)
-                .orElseThrow(() -> NotFoundException.of("Service Order", id));
-        return mapper.toResponse(entity);
+        return mapper.toResponse(this.findEntityById(id));
     }
 
     public ServiceOrderResponse createServiceOrder(NewServiceOrderRequest request) {
-        LaborsDTO labors = this.addLabors(request.getLaborIds(), List.of());
-        CustomerDTO customer = this.getCustomer(request.getCustomerId());
+        LaborsDTO labors = laborSelectionService.addLabors(request.getLaborIds(), List.of());
+        CustomerDTO customer = customerAndMecnichalService.getCustomer(request.getCustomerId());
         VehicleDTO vehicle = this.getVehicle(request.getVehicleId());
         ServiceOrderEntity entity = mapper.toCreateEntity(request, vehicle, customer, labors, ServiceOrderStatus.RECEBIDA);
 
@@ -64,9 +55,8 @@ public class ServiceOrderService {
     }
 
     public ServiceOrderResponse updateServiceOrder(String id, ExistServiceOrderRequest request){
-        ServiceOrderEntity entity = repository.findById(id)
-                .orElseThrow(() -> NotFoundException.of("Service Order", id));
-        MechanicDTO mechanic = (request.getMechanicId() == null || request.getMechanicId().isEmpty()) ? null :this.getMechanic(request.getMechanicId());
+        ServiceOrderEntity entity = this.findEntityById(id);
+        MechanicDTO mechanic = (request.getMechanicId() == null || request.getMechanicId().isEmpty()) ? null :customerAndMecnichalService.getMechanic(request.getMechanicId());
         return mapper.toResponse(repository.save(mapper.toUpdateEntity(request, entity, mechanic)));
     }
 
@@ -75,16 +65,14 @@ public class ServiceOrderService {
     }
 
     public ServiceOrderResponse addLaborsInServiceOrder(String id, List<IdListRequest> laborsIdList){
-        ServiceOrderEntity entity = repository.findById(id)
-                .orElseThrow(() -> NotFoundException.of("Service Order", id));
-        LaborsDTO labors = this.addLabors(laborsIdList, entity.getLabors().getLaborsDetails());
+        ServiceOrderEntity entity = this.findEntityById(id);
+        LaborsDTO labors = laborSelectionService.addLabors(laborsIdList, entity.getLabors().getLaborsDetails());
         entity.setLabors(labors);
         return mapper.toResponse(repository.save(entity));
     }
 
     public ServiceOrderResponse removeLaborFromServiceOrder(String id, String laborId) {
-        ServiceOrderEntity entity = repository.findById(id)
-                .orElseThrow(() -> NotFoundException.of("Service Order", id));
+        ServiceOrderEntity entity = this.findEntityById(id);
         List<LaborDetailDTO> laborsDetails = entity.getLabors().getLaborsDetails();
         laborsDetails.removeIf(labor -> labor.getLaborId().equals(laborId));
         LaborsDTO labors = new LaborsDTO();
@@ -99,54 +87,27 @@ public class ServiceOrderService {
         return new VehicleDTO(response.id(), response.plate(), response.brand(), response.model(), response.color());
     }
 
-    private CustomerDTO getCustomer(@NotBlank(message = "ID do Cliente é obrigatório") String id) {
-        CustomerResponse response = customerService.findById(id);
-        return new CustomerDTO(response.id(), 
-                response.name(), 
-                response.phone(),
-                response.address().street(),
-                response.address().number(),
-                response.address().neighborhood(),
-                response.address().city(),
-                response.address().state(),
-                response.address().zipCode(),
-                response.address().complement());
+    public ServiceOrderResponse addSupplyFromServiceOrder(String id, List<IdListRequest> supplyIdList) {
+        ServiceOrderEntity entity = repository.findById(id)
+                .orElseThrow(() -> NotFoundException.of("Service Order", id));
+        SupplyDTO supply = supplySelectionService.addSupplys(supplyIdList, entity.getSupplys().getSupplysDetails());
+        entity.setSupplys(supply);
+        return mapper.toResponse(repository.save(entity));
     }
 
-    private MechanicDTO getMechanic(@NotBlank(message = "ID do Mecânico é obrigatório") String id) {
-        UserResponse response = userService.findById(id);
-        return new MechanicDTO(response.getId(), response.getName());
+    public ServiceOrderResponse removeSupplyFromServiceOrder(String id, String supplyId) {
+        ServiceOrderEntity entity = this.findEntityById(id);
+        List<SupplyDetailDTO> supplysDetails = entity.getSupplys().getSupplysDetails();
+        supplysDetails.removeIf(supply -> supply.getId().equals(supplyId));
+        SupplyDTO supplys = new SupplyDTO();
+        supplys.setSupplysDetails(supplysDetails);
+        supplys.calculateTotalSupplyAmount();
+        entity.setSupplys(supplys);
+        return mapper.toResponse(repository.save(entity));
     }
 
-    private LaborsDTO addLabors(List<IdListRequest> laborsIdList, List<LaborDetailDTO> laborsDetails) {
-        List<LaborDetailDTO> allLabors = new ArrayList<>(laborsDetails != null ? laborsDetails : List.of());
-
-        if (laborsIdList != null && !laborsIdList.isEmpty()) {
-            List<LaborDetailDTO> newLabors = laborsIdList.stream()
-                    .map(id -> {
-                        LaborResponse response = laborService.findById(id.getId());
-                        return new LaborDetailDTO(response.id(), response.name(), response.price(), null, null);
-                    })
-                    .toList();
-            allLabors.addAll(newLabors);
-        }
-        LaborsDTO labors = new LaborsDTO();
-        labors.setLaborsDetails(allLabors);
-        labors.calculateTotalLaborsAmount();
-        return labors;
+    private ServiceOrderEntity findEntityById(String id){
+        return repository.findById(id)
+                .orElseThrow(() -> NotFoundException.of("Service Order", id));
     }
-
-    private SupplyDTO addSupplys(List<String> supplyList){
-        /*TODO: Implementar construcao da lista de suprimentos dentro da O.S
-         *A O.S recebe a lista de IDs e busca os suprimentos e vincula os preços ou
-         *recebe os suprimentos e os preços no request?*/
-
-        List<SupplyDetailDTO> supplysDetails = List.of();
-        SupplyDTO supply = new SupplyDTO();
-
-        // Removido setTotalPrice pois o calculo é dinâmico agora no DTO
-        supply.setSupplysDetails(supplysDetails);
-        return supply;
-    }
-
 }
