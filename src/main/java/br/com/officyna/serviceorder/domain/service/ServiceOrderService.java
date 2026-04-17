@@ -158,7 +158,7 @@ public class ServiceOrderService {
     }
 
     private void validateExecutionStatus(ServiceOrderEntity entity) {
-        if (!ServiceOrderStatus.APROVADA.equals(entity.getStatus())) {
+        if (!(ServiceOrderStatus.APROVADA.equals(entity.getStatus()) || ServiceOrderStatus.EM_EXECUCAO.equals(entity.getStatus()))) {
             throw new DomainException("Um serviço só pode ser iniciado ou finalizado se o status da ordem de serviço for APROVADA.");
         }
         LaborsDTO labors = entity.getLabors();
