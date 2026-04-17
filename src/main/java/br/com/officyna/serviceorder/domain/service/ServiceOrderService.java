@@ -136,6 +136,7 @@ public class ServiceOrderService {
             }
         }
         if(entity.getExecutionStartDate() == null) entity.setExecutionStartDate(LocalDateTime.now());
+        if(!entity.getStatus().equals(ServiceOrderStatus.EM_EXECUCAO)) entity.setStatus(ServiceOrderStatus.EM_EXECUCAO);
         return mapper.toResponse(repository.save(entity));
     }
 
