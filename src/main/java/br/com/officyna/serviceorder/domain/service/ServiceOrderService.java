@@ -1,7 +1,5 @@
 package br.com.officyna.serviceorder.domain.service;
 
-import br.com.officyna.administrative.vehicle.api.resources.VehicleResponse;
-import br.com.officyna.administrative.vehicle.domain.service.VehicleService;
 import br.com.officyna.infrastructure.exception.DomainException;
 import br.com.officyna.infrastructure.exception.NotFoundException;
 import br.com.officyna.serviceorder.api.resources.ExistServiceOrderRequest;
@@ -13,7 +11,6 @@ import br.com.officyna.serviceorder.domain.enitity.ServiceOrderEntity;
 import br.com.officyna.serviceorder.domain.enums.ServiceOrderStatus;
 import br.com.officyna.serviceorder.domain.mapper.ServiceOrderMapper;
 import br.com.officyna.serviceorder.repository.ServiceOrderRepository;
-import jakarta.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -32,7 +29,7 @@ public class ServiceOrderService {
 
     private final CustomerAndMecnichalService customerAndMecnichalService;
 
-    private final VehicleService vehicleService;
+    private final VehicleSelectionService vehicleSelectionService;
 
     private final ServiceOrderMapper mapper;
 
@@ -55,7 +52,7 @@ public class ServiceOrderService {
     public ServiceOrderResponse createServiceOrder(NewServiceOrderRequest request) {
         LaborsDTO labors = laborSelectionService.addLabors(request.getLaborIds(), List.of());
         CustomerDTO customer = customerAndMecnichalService.getCustomer(request.getCustomerId());
-        VehicleDTO vehicle = this.getVehicle(request.getVehicleId());
+        VehicleDTO vehicle = vehicleSelectionService.getVehicle(request.getVehicleId());
         ServiceOrderEntity entity = mapper.toCreateEntity(request, vehicle, customer, labors, ServiceOrderStatus.RECEBIDA);
 
         return mapper.toResponse(repository.save(entity));
@@ -89,11 +86,6 @@ public class ServiceOrderService {
         return mapper.toResponse(repository.save(entity));
     }
 
-    private VehicleDTO getVehicle(@NotBlank(message = "ID do Veículo é obrigatório") String id) {
-        VehicleResponse response = vehicleService.findById(id);
-        return new VehicleDTO(response.id(), response.plate(), response.brand(), response.model(), response.color());
-    }
-
     public ServiceOrderResponse addSupplyFromServiceOrder(String id, List<IdListRequest> supplyIdList) {
         ServiceOrderEntity entity = repository.findById(id)
                 .orElseThrow(() -> NotFoundException.of("Service Order", id));
@@ -115,8 +107,7 @@ public class ServiceOrderService {
 
     public ServiceOrderResponse updateStatus(String id, ServiceOrderStatus status){
         ServiceOrderEntity entity = this.findEntityById(id);
-        entity.setStatus(status);
-        entity.setStatusDate(status);
+        this.updateStatusDateByStatus(entity, status);
         return mapper.toResponse(repository.save(entity));
     }
 
@@ -135,8 +126,7 @@ public class ServiceOrderService {
                 throw new NotFoundException("A O.S não possui este serviço");
             }
         }
-        if(entity.getExecutionStartDate() == null) entity.setExecutionStartDate(LocalDateTime.now());
-        if(!entity.getStatus().equals(ServiceOrderStatus.EM_EXECUCAO)) entity.setStatus(ServiceOrderStatus.EM_EXECUCAO);
+        this.updateStatusDateByStatus(entity, ServiceOrderStatus.EM_EXECUCAO);
         return mapper.toResponse(repository.save(entity));
     }
 
@@ -166,5 +156,37 @@ public class ServiceOrderService {
         if (labors == null || labors.getLaborsDetails() == null) {
             throw new DomainException("A ordem de serviço não possui serviços cadastrados.");
         }
+    }
+
+    private void updateStatusDateByStatus(ServiceOrderEntity entity, ServiceOrderStatus status){
+        if(status.equals(entity.getStatus())) return;
+        if(status.equals(ServiceOrderStatus.RECEBIDA)){
+            throw new DomainException("A Ordem de Serviço já foi recebida e não pode retornar a este status.");
+        }else if(status.equals(ServiceOrderStatus.EM_DIAGNOSTICO)){
+            if (!ServiceOrderStatus.RECEBIDA.equals(entity.getStatus())) {
+                throw new DomainException("Para iniciar o diagnóstico, a O.S. deve estar no status RECEBIDA.");
+            }
+        }else if(status.equals(ServiceOrderStatus.AGUARDANDO_APROVACAO)){
+            if (!ServiceOrderStatus.EM_DIAGNOSTICO.equals(entity.getStatus())) {
+                throw new DomainException("Para aguardar aprovação, a O.S. deve ter passado pelo diagnóstico.");
+            }
+        }else if(status.equals(ServiceOrderStatus.APROVADA)){
+            if (!ServiceOrderStatus.AGUARDANDO_APROVACAO.equals(entity.getStatus())) {
+                throw new DomainException("Apenas ordens AGUARDANDO APROVAÇÃO podem ser aprovadas.");
+            }
+        }else if(status.equals(ServiceOrderStatus.EM_EXECUCAO)){
+            if (!ServiceOrderStatus.APROVADA.equals(entity.getStatus())) {
+                throw new DomainException("Apenas ordens APROVADAS podem entrar em execução.");
+            }
+        }else if(status.equals(ServiceOrderStatus.FINALIZADA)){
+            if (!ServiceOrderStatus.EM_EXECUCAO.equals(entity.getStatus())) {
+                throw new DomainException("Apenas ordens EM EXECUÇÃO podem ser finalizadas.");
+            }
+        }else if(status.equals(ServiceOrderStatus.RECUSADA)){
+            if (!ServiceOrderStatus.AGUARDANDO_APROVACAO.equals(entity.getStatus())) {
+                throw new DomainException("Apenas ordens AGUARDANDO APROVAÇÃO podem ser recusadas.");
+            }
+        }
+        entity.setStatusDate(status);
     }
 }
