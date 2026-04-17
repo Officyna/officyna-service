@@ -7,7 +7,7 @@ import br.com.officyna.serviceorder.api.resources.IdListRequest;
 import br.com.officyna.serviceorder.api.resources.NewServiceOrderRequest;
 import br.com.officyna.serviceorder.api.resources.ServiceOrderResponse;
 import br.com.officyna.serviceorder.domain.dto.*;
-import br.com.officyna.serviceorder.domain.enitity.ServiceOrderEntity;
+import br.com.officyna.serviceorder.domain.entity.ServiceOrderEntity;
 import br.com.officyna.serviceorder.domain.enums.ServiceOrderStatus;
 import br.com.officyna.serviceorder.domain.mapper.ServiceOrderMapper;
 import br.com.officyna.serviceorder.repository.ServiceOrderRepository;
@@ -181,6 +181,11 @@ public class ServiceOrderService {
         }else if(status.equals(ServiceOrderStatus.FINALIZADA)){
             if (!ServiceOrderStatus.EM_EXECUCAO.equals(entity.getStatus())) {
                 throw new DomainException("Apenas ordens EM EXECUÇÃO podem ser finalizadas.");
+            }
+
+        }else if(status.equals(ServiceOrderStatus.ENTREGUE)){
+            if (!ServiceOrderStatus.FINALIZADA.equals(entity.getStatus())) {
+                throw new DomainException("Apenas ordes FINALIZADAS podem ser consideradas entregues");
             }
         }else if(status.equals(ServiceOrderStatus.RECUSADA)){
             if (!ServiceOrderStatus.AGUARDANDO_APROVACAO.equals(entity.getStatus())) {

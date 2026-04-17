@@ -1,4 +1,4 @@
-package br.com.officyna.serviceorder.domain.enitity;
+package br.com.officyna.serviceorder.domain.entity;
 
 import br.com.officyna.serviceorder.domain.dto.*;
 import br.com.officyna.serviceorder.domain.enums.ServiceOrderStatus;
@@ -40,7 +40,7 @@ public class ServiceOrderEntity {
 
     private LocalDateTime registrationDate;
 
-    private LocalDateTime diagnosisDate;
+    private LocalDateTime DiagnosisStartDate;
 
     private LocalDateTime clientSendDate;
 
@@ -49,6 +49,10 @@ public class ServiceOrderEntity {
     private LocalDateTime executionStartDate;
 
     private LocalDateTime finalizationDate;
+
+    private LocalDateTime deliveryDate;
+
+    private LocalDateTime refuseDate;
 
     private ServiceOrderStatus status;
 
@@ -70,11 +74,13 @@ public class ServiceOrderEntity {
 
         switch (status) {
             case RECEBIDA -> this.registrationDate = LocalDateTime.now();
-            case EM_DIAGNOSTICO -> this.diagnosisDate = LocalDateTime.now();
+            case EM_DIAGNOSTICO -> this.DiagnosisStartDate = LocalDateTime.now();
             case AGUARDANDO_APROVACAO -> this.clientSendDate = LocalDateTime.now();
             case APROVADA -> this.approvalDate = LocalDateTime.now();
             case EM_EXECUCAO -> this.executionStartDate = LocalDateTime.now();
-            case FINALIZADA, RECUSADA -> this.finalizationDate = LocalDateTime.now();
+            case ENTREGUE -> this.deliveryDate = LocalDateTime.now();
+            case FINALIZADA -> this.finalizationDate = LocalDateTime.now();
+            case RECUSADA -> this.refuseDate = LocalDateTime.now();
         }
     }
 }

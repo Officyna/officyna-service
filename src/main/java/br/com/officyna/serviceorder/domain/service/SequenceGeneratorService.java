@@ -1,6 +1,6 @@
 package br.com.officyna.serviceorder.domain.service;
 
-import br.com.officyna.serviceorder.domain.enitity.ServiceOrderSequenceEntity;
+import br.com.officyna.serviceorder.domain.entity.ServiceOrderSequenceEntity;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.mongodb.core.MongoOperations;
 import org.springframework.data.mongodb.core.query.Update;

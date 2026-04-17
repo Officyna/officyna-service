@@ -16,6 +16,8 @@ public class LaborDetailDTO {
 
     private String name;
 
+    private String description;
+
     private BigDecimal laborPrice;
 
     private LocalDateTime startDate;
