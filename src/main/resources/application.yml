@@ -3,6 +3,8 @@ spring:
     mongodb:
       uri: ${MONGODB_URI:mongodb://localhost:27017/officyna}
       database: ${MONGODB_DATABASE:officyna}
+  jackson:
+    read-unknown-enum-values-as-null: true
 
 server:
   port: 8080
@@ -31,3 +33,4 @@ logging:
   level:
     br.com.officyna: INFO
     org.springframework.security: INFO
+

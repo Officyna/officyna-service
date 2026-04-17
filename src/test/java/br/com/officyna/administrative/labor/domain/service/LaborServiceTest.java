@@ -49,11 +49,11 @@ class LaborServiceTest {
     }
 
     private LaborRequest createLaborRequest(String name) {
-        return new LaborRequest(name, "sbrubles " + name, new BigDecimal("100.00"), 1);
+        return new LaborRequest(name, "sbrubles " + name, new BigDecimal("100.00"), 1, true);
     }
 
     private LaborResponse createLaborResponse(String id, String name) {
-        return new LaborResponse(id, name, "sbrubles " + name, new BigDecimal("100.00"), 1, LocalDateTime.now(), LocalDateTime.now());
+        return new LaborResponse(id, name, "sbrubles " + name, new BigDecimal("100.00"), 1, LocalDateTime.now(), LocalDateTime.now(), true);
     }
 
     @Test
