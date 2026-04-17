@@ -2,6 +2,7 @@ package br.com.officyna.serviceorder.domain.service;
 
 import br.com.officyna.administrative.vehicle.api.resources.VehicleResponse;
 import br.com.officyna.administrative.vehicle.domain.service.VehicleService;
+import br.com.officyna.infrastructure.exception.DomainException;
 import br.com.officyna.infrastructure.exception.NotFoundException;
 import br.com.officyna.serviceorder.api.resources.ExistServiceOrderRequest;
 import br.com.officyna.serviceorder.api.resources.IdListRequest;
@@ -16,6 +17,7 @@ import jakarta.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -33,6 +35,11 @@ public class ServiceOrderService {
     private final VehicleService vehicleService;
 
     private final ServiceOrderMapper mapper;
+
+    private ServiceOrderEntity findEntityById(String id){
+        return repository.findById(id)
+                .orElseThrow(() -> NotFoundException.of("Service Order", id));
+    }
 
     public List<ServiceOrderResponse> findAll() {
         return repository.findAll()
@@ -106,8 +113,57 @@ public class ServiceOrderService {
         return mapper.toResponse(repository.save(entity));
     }
 
-    private ServiceOrderEntity findEntityById(String id){
-        return repository.findById(id)
-                .orElseThrow(() -> NotFoundException.of("Service Order", id));
+    public ServiceOrderResponse updateStatus(String id, ServiceOrderStatus status){
+        ServiceOrderEntity entity = this.findEntityById(id);
+        entity.setStatus(status);
+        entity.setStatusDate(status);
+        return mapper.toResponse(repository.save(entity));
+    }
+
+    public ServiceOrderResponse startLabor(String id, String laborId){
+        ServiceOrderEntity entity = this.findEntityById(id);
+        this.validateExecutionStatus(entity);
+        for(LaborDetailDTO labor : entity.getLabors().getLaborsDetails()){
+            if(labor.getLaborId().equals(laborId)){
+                if(labor.getStartDate() == null) {
+                    labor.setStartDate(LocalDateTime.now());
+                    break;
+                } else {
+                    throw new DomainException("O serviço já foi iniciado");
+                }
+            } else{
+                throw new NotFoundException("A O.S não possui este serviço");
+            }
+        }
+        if(entity.getExecutionStartDate() == null) entity.setExecutionStartDate(LocalDateTime.now());
+        return mapper.toResponse(repository.save(entity));
+    }
+
+    public ServiceOrderResponse finishLabor(String id, String laborId){
+        ServiceOrderEntity entity = this.findEntityById(id);
+        this.validateExecutionStatus(entity);
+        for(LaborDetailDTO labor : entity.getLabors().getLaborsDetails()){
+            if(labor.getLaborId().equals(laborId)){
+                if(labor.getEndDate() == null && labor.getStartDate() != null) {
+                    labor.setEndDate(LocalDateTime.now());
+                    break;
+                } else {
+                    throw new DomainException("Não é possível finalizar um serviço que não foi iniciado.");
+                }
+            } else{
+                throw new NotFoundException("A O.S não possui este serviço");
+            }
+        }
+        return mapper.toResponse(repository.save(entity));
+    }
+
+    private void validateExecutionStatus(ServiceOrderEntity entity) {
+        if (!ServiceOrderStatus.APROVADA.equals(entity.getStatus())) {
+            throw new DomainException("Um serviço só pode ser iniciado ou finalizado se o status da ordem de serviço for APROVADA.");
+        }
+        LaborsDTO labors = entity.getLabors();
+        if (labors == null || labors.getLaborsDetails() == null) {
+            throw new DomainException("A ordem de serviço não possui serviços cadastrados.");
+        }
     }
 }

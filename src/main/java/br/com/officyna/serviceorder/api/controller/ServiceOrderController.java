@@ -5,6 +5,7 @@ import br.com.officyna.serviceorder.api.resources.ExistServiceOrderRequest;
 import br.com.officyna.serviceorder.api.resources.IdListRequest;
 import br.com.officyna.serviceorder.api.resources.NewServiceOrderRequest;
 import br.com.officyna.serviceorder.api.resources.ServiceOrderResponse;
+import br.com.officyna.serviceorder.domain.enums.ServiceOrderStatus;
 import br.com.officyna.serviceorder.domain.service.ServiceOrderService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -65,5 +66,20 @@ public class ServiceOrderController implements ServiceOrderApi {
     public ResponseEntity<Void> deleteServiceOrder(String id) {
         service.deleteServiceOrder(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @Override
+    public ResponseEntity<ServiceOrderResponse> startLabor(String id, String laborId) {
+        return ResponseEntity.ok(service.startLabor(id, laborId));
+    }
+
+    @Override
+    public ResponseEntity<ServiceOrderResponse> finishLabor(String id, String laborId) {
+        return ResponseEntity.ok(service.finishLabor(id, laborId));
+    }
+
+    @Override
+    public ResponseEntity<ServiceOrderResponse> updateStatus(String id, ServiceOrderStatus status) {
+        return ResponseEntity.ok(service.updateStatus(id, status));
     }
 }
