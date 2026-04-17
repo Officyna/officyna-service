@@ -4,6 +4,7 @@ import br.com.officyna.serviceorder.api.resources.ExistServiceOrderRequest;
 import br.com.officyna.serviceorder.api.resources.IdListRequest;
 import br.com.officyna.serviceorder.api.resources.NewServiceOrderRequest;
 import br.com.officyna.serviceorder.api.resources.ServiceOrderResponse;
+import br.com.officyna.serviceorder.domain.enums.ServiceOrderStatus;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
@@ -35,6 +36,13 @@ import java.util.List;
         @ApiResponse(
                 responseCode = "400",
                 description = "Bad request",
+                content = @Content(
+                        schema = @Schema(implementation = ErrorResponse.class)
+                )
+        ),
+        @ApiResponse(
+                responseCode = "404",
+                description = "Not found",
                 content = @Content(
                         schema = @Schema(implementation = ErrorResponse.class)
                 )
@@ -101,12 +109,26 @@ public interface ServiceOrderApi {
     })
     ResponseEntity<ServiceOrderResponse> addLaborInServiceOrder(@Param("Service order ID") String id, @RequestBody List<IdListRequest> laborsIdList);
 
-    @DeleteMapping("/{id}/labors/{laborId}")
+    @DeleteMapping("/{id}/remove-labors/{laborId}")
     @Operation(summary = "Delete labor from a Service order")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Labor removed from the service order")
     })
     ResponseEntity<ServiceOrderResponse> removeLaborFromServiceOrder(@Param("Service order ID") String id, @Param("Labor ID") String laborId);
+
+    @PutMapping("/{id}/add-supply")
+    @Operation(summary = "Add supplys to a Service order")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Supplys added to the service order")
+    })
+    ResponseEntity<ServiceOrderResponse> addSupplyInServiceOrder(@Param("Service order ID") String id, @RequestBody List<IdListRequest> laborsIdList);
+
+    @DeleteMapping("/{id}/remove-supply/{supplyId}")
+    @Operation(summary = "Delete supplys from a Service order")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Supply removed from the service order")
+    })
+    ResponseEntity<ServiceOrderResponse> removeSupplyFromServiceOrder(@Param("Service order ID") String id, @Param("Supply ID") String supplyId);
 
     @DeleteMapping("/{id}")
     @Operation(summary = "Delete a Service order")
@@ -117,4 +139,25 @@ public interface ServiceOrderApi {
         )
     })
     ResponseEntity<Void> deleteServiceOrder(@Parameter(description = "Service order ID") @PathVariable String id);
+
+    @PutMapping("/{id}/start-labor/{laborId}")
+    @Operation(summary = "Start a labor in a Service order")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Labor started in the service order")
+    })
+    ResponseEntity<ServiceOrderResponse> startLabor(@Param("Service order ID") String id, @Param("Labor ID") String laborId);
+
+    @PutMapping("/{id}/finish-labor/{laborId}")
+    @Operation(summary = "Finish a labor in a Service order")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Labor finished in the service order")
+    })
+    ResponseEntity<ServiceOrderResponse> finishLabor(@Param("Service order ID") String id, @Param("Labor ID") String laborId);
+
+    @PutMapping("/{id}/update-status/{status}")
+    @Operation(summary = "Status updated")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Status updated")
+    })
+    ResponseEntity<ServiceOrderResponse> updateStatus(@Param("Service order ID") String id, @Param("Status") ServiceOrderStatus status);
 }
