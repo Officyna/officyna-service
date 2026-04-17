@@ -1,6 +1,6 @@
 package br.com.officyna.serviceorder.domain.component;
 
-import br.com.officyna.serviceorder.domain.enitity.ServiceOrderEntity;
+import br.com.officyna.serviceorder.domain.entity.ServiceOrderEntity;
 import br.com.officyna.serviceorder.domain.service.SequenceGeneratorService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.mongodb.core.mapping.event.AbstractMongoEventListener;

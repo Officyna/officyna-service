@@ -24,7 +24,7 @@ public class LaborSelectionService {
             List<LaborDetailDTO> newLabors = laborsIdList.stream()
                     .map(id -> {
                         LaborResponse response = laborService.findById(id.getId());
-                        return new LaborDetailDTO(response.id(), response.name(), response.price(), null, null);
+                        return new LaborDetailDTO(response.id(), response.name(), response.description(), response.price(), null, null);
                     })
                     .toList();
             allLabors.addAll(newLabors);

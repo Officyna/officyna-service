@@ -1,4 +1,4 @@
-package br.com.officyna.serviceorder.domain.enitity;
+package br.com.officyna.serviceorder.domain.entity;
 
 import lombok.Getter;
 import lombok.Setter;

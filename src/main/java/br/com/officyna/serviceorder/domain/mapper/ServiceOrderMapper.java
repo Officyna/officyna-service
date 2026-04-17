@@ -7,7 +7,7 @@ import br.com.officyna.serviceorder.domain.dto.CustomerDTO;
 import br.com.officyna.serviceorder.domain.dto.LaborsDTO;
 import br.com.officyna.serviceorder.domain.dto.MechanicDTO;
 import br.com.officyna.serviceorder.domain.dto.VehicleDTO;
-import br.com.officyna.serviceorder.domain.enitity.ServiceOrderEntity;
+import br.com.officyna.serviceorder.domain.entity.ServiceOrderEntity;
 import br.com.officyna.serviceorder.domain.enums.ServiceOrderStatus;
 import org.springframework.stereotype.Component;
 
@@ -59,11 +59,13 @@ public class ServiceOrderMapper {
         LocalDateTime statusDate = null;
         switch (entity.getStatus()) {
             case RECEBIDA -> statusDate = entity.getRegistrationDate();
-            case EM_DIAGNOSTICO -> statusDate = entity.getDiagnosisDate();
+            case EM_DIAGNOSTICO -> statusDate = entity.getDiagnosisStartDate();
             case AGUARDANDO_APROVACAO -> statusDate = entity.getClientSendDate();
             case APROVADA -> statusDate = entity.getApprovalDate();
             case EM_EXECUCAO -> statusDate = entity.getExecutionStartDate();
-            case FINALIZADA, RECUSADA -> statusDate = entity.getFinalizationDate();
+            case ENTREGUE -> statusDate = entity.getDeliveryDate();
+            case FINALIZADA -> statusDate = entity.getFinalizationDate();
+            case RECUSADA -> statusDate = entity.getRefuseDate();
         }
         return this.formatLocalDateTime(statusDate);
     }
