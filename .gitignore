@@ -1,0 +1,14 @@
+
+!.mvn/wrapper/maven-wrapper.jar
+/mvnw
+/mvnw.cmd
+*.iml
+.DS_Store
+*.log
+.classpath
+.project
+.settings/
+bin/
+.idea/
+target/
+workspace.xml
