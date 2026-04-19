@@ -6,6 +6,5 @@ public record LaborRequest(
     String name,
     String description,
     BigDecimal price,
-    Integer executionTimeInDays,
-    Boolean active
+    Integer executionTimeInDays
 ) {}

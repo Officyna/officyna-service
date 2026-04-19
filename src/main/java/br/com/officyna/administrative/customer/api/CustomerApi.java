@@ -1,7 +1,7 @@
 package br.com.officyna.administrative.customer.api;
 
-import br.com.officyna.administrative.customer.api.resources.CustomerRequest;
-import br.com.officyna.administrative.customer.api.resources.CustomerResponse;
+import br.com.officyna.customer.api.resources.CustomerRequest;
+import br.com.officyna.customer.api.resources.CustomerResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;

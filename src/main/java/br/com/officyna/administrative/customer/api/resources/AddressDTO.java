@@ -1,4 +1,4 @@
-package br.com.officyna.administrative.customer.api.resources;
+package br.com.officyna.customer.api.resources;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;

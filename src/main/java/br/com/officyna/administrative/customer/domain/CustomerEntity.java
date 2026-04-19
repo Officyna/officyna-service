@@ -1,4 +1,4 @@
-package br.com.officyna.administrative.customer.domain;
+package br.com.officyna.customer.domain;
 
 import lombok.*;
 import org.springframework.data.annotation.CreatedDate;

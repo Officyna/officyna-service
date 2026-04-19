@@ -9,7 +9,6 @@ services:
       - "27017:27017"
     volumes:
       - mongo_data:/data/db
-      - ./db-seed:/docker-entrypoint-initdb.d:ro
     healthcheck:
       test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
       interval: 10s
@@ -46,6 +45,7 @@ services:
     environment:
       # Database
       MONGODB_URI: mongodb://mongodb:27017/officyna
+      MONGODB_DATABASE: officyna
       # JWT
       JWT_SECRET: officyna-secret-key-change-in-production-min-256bits
       JWT_EXPIRATION: 86400000
