@@ -11,11 +11,13 @@ COPY src ./src
 RUN mvn clean package -DskipTests -q
 
 # --- Stage 2: Runtime ---
-FROM eclipse-temurin:25-jre-jammy
+FROM eclipse-temurin:21-jre-jammy
 WORKDIR /app
 
-# Non-root user for security
-RUN groupadd -r officyna && useradd -r -g officyna officyna
+# Install curl for healthcheck, then create non-root user
+RUN apt-get update && apt-get install -y --no-install-recommends curl \
+    && rm -rf /var/lib/apt/lists/* \
+    && groupadd -r officyna && useradd -r -g officyna officyna
 USER officyna
 
 COPY --from=builder /app/target/officyna-service-*.jar app.jar
