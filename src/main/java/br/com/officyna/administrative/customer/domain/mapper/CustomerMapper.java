@@ -1,10 +1,11 @@
-package br.com.officyna.customer.domain.mapper;
+package br.com.officyna.administrative.customer.domain.mapper;
 
-import br.com.officyna.customer.api.resources.AddressDTO;
-import br.com.officyna.customer.api.resources.CustomerRequest;
-import br.com.officyna.customer.api.resources.CustomerResponse;
-import br.com.officyna.customer.domain.AddressEntity;
-import br.com.officyna.customer.domain.CustomerEntity;
+
+import br.com.officyna.administrative.customer.api.resources.AddressDTO;
+import br.com.officyna.administrative.customer.api.resources.CustomerRequest;
+import br.com.officyna.administrative.customer.api.resources.CustomerResponse;
+import br.com.officyna.administrative.customer.domain.AddressEntity;
+import br.com.officyna.administrative.customer.domain.CustomerEntity;
 import org.springframework.stereotype.Component;
 
 @Component
