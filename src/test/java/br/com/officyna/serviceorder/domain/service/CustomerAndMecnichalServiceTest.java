@@ -1,0 +1,84 @@
+package br.com.officyna.serviceorder.domain.service;
+
+import br.com.officyna.administrative.customer.api.resources.AddressDTO;
+import br.com.officyna.administrative.customer.api.resources.CustomerResponse;
+import br.com.officyna.administrative.customer.domain.CustomerType;
+import br.com.officyna.administrative.customer.domain.service.CustomerService;
+import br.com.officyna.administrative.user.api.resources.UserResponse;
+import br.com.officyna.administrative.user.domain.service.UserService;
+import br.com.officyna.serviceorder.domain.dto.CustomerDTO;
+import br.com.officyna.serviceorder.domain.dto.MechanicDTO;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+import java.time.LocalDateTime;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.when;
+
+@ExtendWith(MockitoExtension.class)
+class CustomerAndMecnichalServiceTest {
+
+    @Mock
+    private UserService userService;
+
+    @Mock
+    private CustomerService customerService;
+
+    @InjectMocks
+    private CustomerAndMecnichalService service;
+
+    @Test
+    @DisplayName("Deve buscar cliente e mapear para DTO corretamente")
+    void getCustomer_ShouldReturnCustomerDTO() {
+        String id = "1";
+
+        CustomerResponse response = new CustomerResponse("1",
+                "Ricardo Almeida",
+                "342.155.890-12",
+                CustomerType.INDIVIDUAL,
+                "ricardo.almeida@email.com",
+                "98765-4321",
+                "11",
+                "+55",
+                new AddressDTO("Rua Flaviano de Melo",
+                        "500",
+                        "Bloco B, Apt 12",
+                        "Centro",
+                        "Mogi das Cruzes",
+                        "SP",
+                        "08710-000",
+                        "Brazil"),
+                true,
+                LocalDateTime.now()
+        );
+
+        when(customerService.findById(id)).thenReturn(response);
+
+        CustomerDTO result = service.getCustomer(id);
+
+        assertThat(result).isNotNull();
+        assertThat(result.getId()).isEqualTo(id);
+        assertThat(result.getFullName()).isEqualTo("Ricardo Almeida");
+        assertThat(result.getFullAdress()).isEqualTo("Rua Flaviano de Melo, 500 - Centro, Mogi das Cruzes - SP, 08710-000");
+    }
+
+    @Test
+    @DisplayName("Deve buscar mecânico e mapear para DTO corretamente")
+    void getMechanic_ShouldReturnMechanicDTO() {
+        String id = "mech-1";
+        UserResponse response = UserResponse.builder().id(id).name("Mecânico Master").build();
+
+        when(userService.findById(id)).thenReturn(response);
+
+        MechanicDTO result = service.getMechanic(id);
+
+        assertThat(result).isNotNull();
+        assertThat(result.getId()).isEqualTo(id);
+        assertThat(result.getName()).isEqualTo("Mecânico Master");
+    }
+}
