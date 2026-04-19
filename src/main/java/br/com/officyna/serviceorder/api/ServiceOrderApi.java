@@ -1,9 +1,6 @@
 package br.com.officyna.serviceorder.api;
 
-import br.com.officyna.serviceorder.api.resources.ExistServiceOrderRequest;
-import br.com.officyna.serviceorder.api.resources.IdListRequest;
-import br.com.officyna.serviceorder.api.resources.NewServiceOrderRequest;
-import br.com.officyna.serviceorder.api.resources.ServiceOrderResponse;
+import br.com.officyna.serviceorder.api.resources.*;
 import br.com.officyna.serviceorder.domain.enums.ServiceOrderStatus;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -107,7 +104,7 @@ public interface ServiceOrderApi {
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Labors added to the service order")
     })
-    ResponseEntity<ServiceOrderResponse> addLaborInServiceOrder(@Param("Service order ID") String id, @RequestBody List<IdListRequest> laborsIdList);
+    ResponseEntity<ServiceOrderResponse> addLaborInServiceOrder(@Param("Service order ID") String id, @RequestBody List<LaborsRequest> laborsIdList);
 
     @DeleteMapping("/{id}/remove-labors/{laborId}")
     @Operation(summary = "Delete labor from a Service order")
@@ -121,7 +118,7 @@ public interface ServiceOrderApi {
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Supplys added to the service order")
     })
-    ResponseEntity<ServiceOrderResponse> addSupplyInServiceOrder(@Param("Service order ID") String id, @RequestBody List<IdListRequest> laborsIdList);
+    ResponseEntity<ServiceOrderResponse> addSupplyInServiceOrder(@Param("Service order ID") String id, @RequestBody List<SupplysRequest> laborsIdList);
 
     @DeleteMapping("/{id}/remove-supply/{supplyId}")
     @Operation(summary = "Delete supplys from a Service order")

@@ -9,7 +9,9 @@ import lombok.Setter;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-public class IdListRequest {
+public class SupplysRequest {
 
     private String id;
+
+    private Integer quantity;
 }

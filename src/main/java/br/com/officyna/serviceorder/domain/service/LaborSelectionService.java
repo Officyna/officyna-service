@@ -2,7 +2,7 @@ package br.com.officyna.serviceorder.domain.service;
 
 import br.com.officyna.administrative.labor.api.resources.LaborResponse;
 import br.com.officyna.administrative.labor.domain.service.LaborService;
-import br.com.officyna.serviceorder.api.resources.IdListRequest;
+import br.com.officyna.serviceorder.api.resources.LaborsRequest;
 import br.com.officyna.serviceorder.domain.dto.LaborDetailDTO;
 import br.com.officyna.serviceorder.domain.dto.LaborsDTO;
 import lombok.RequiredArgsConstructor;
@@ -18,7 +18,7 @@ public class LaborSelectionService {
 
     private final LaborService laborService;
 
-    LaborsDTO addLabors(List<IdListRequest> laborsIdList, List<LaborDetailDTO> laborsDetails) {
+    LaborsDTO addLabors(List<LaborsRequest> laborsIdList, List<LaborDetailDTO> laborsDetails) {
         List<LaborDetailDTO> allLabors = new ArrayList<>(laborsDetails != null ? laborsDetails : List.of());
 
         if (laborsIdList != null && !laborsIdList.isEmpty()) {

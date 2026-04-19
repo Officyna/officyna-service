@@ -28,7 +28,7 @@ public class NewServiceOrderRequest {
 
     @Schema(description = "Lista de IDs de Serviços (Mão de Obra)")
     @NotEmpty(message = "A ordem de serviço deve ter pelo menos um serviço")
-    private List<IdListRequest> laborIds;
+    private List<LaborsRequest> laborIds;
 
     @Schema(description = "Texto de informação/observação do cliente ou diagnóstico inicial")
     @Size(max = 1000, message = "O texto de informação deve ter no máximo 1000 caracteres")

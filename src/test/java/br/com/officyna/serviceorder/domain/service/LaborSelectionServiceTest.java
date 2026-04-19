@@ -2,7 +2,7 @@ package br.com.officyna.serviceorder.domain.service;
 
 import br.com.officyna.administrative.labor.api.resources.LaborResponse;
 import br.com.officyna.administrative.labor.domain.service.LaborService;
-import br.com.officyna.serviceorder.api.resources.IdListRequest;
+import br.com.officyna.serviceorder.api.resources.LaborsRequest;
 import br.com.officyna.serviceorder.domain.dto.LaborDetailDTO;
 import br.com.officyna.serviceorder.domain.dto.LaborsDTO;
 import org.junit.jupiter.api.DisplayName;
@@ -33,7 +33,7 @@ class LaborSelectionServiceTest {
     @DisplayName("Deve adicionar novos serviços e calcular o valor total acumulado")
     void addLabors_ShouldAddNewLaborsAndCalculateTotal() {
         // Arrange
-        IdListRequest req = new IdListRequest();
+        LaborsRequest req = new LaborsRequest();
         req.setId("labor-1");
 
         LaborResponse response = new LaborResponse("labor-1", "Troca de Óleo e Filtro", "Substituição de óleo sintético 5W30 e filtro de óleo original.", BigDecimal.valueOf(150.00), 1, LocalDateTime.now(), LocalDateTime.now(), true);
@@ -51,7 +51,7 @@ class LaborSelectionServiceTest {
     @DisplayName("Deve manter a lista de serviços existentes ao adicionar novos")
     void addLabors_ShouldMaintainExistingLabors() {
         LaborDetailDTO existing = new LaborDetailDTO("old-1", "Alinhamento", "Desc", BigDecimal.valueOf(100.00), null, null);
-        IdListRequest req = new IdListRequest();
+        LaborsRequest req = new LaborsRequest();
         req.setId("new-1");
 
         when(laborService.findById("new-1")).thenReturn(new LaborResponse("new-1", "Balanceamento", "Desc", BigDecimal.valueOf(80.00), 1, LocalDateTime.now(), LocalDateTime.now(), true));
