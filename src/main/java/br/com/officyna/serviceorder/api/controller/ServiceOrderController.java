@@ -1,14 +1,10 @@
 package br.com.officyna.serviceorder.api.controller;
 
 import br.com.officyna.serviceorder.api.ServiceOrderApi;
-import br.com.officyna.serviceorder.api.resources.ExistServiceOrderRequest;
-import br.com.officyna.serviceorder.api.resources.IdListRequest;
-import br.com.officyna.serviceorder.api.resources.NewServiceOrderRequest;
-import br.com.officyna.serviceorder.api.resources.ServiceOrderResponse;
+import br.com.officyna.serviceorder.api.resources.*;
 import br.com.officyna.serviceorder.domain.enums.ServiceOrderStatus;
 import br.com.officyna.serviceorder.domain.service.ServiceOrderService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -43,7 +39,7 @@ public class ServiceOrderController implements ServiceOrderApi {
     }
 
     @Override
-    public ResponseEntity<ServiceOrderResponse> addLaborInServiceOrder(String id, List<IdListRequest> laborsIdList) {
+    public ResponseEntity<ServiceOrderResponse> addLaborInServiceOrder(String id, List<LaborsRequest> laborsIdList) {
         return ResponseEntity.ok(service.addLaborsInServiceOrder(id, laborsIdList));
     }
 
@@ -53,7 +49,7 @@ public class ServiceOrderController implements ServiceOrderApi {
     }
 
     @Override
-    public ResponseEntity<ServiceOrderResponse> addSupplyInServiceOrder(String id, List<IdListRequest> supplyIdList) {
+    public ResponseEntity<ServiceOrderResponse> addSupplyInServiceOrder(String id, List<SupplysRequest> supplyIdList) {
         return ResponseEntity.ok(service.addSupplyFromServiceOrder(id, supplyIdList));
     }
 

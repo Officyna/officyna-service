@@ -2,10 +2,7 @@ package br.com.officyna.serviceorder.domain.service;
 
 import br.com.officyna.infrastructure.exception.DomainException;
 import br.com.officyna.infrastructure.exception.NotFoundException;
-import br.com.officyna.serviceorder.api.resources.ExistServiceOrderRequest;
-import br.com.officyna.serviceorder.api.resources.IdListRequest;
-import br.com.officyna.serviceorder.api.resources.NewServiceOrderRequest;
-import br.com.officyna.serviceorder.api.resources.ServiceOrderResponse;
+import br.com.officyna.serviceorder.api.resources.*;
 import br.com.officyna.serviceorder.domain.dto.*;
 import br.com.officyna.serviceorder.domain.entity.ServiceOrderEntity;
 import br.com.officyna.serviceorder.domain.enums.ServiceOrderStatus;
@@ -68,7 +65,7 @@ public class ServiceOrderService {
         repository.deleteById(id);
     }
 
-    public ServiceOrderResponse addLaborsInServiceOrder(String id, List<IdListRequest> laborsIdList){
+    public ServiceOrderResponse addLaborsInServiceOrder(String id, List<LaborsRequest> laborsIdList){
         ServiceOrderEntity entity = this.findEntityById(id);
         LaborsDTO labors = laborSelectionService.addLabors(laborsIdList, entity.getLabors().getLaborsDetails());
         entity.setLabors(labors);
@@ -86,22 +83,20 @@ public class ServiceOrderService {
         return mapper.toResponse(repository.save(entity));
     }
 
-    public ServiceOrderResponse addSupplyFromServiceOrder(String id, List<IdListRequest> supplyIdList) {
+    public ServiceOrderResponse addSupplyFromServiceOrder(String id, List<SupplysRequest> supplyIdList) {
         ServiceOrderEntity entity = repository.findById(id)
                 .orElseThrow(() -> NotFoundException.of("Service Order", id));
-        SupplyDTO supply = supplySelectionService.addSupplys(supplyIdList, entity.getSupplys().getSupplysDetails());
+        SupplyDTO supply = supplySelectionService.addSupplys(
+                supplyIdList,
+                (entity.getSupplys() == null) ? List.of() : entity.getSupplys().getSupplysDetails()
+        );
         entity.setSupplys(supply);
         return mapper.toResponse(repository.save(entity));
     }
 
     public ServiceOrderResponse removeSupplyFromServiceOrder(String id, String supplyId) {
         ServiceOrderEntity entity = this.findEntityById(id);
-        List<SupplyDetailDTO> supplysDetails = entity.getSupplys().getSupplysDetails();
-        supplysDetails.removeIf(supply -> supply.getId().equals(supplyId));
-        SupplyDTO supplys = new SupplyDTO();
-        supplys.setSupplysDetails(supplysDetails);
-        supplys.calculateTotalSupplyAmount();
-        entity.setSupplys(supplys);
+        supplySelectionService.removeSupply(entity.getSupplys(), supplyId);
         return mapper.toResponse(repository.save(entity));
     }
 

@@ -33,8 +33,6 @@ public class ServiceOrderMapper {
     public ServiceOrderEntity toUpdateEntity(ExistServiceOrderRequest request, ServiceOrderEntity entity, MechanicDTO mechanic){
         entity.setInformationText(request.getInformationText());
         entity.setMechanic(mechanic);
-        entity.setStatus(request.getStatus());
-        entity.setStatusDate(request.getStatus());
         return entity;
     }
 

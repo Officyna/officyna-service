@@ -1,6 +1,5 @@
 package br.com.officyna.serviceorder.api.resources;
 
-import br.com.officyna.serviceorder.domain.enums.ServiceOrderStatus;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
@@ -21,8 +20,4 @@ public class ExistServiceOrderRequest {
 
     @Schema(description = "ID do mecanico", example = "60d5ecb8b392d40015f69e1a")
     private String mechanicId;
-
-    @Schema(description = "Status da O.S", example = "EM_EXECUCAO")
-    private ServiceOrderStatus status;
-
 }
