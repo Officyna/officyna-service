@@ -8,6 +8,7 @@ import br.com.officyna.serviceorder.domain.dto.LaborsDTO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -31,7 +32,18 @@ public class LaborSelectionService {
         }
         LaborsDTO labors = new LaborsDTO();
         labors.setLaborsDetails(allLabors);
-        labors.calculateTotalLaborsAmount();
+        this.calculateTotalLaborsAmount(labors);
         return labors;
+    }
+
+    public void calculateTotalLaborsAmount(LaborsDTO labors){
+        if(labors.getLaborsDetails() == null || labors.getLaborsDetails().isEmpty()){
+            labors.setTotalLaborsAmount(BigDecimal.ZERO);
+            return;
+        }
+        BigDecimal totalLaborsAmount = labors.getLaborsDetails().stream()
+                .map(LaborDetailDTO::getLaborPrice)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        labors.setTotalLaborsAmount(totalLaborsAmount);
     }
 }

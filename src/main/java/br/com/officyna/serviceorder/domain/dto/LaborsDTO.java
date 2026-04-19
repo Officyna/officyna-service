@@ -16,15 +16,4 @@ public class LaborsDTO {
 
     private BigDecimal totalLaborsAmount;
 
-    public void calculateTotalLaborsAmount(){
-        if(this.laborsDetails == null || this.laborsDetails.isEmpty()){
-            this.totalLaborsAmount = BigDecimal.ZERO;
-            return;
-        }
-        this.totalLaborsAmount = this.laborsDetails.stream()
-                .map(LaborDetailDTO::getLaborPrice)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-    }
-
-
 }

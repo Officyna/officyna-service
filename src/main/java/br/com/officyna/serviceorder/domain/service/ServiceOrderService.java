@@ -81,7 +81,7 @@ public class ServiceOrderService {
         laborsDetails.removeIf(labor -> labor.getLaborId().equals(laborId));
         LaborsDTO labors = new LaborsDTO();
         labors.setLaborsDetails(laborsDetails);
-        labors.calculateTotalLaborsAmount();
+        laborSelectionService.calculateTotalLaborsAmount(labors);
         entity.setLabors(labors);
         return mapper.toResponse(repository.save(entity));
     }
@@ -158,8 +158,10 @@ public class ServiceOrderService {
         }
     }
 
-    private void updateStatusDateByStatus(ServiceOrderEntity entity, ServiceOrderStatus status){
-        if(status.equals(entity.getStatus())) return;
+    public void updateStatusDateByStatus(ServiceOrderEntity entity, ServiceOrderStatus status){
+        if(status.equals(entity.getStatus())) {
+            throw new DomainException("A Ordem de Serviço já foi processada com status " + status.getStatusName() + ".");
+        }
         if(status.equals(ServiceOrderStatus.RECEBIDA)){
             throw new DomainException("A Ordem de Serviço já foi recebida e não pode retornar a este status.");
         }else if(status.equals(ServiceOrderStatus.EM_DIAGNOSTICO)){
