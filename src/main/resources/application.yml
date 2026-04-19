@@ -1,10 +1,8 @@
 spring:
-  data:
-    mongodb:
-      uri: ${MONGODB_URI:mongodb://localhost:27017/officyna}
-      database: ${MONGODB_DATABASE:officyna}
   jackson:
     read-unknown-enum-values-as-null: true
+  mongodb:
+    uri: ${MONGODB_URI:mongodb://localhost:27017/officyna}
 
 server:
   port: 8080
