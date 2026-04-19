@@ -1,14 +1,14 @@
 package br.com.officyna.administrative.vehicle.domain.service;
 
-import br.com.officyna.administrative.customer.domain.CustomerEntity;
-import br.com.officyna.administrative.customer.domain.service.CustomerService;
+import br.com.officyna.customer.domain.CustomerEntity;
+import br.com.officyna.customer.domain.service.CustomerService;
+import br.com.officyna.infrastructure.exception.DomainException;
+import br.com.officyna.infrastructure.exception.NotFoundException;
 import br.com.officyna.administrative.vehicle.api.resources.VehicleRequest;
 import br.com.officyna.administrative.vehicle.api.resources.VehicleResponse;
 import br.com.officyna.administrative.vehicle.domain.VehicleEntity;
 import br.com.officyna.administrative.vehicle.domain.mapper.VehicleMapper;
 import br.com.officyna.administrative.vehicle.repository.VehicleRepository;
-import br.com.officyna.infrastructure.exception.DomainException;
-import br.com.officyna.infrastructure.exception.NotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 

@@ -1,10 +1,10 @@
-package br.com.officyna.administrative.customer.domain.service;
+package br.com.officyna.customer.domain.service;
 
-import br.com.officyna.administrative.customer.api.resources.CustomerRequest;
-import br.com.officyna.administrative.customer.api.resources.CustomerResponse;
-import br.com.officyna.administrative.customer.domain.CustomerEntity;
-import br.com.officyna.administrative.customer.domain.mapper.CustomerMapper;
-import br.com.officyna.administrative.customer.repository.CustomerRepository;
+import br.com.officyna.customer.api.resources.CustomerRequest;
+import br.com.officyna.customer.api.resources.CustomerResponse;
+import br.com.officyna.customer.domain.CustomerEntity;
+import br.com.officyna.customer.domain.mapper.CustomerMapper;
+import br.com.officyna.customer.repository.CustomerRepository;
 import br.com.officyna.infrastructure.exception.DomainException;
 import br.com.officyna.infrastructure.exception.NotFoundException;
 import lombok.RequiredArgsConstructor;

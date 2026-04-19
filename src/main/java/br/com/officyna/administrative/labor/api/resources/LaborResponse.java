@@ -10,6 +10,5 @@ public record LaborResponse(
     BigDecimal price,
     Integer executionTimeInDays,
     LocalDateTime createdAt,
-    LocalDateTime updatedAt,
-    Boolean active
+    LocalDateTime updatedAt
 ) {}

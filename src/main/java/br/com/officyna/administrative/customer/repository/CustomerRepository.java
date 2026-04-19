@@ -1,6 +1,6 @@
 package br.com.officyna.administrative.customer.repository;
 
-import br.com.officyna.administrative.customer.domain.CustomerEntity;
+import br.com.officyna.customer.domain.CustomerEntity;
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.stereotype.Repository;
 

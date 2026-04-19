@@ -14,7 +14,6 @@ public class LaborMapper {
                 .description(request.description())
                 .price(request.price())
                 .executionTimeInDays(request.executionTimeInDays())
-                .active(request.active())
                 .build();
     }
 
@@ -26,8 +25,7 @@ public class LaborMapper {
                 entity.getPrice(),
                 entity.getExecutionTimeInDays(),
                 entity.getCreatedAt(),
-                entity.getUpdatedAt(),
-                entity.getActive()
+                entity.getUpdatedAt()
         );
     }
 
@@ -35,7 +33,6 @@ public class LaborMapper {
         entity.setName(request.name());
         entity.setDescription(request.description());
         entity.setPrice(request.price());
-        entity.setActive(request.active());
         entity.setExecutionTimeInDays(request.executionTimeInDays());
     }
 }
