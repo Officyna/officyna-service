@@ -170,7 +170,6 @@ public class ServiceOrderService {
             if(labor.getLaborId().equals(laborId)){
                 if(labor.getEndDate() == null && labor.getStartDate() != null) {
                     labor.setEndDate(LocalDateTime.now());
-                    laborSelectionService.calculateTimeExecution(laborId, labor.getStartDate(), labor.getEndDate());
                     found = true;
                     break;
                 } else {
