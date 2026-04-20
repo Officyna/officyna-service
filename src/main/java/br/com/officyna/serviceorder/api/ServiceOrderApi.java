@@ -72,6 +72,18 @@ public interface ServiceOrderApi {
     })
     ResponseEntity<ServiceOrderResponse> findById(@Parameter(description = "Service order ID") @PathVariable String id);
 
+    @GetMapping("/number/{serviceOrderNumber}")
+    @Operation(summary = "Find Service Order by number")
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Service order found",
+                    content = @Content(
+                            schema = @Schema(implementation = ServiceOrderResponse.class)
+                    ))
+    })
+    ResponseEntity<ServiceOrderResponse> findByServiceOrderNumber(@Parameter(description = "Service order number") @PathVariable Long serviceOrderNumber);
+
     @PostMapping()
     @Operation(summary = "Create a new Service order")
     @ApiResponses({
