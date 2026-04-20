@@ -9,6 +9,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -45,5 +46,9 @@ public class LaborSelectionService {
                 .map(LaborDetailDTO::getLaborPrice)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
         labors.setTotalLaborsAmount(totalLaborsAmount);
+    }
+
+    public void calculateTimeExecution(String laborId, LocalDateTime startDate, LocalDateTime endDate) {
+//        laborService.updateExecutionTimeInDays(laborId, startDate, endDate);
     }
 }
