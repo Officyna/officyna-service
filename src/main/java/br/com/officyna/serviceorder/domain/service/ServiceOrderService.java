@@ -9,6 +9,7 @@ import br.com.officyna.serviceorder.domain.enums.ServiceOrderStatus;
 import br.com.officyna.serviceorder.domain.mapper.ServiceOrderMapper;
 import br.com.officyna.serviceorder.repository.ServiceOrderRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -44,6 +45,14 @@ public class ServiceOrderService {
 
     public ServiceOrderResponse findById(String id) {
         return mapper.toResponse(this.findEntityById(id));
+    }
+
+    public ServiceOrderResponse findByServiceOrderNumber(Long serviceOrderNumber) {
+        ServiceOrderEntity entity = repository.findByServiceOrderNumber(serviceOrderNumber)
+                .orElseThrow(
+                        () -> NotFoundException.of("Service Order ", serviceOrderNumber)
+                );
+        return mapper.toResponse(entity);
     }
 
     public ServiceOrderResponse createServiceOrder(NewServiceOrderRequest request) {
@@ -132,6 +141,7 @@ public class ServiceOrderService {
             if(labor.getLaborId().equals(laborId)){
                 if(labor.getEndDate() == null && labor.getStartDate() != null) {
                     labor.setEndDate(LocalDateTime.now());
+                    laborSelectionService.calculateTimeExecution(laborId, labor.getStartDate(), labor.getEndDate());
                     break;
                 } else {
                     throw new DomainException("Não é possível finalizar um serviço que não foi iniciado.");
@@ -179,7 +189,6 @@ public class ServiceOrderService {
             if (!ServiceOrderStatus.EM_EXECUCAO.equals(entity.getStatus())) {
                 throw new DomainException("Apenas ordens EM EXECUÇÃO podem ser finalizadas.");
             }
-
         }else if(status.equals(ServiceOrderStatus.ENTREGUE)){
             if (!ServiceOrderStatus.FINALIZADA.equals(entity.getStatus())) {
                 throw new DomainException("Apenas ordes FINALIZADAS podem ser consideradas entregues");
