@@ -32,6 +32,8 @@ public class ServiceOrderService {
 
     private final ServiceOrderMapper mapper;
 
+    private final StatusService statusService;
+
     private ServiceOrderEntity findEntityById(String id){
         return repository.findById(id)
                 .orElseThrow(() -> NotFoundException.of("Service Order", id));
@@ -61,8 +63,8 @@ public class ServiceOrderService {
         LaborsDTO labors = laborSelectionService.addLabors(request.getLaborIds(), List.of());
         CustomerDTO customer = customerAndMecnichalService.getCustomer(request.getCustomerId());
         VehicleDTO vehicle = vehicleSelectionService.getVehicle(request.getVehicleId());
-        ServiceOrderEntity entity = mapper.toCreateEntity(request, vehicle, customer, labors, ServiceOrderStatus.RECEBIDA);
-
+        ServiceOrderEntity entity = mapper.toCreateEntity(request, vehicle, customer, labors);
+        statusService.updateStatus(entity, ServiceOrderStatus.RECEBIDA);
         ServiceOrderEntity saved = repository.save(entity);
         log.info("Ordem de Serviço criada com sucesso. ID: {}, Número: {}", saved.getId(), saved.getServiceOrderNumber());
         return mapper.toResponse(saved);
@@ -126,7 +128,7 @@ public class ServiceOrderService {
     public ServiceOrderResponse updateStatus(String id, ServiceOrderStatus status){
         log.info("Alterando status da O.S. ID: {} para {}", id, status);
         ServiceOrderEntity entity = this.findEntityById(id);
-        this.updateStatusDateByStatus(entity, status);
+        statusService.updateStatus(entity, status);
         ServiceOrderEntity saved = repository.save(entity);
         log.info("Status da O.S. ID: {} alterado para {} com sucesso.", id, status);
         return mapper.toResponse(saved);
@@ -135,7 +137,7 @@ public class ServiceOrderService {
     public ServiceOrderResponse startLabor(String id, String laborId){
         log.info("Iniciando execução do serviço ID: {} na O.S. ID: {}", laborId, id);
         ServiceOrderEntity entity = this.findEntityById(id);
-        this.validateExecutionStatus(entity);
+        statusService.validateStatusForStartExecution(entity);
         
         boolean found = false;
         for(LaborDetailDTO labor : entity.getLabors().getLaborsDetails()){
@@ -155,15 +157,16 @@ public class ServiceOrderService {
             log.error("Serviço ID: {} não encontrado na O.S. ID: {}", laborId, id);
             throw new NotFoundException("A O.S não possui este serviço");
         }
-
-        this.updateStatusDateByStatus(entity, ServiceOrderStatus.EM_EXECUCAO);
+        if(entity.getStatus().equals(ServiceOrderStatus.APROVADA)){
+            statusService.updateStatus(entity, ServiceOrderStatus.EM_EXECUCAO);
+        }
         return mapper.toResponse(repository.save(entity));
     }
 
     public ServiceOrderResponse finishLabor(String id, String laborId){
         log.info("Finalizando execução do serviço ID: {} na O.S. ID: {}", laborId, id);
         ServiceOrderEntity entity = this.findEntityById(id);
-        this.validateExecutionStatus(entity);
+        statusService.validateStatusForStartExecution(entity);
         
         boolean found = false;
         for(LaborDetailDTO labor : entity.getLabors().getLaborsDetails()){
@@ -185,55 +188,5 @@ public class ServiceOrderService {
         }
 
         return mapper.toResponse(repository.save(entity));
-    }
-
-    private void validateExecutionStatus(ServiceOrderEntity entity) {
-        if (!(ServiceOrderStatus.APROVADA.equals(entity.getStatus()) || ServiceOrderStatus.EM_EXECUCAO.equals(entity.getStatus()))) {
-            log.warn("Tentativa de operar serviços em O.S. com status inválido: {}. ID: {}", entity.getStatus(), entity.getId());
-            throw new DomainException("Um serviço só pode ser iniciado ou finalizado se o status da ordem de serviço for APROVADA ou EM EXECUÇÃO.");
-        }
-        LaborsDTO labors = entity.getLabors();
-        if (labors == null || labors.getLaborsDetails() == null) {
-            throw new DomainException("A ordem de serviço não possui serviços cadastrados.");
-        }
-    }
-
-    public void updateStatusDateByStatus(ServiceOrderEntity entity, ServiceOrderStatus status){
-        log.debug("Validando transição de status para a O.S. ID: {}. De {} para {}", entity.getId(), entity.getStatus(), status);
-        if(status.equals(entity.getStatus())) {
-            throw new DomainException("A Ordem de Serviço já foi processada com status " + status.getStatusName() + ".");
-        }
-        if(status.equals(ServiceOrderStatus.RECEBIDA)){
-            throw new DomainException("A Ordem de Serviço já foi recebida e não pode retornar a este status.");
-        }else if(status.equals(ServiceOrderStatus.EM_DIAGNOSTICO)){
-            if (!ServiceOrderStatus.RECEBIDA.equals(entity.getStatus())) {
-                throw new DomainException("Para iniciar o diagnóstico, a O.S. deve estar no status RECEBIDA.");
-            }
-        }else if(status.equals(ServiceOrderStatus.AGUARDANDO_APROVACAO)){
-            if (!ServiceOrderStatus.EM_DIAGNOSTICO.equals(entity.getStatus())) {
-                throw new DomainException("Para aguardar aprovação, a O.S. deve ter passado pelo diagnóstico.");
-            }
-        }else if(status.equals(ServiceOrderStatus.APROVADA)){
-            if (!ServiceOrderStatus.AGUARDANDO_APROVACAO.equals(entity.getStatus())) {
-                throw new DomainException("Apenas ordens AGUARDANDO APROVAÇÃO podem ser aprovadas.");
-            }
-        }else if(status.equals(ServiceOrderStatus.EM_EXECUCAO)){
-            if (!ServiceOrderStatus.APROVADA.equals(entity.getStatus())) {
-                throw new DomainException("Apenas ordens APROVADAS podem entrar em execução.");
-            }
-        }else if(status.equals(ServiceOrderStatus.FINALIZADA)){
-            if (!ServiceOrderStatus.EM_EXECUCAO.equals(entity.getStatus())) {
-                throw new DomainException("Apenas ordens EM EXECUÇÃO podem ser finalizadas.");
-            }
-        }else if(status.equals(ServiceOrderStatus.ENTREGUE)){
-            if (!ServiceOrderStatus.FINALIZADA.equals(entity.getStatus())) {
-                throw new DomainException("Apenas ordes FINALIZADAS podem ser consideradas entregues");
-            }
-        }else if(status.equals(ServiceOrderStatus.RECUSADA)){
-            if (!ServiceOrderStatus.AGUARDANDO_APROVACAO.equals(entity.getStatus())) {
-                throw new DomainException("Apenas ordens AGUARDANDO APROVAÇÃO podem ser recusadas.");
-            }
-        }
-        entity.setStatusDate(status);
     }
 }
