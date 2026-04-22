@@ -1,9 +1,6 @@
-target/
-.idea/
 !.mvn/wrapper/maven-wrapper.jar
 /mvnw
 /mvnw.cmd
-.idea/
 *.iml
 .DS_Store
 *.log
@@ -11,4 +8,6 @@ target/
 .project
 .settings/
 bin/
+.idea/
+target/
 workspace.xml
