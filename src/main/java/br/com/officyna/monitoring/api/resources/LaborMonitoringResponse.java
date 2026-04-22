@@ -7,6 +7,7 @@ public record LaborMonitoringResponse(
         String laborName,
         String laborDescription,
         Double averageExecutionTimeInDays,
+        String averageExecutionTimeFormatted,
         Integer totalExecutions,
         LocalDateTime updatedAt
 ) {}

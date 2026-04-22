@@ -28,14 +28,6 @@ public interface MonitoringApi {
     ResponseEntity<List<LaborMonitoringResponse>> findAll();
 
     @Hidden
-    @PostMapping("/test-update")
-    ResponseEntity<Void> testUpdate(
-            @RequestParam String laborId,
-            @RequestParam LocalDateTime startDate,
-            @RequestParam LocalDateTime endDate
-    );
-
-    @Hidden
     @PutMapping("/force-recalc")
     @Operation(
             summary = "Force recalculation of average execution time for all labors",

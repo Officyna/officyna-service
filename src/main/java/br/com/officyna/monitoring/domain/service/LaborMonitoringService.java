@@ -68,6 +68,27 @@ public class LaborMonitoringService {
         }
     }
 
+    public void initializeFromEstimate(String laborId, String laborName, String laborDescription, Integer estimatedDays) {
+        if (estimatedDays == null) return;
+        monitoringRepository.findByLaborId(laborId).ifPresentOrElse(
+                entity -> {
+                    entity.setLaborName(laborName);
+                    entity.setLaborDescription(laborDescription);
+                    monitoringRepository.save(entity);
+                },
+                () -> {
+                    LaborMonitoringEntity entity = LaborMonitoringEntity.builder()
+                            .laborId(laborId)
+                            .laborName(laborName)
+                            .laborDescription(laborDescription)
+                            .averageExecutionTimeInDays((double) estimatedDays)
+                            .totalExecutions(0)
+                            .build();
+                    monitoringRepository.save(entity);
+                }
+        );
+    }
+
     public ForceRecalcResponse forceRecalc() {
         List<LaborEntity> labors = laborRepository.findByActiveTrue();
         int processed = 0;
@@ -84,13 +105,16 @@ public class LaborMonitoringService {
                     .filter(duration -> duration >= 0)
                     .toList();
 
+            if (durations.isEmpty())
+                continue;
+
             LaborMonitoringEntity entity = monitoringRepository.findByLaborId(labor.getId())
                     .orElseGet(() -> LaborMonitoringEntity.builder().laborId(labor.getId()).build());
 
             entity.setLaborName(labor.getName());
             entity.setLaborDescription(labor.getDescription());
             entity.setAverageExecutionTimeInDays(
-                    durations.isEmpty() ? null : durations.stream().mapToLong(Long::longValue).average().orElse(0)
+                    durations.stream().mapToLong(Long::longValue).average().orElse(0)
             );
             entity.setTotalExecutions(durations.size());
             monitoringRepository.save(entity);
@@ -104,12 +128,26 @@ public class LaborMonitoringService {
         return (currentAverage * totalExecutions + newDuration) / (totalExecutions + 1);
     }
 
+    private String formatDays(Double days) {
+        if (days == null) return null;
+        long totalSeconds = Math.round(days * 86400);
+        long d = totalSeconds / 86400;
+        long h = (totalSeconds % 86400) / 3600;
+        long m = (totalSeconds % 3600) / 60;
+        long s = totalSeconds % 60;
+        if (d > 0) {
+            return String.format("%d dia%s %02d:%02d:%02d", d, d > 1 ? "s" : "", h, m, s);
+        }
+        return String.format("%02d:%02d:%02d", h, m, s);
+    }
+
     private LaborMonitoringResponse toResponse(LaborMonitoringEntity entity) {
         return new LaborMonitoringResponse(
                 entity.getLaborId(),
                 entity.getLaborName(),
                 entity.getLaborDescription(),
                 entity.getAverageExecutionTimeInDays(),
+                formatDays(entity.getAverageExecutionTimeInDays()),
                 entity.getTotalExecutions(),
                 entity.getUpdatedAt()
         );

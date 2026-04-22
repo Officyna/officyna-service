@@ -23,12 +23,6 @@ public class MonitoringController implements MonitoringApi {
     }
 
     @Override
-    public ResponseEntity<Void> testUpdate(String laborId, LocalDateTime startDate, LocalDateTime endDate) {
-        laborMonitoringService.updateExecutionTimeInDays(laborId, startDate, endDate);
-        return ResponseEntity.accepted().build();
-    }
-
-    @Override
     public ResponseEntity<ForceRecalcResponse> forceRecalc() {
         return ResponseEntity.ok(laborMonitoringService.forceRecalc());
     }
