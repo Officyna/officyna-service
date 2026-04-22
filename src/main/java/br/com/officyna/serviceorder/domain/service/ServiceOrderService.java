@@ -2,6 +2,7 @@ package br.com.officyna.serviceorder.domain.service;
 
 import br.com.officyna.infrastructure.exception.DomainException;
 import br.com.officyna.infrastructure.exception.NotFoundException;
+import br.com.officyna.monitoring.domain.service.LaborMonitoringService;
 import br.com.officyna.serviceorder.api.resources.*;
 import br.com.officyna.serviceorder.domain.dto.*;
 import br.com.officyna.serviceorder.domain.entity.ServiceOrderEntity;
@@ -33,6 +34,8 @@ public class ServiceOrderService {
     private final ServiceOrderMapper mapper;
 
     private final StatusService statusService;
+
+    private final LaborMonitoringService laborMonitoringService;
 
     private ServiceOrderEntity findEntityById(String id){
         return repository.findById(id)
@@ -172,8 +175,13 @@ public class ServiceOrderService {
         for(LaborDetailDTO labor : entity.getLabors().getLaborsDetails()){
             if(labor.getLaborId().equals(laborId)){
                 if(labor.getEndDate() == null && labor.getStartDate() != null) {
-                    labor.setEndDate(LocalDateTime.now());
                     found = true;
+                    labor.setEndDate(LocalDateTime.now());
+                    laborMonitoringService.updateExecutionTimeInDays(
+                            laborId,
+                            labor.getStartDate(),
+                            labor.getEndDate()
+                    );
                     break;
                 } else {
                     log.error("Falha ao finalizar serviço. Verifique se foi iniciado ou se já está finalizado. O.S. ID: {}, Labor ID: {}", id, laborId);
