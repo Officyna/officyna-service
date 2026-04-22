@@ -33,6 +33,10 @@ public class CustomerAndMecnichalService {
                 response.address().complement());
     }
 
+    CustomerResponse getCustomerByDocument(String document) {
+        return customerService.findByDocument(document);
+    }
+
     MechanicDTO getMechanic(@NotBlank(message = "ID do Mecânico é obrigatório") String id) {
         UserResponse response = userService.findById(id);
         return new MechanicDTO(response.getId(), response.getName());

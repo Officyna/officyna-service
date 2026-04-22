@@ -67,20 +67,4 @@ public class ServiceOrderEntity {
     @Setter(NONE)
     @LastModifiedDate
     private LocalDateTime updatedAt;
-
-    public void setStatusDate(ServiceOrderStatus status) {
-        this.status = status;
-        if (status == null) return;
-
-        switch (status) {
-            case RECEBIDA -> this.registrationDate = LocalDateTime.now();
-            case EM_DIAGNOSTICO -> this.DiagnosisStartDate = LocalDateTime.now();
-            case AGUARDANDO_APROVACAO -> this.clientSendDate = LocalDateTime.now();
-            case APROVADA -> this.approvalDate = LocalDateTime.now();
-            case EM_EXECUCAO -> this.executionStartDate = LocalDateTime.now();
-            case ENTREGUE -> this.deliveryDate = LocalDateTime.now();
-            case FINALIZADA -> this.finalizationDate = LocalDateTime.now();
-            case RECUSADA -> this.refuseDate = LocalDateTime.now();
-        }
-    }
 }

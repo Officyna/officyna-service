@@ -18,15 +18,13 @@ import java.time.format.DateTimeFormatter;
 @Component
 public class ServiceOrderMapper {
 
-    public ServiceOrderEntity toCreateEntity(NewServiceOrderRequest request, VehicleDTO vehicle, CustomerDTO customer, LaborsDTO labors, ServiceOrderStatus status){
+    public ServiceOrderEntity toCreateEntity(NewServiceOrderRequest request, VehicleDTO vehicle, CustomerDTO customer, LaborsDTO labors){
         ServiceOrderEntity entity = ServiceOrderEntity.builder()
                 .vehicle(vehicle)
                 .customer(customer)
                 .informationText(request.getInformationText())
                 .labors(labors)
-                .status(status)
                 .build();
-        entity.setStatusDate(status);
         return entity;
     }
 
