@@ -37,6 +37,8 @@ public class ServiceOrderService {
 
     private final LaborMonitoringService laborMonitoringService;
 
+    private final BudgetService budgetService;
+
     private ServiceOrderEntity findEntityById(String id){
         return repository.findById(id)
                 .orElseThrow(() -> NotFoundException.of("Service Order", id));
@@ -68,6 +70,7 @@ public class ServiceOrderService {
         VehicleDTO vehicle = vehicleSelectionService.getVehicle(request.getVehicleId());
         ServiceOrderEntity entity = mapper.toCreateEntity(request, vehicle, customer, labors);
         statusService.updateStatus(entity, ServiceOrderStatus.RECEBIDA);
+        budgetService.calculateBudget(entity);
         ServiceOrderEntity saved = repository.save(entity);
         log.info("Ordem de Serviço criada com sucesso. ID: {}, Número: {}", saved.getId(), saved.getServiceOrderNumber());
         return mapper.toResponse(saved);
@@ -94,6 +97,7 @@ public class ServiceOrderService {
         ServiceOrderEntity entity = this.findEntityById(id);
         LaborsDTO labors = laborSelectionService.addLabors(laborsIdList, entity.getLabors().getLaborsDetails());
         entity.setLabors(labors);
+        budgetService.calculateBudget(entity);
         return mapper.toResponse(repository.save(entity));
     }
 
@@ -106,6 +110,7 @@ public class ServiceOrderService {
         labors.setLaborsDetails(laborsDetails);
         laborSelectionService.calculateTotalLaborsAmount(labors);
         entity.setLabors(labors);
+        budgetService.calculateBudget(entity);
         return mapper.toResponse(repository.save(entity));
     }
 
@@ -118,6 +123,7 @@ public class ServiceOrderService {
                 (entity.getSupplys() == null) ? List.of() : entity.getSupplys().getSupplysDetails()
         );
         entity.setSupplys(supply);
+        budgetService.calculateBudget(entity);
         return mapper.toResponse(repository.save(entity));
     }
 
@@ -125,6 +131,7 @@ public class ServiceOrderService {
         log.info("Removendo suprimento ID: {} da O.S. ID: {}", supplyId, id);
         ServiceOrderEntity entity = this.findEntityById(id);
         supplySelectionService.removeSupply(entity.getSupplys(), supplyId);
+        budgetService.calculateBudget(entity);
         return mapper.toResponse(repository.save(entity));
     }
 
