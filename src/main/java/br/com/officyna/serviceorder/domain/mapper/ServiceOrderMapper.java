@@ -14,6 +14,7 @@ import org.springframework.stereotype.Component;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Locale;
 
 @Component
 public class ServiceOrderMapper {
@@ -74,8 +75,10 @@ public class ServiceOrderMapper {
         return dateTime.format(formatter);
     }
 
+    private static final Locale PT_BR = Locale.forLanguageTag("pt-BR");
+
     private String formatMoney(BigDecimal value){
-        return String.format("R$ %.2f", value);
+        return String.format(PT_BR, "R$ %.2f", value);
     }
 
 }

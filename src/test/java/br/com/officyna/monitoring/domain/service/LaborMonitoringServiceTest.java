@@ -236,24 +236,17 @@ class LaborMonitoringServiceTest {
     }
 
     @Test
-    @DisplayName("Deve salvar labor com média nula quando não há execuções completas")
-    void forceRecalc_DeveRegistrarLaborSemExecucoes() {
+    @DisplayName("Não deve salvar monitoramento quando labor não possui execuções completas")
+    void forceRecalc_NaoDeveSalvar_QuandoSemExecucoes() {
         LaborEntity labor = buildLaborEntity("lab1", "Troca de óleo");
 
         when(laborRepository.findByActiveTrue()).thenReturn(List.of(labor));
         when(serviceOrderRepository.findByLaborIdWithCompletedExecutions("lab1")).thenReturn(List.of());
-        when(monitoringRepository.findByLaborId("lab1")).thenReturn(Optional.empty());
-        when(monitoringRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
         ForceRecalcResponse response = service.forceRecalc();
 
-        assertEquals(1, response.laborsProcessed());
-
-        ArgumentCaptor<LaborMonitoringEntity> captor = ArgumentCaptor.forClass(LaborMonitoringEntity.class);
-        verify(monitoringRepository, times(1)).save(captor.capture());
-
-        assertNull(captor.getValue().getAverageExecutionTimeInDays());
-        assertEquals(0, captor.getValue().getTotalExecutions());
+        assertEquals(0, response.laborsProcessed());
+        verify(monitoringRepository, never()).save(any());
     }
 
     @Test
