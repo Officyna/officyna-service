@@ -7,6 +7,7 @@ import br.com.officyna.administrative.labor.domain.mapper.LaborMapper;
 import br.com.officyna.administrative.labor.repository.LaborRepository;
 import br.com.officyna.infrastructure.exception.DomainException;
 import br.com.officyna.infrastructure.exception.NotFoundException;
+import br.com.officyna.monitoring.domain.service.LaborMonitoringService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -31,6 +32,9 @@ class LaborServiceTest {
 
     @Mock
     private LaborMapper laborMapper;
+
+    @Mock
+    private LaborMonitoringService laborMonitoringService;;
 
     @InjectMocks
     private LaborService laborService;

@@ -34,6 +34,8 @@ public class StatusService {
         log.debug("Validando transição de status para a O.S. ID: {}. De {} para {}", entity.getId(), entity.getStatus(), status);
         if(status.equals(entity.getStatus())) {
             throw new DomainException("A Ordem de Serviço já foi processada com status " + status.getStatusName() + ".");
+        }else if(status.equals(ServiceOrderStatus.RECEBIDA) && entity.getStatus() != null){
+            throw new DomainException("A Ordem de Serviço já foi recebida e não pode retornar a este status.");
         }else if(status.equals(ServiceOrderStatus.EM_DIAGNOSTICO)){
             if (!ServiceOrderStatus.RECEBIDA.equals(entity.getStatus())) {
                 throw new DomainException("Para iniciar o diagnóstico, a O.S. deve estar no status RECEBIDA.");
