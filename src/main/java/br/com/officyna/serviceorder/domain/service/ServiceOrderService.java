@@ -70,8 +70,7 @@ public class ServiceOrderService {
         VehicleDTO vehicle = vehicleSelectionService.getVehicle(request.getVehicleId());
         ServiceOrderEntity entity = mapper.toCreateEntity(request, vehicle, customer, labors);
         statusService.updateStatus(entity, ServiceOrderStatus.RECEBIDA);
-        budgetService.calculateBudget(entity);
-        ServiceOrderEntity saved = repository.save(entity);
+        ServiceOrderEntity saved = this.save(entity);
         log.info("Ordem de Serviço criada com sucesso. ID: {}, Número: {}", saved.getId(), saved.getServiceOrderNumber());
         return mapper.toResponse(saved);
     }
@@ -81,7 +80,7 @@ public class ServiceOrderService {
         ServiceOrderEntity entity = this.findEntityById(id);
         MechanicDTO mechanic = (request.getMechanicId() == null || request.getMechanicId().isEmpty()) ? null :customerAndMecnichalService.getMechanic(request.getMechanicId());
         
-        ServiceOrderEntity updated = repository.save(mapper.toUpdateEntity(request, entity, mechanic));
+        ServiceOrderEntity updated = this.save(mapper.toUpdateEntity(request, entity, mechanic));
         log.info("Ordem de Serviço ID: {} atualizada com sucesso.", id);
         return mapper.toResponse(updated);
     }
@@ -97,8 +96,7 @@ public class ServiceOrderService {
         ServiceOrderEntity entity = this.findEntityById(id);
         LaborsDTO labors = laborSelectionService.addLabors(laborsIdList, entity.getLabors().getLaborsDetails());
         entity.setLabors(labors);
-        budgetService.calculateBudget(entity);
-        return mapper.toResponse(repository.save(entity));
+        return mapper.toResponse(this.save(entity));
     }
 
     public ServiceOrderResponse removeLaborFromServiceOrder(String id, String laborId) {
@@ -108,10 +106,8 @@ public class ServiceOrderService {
         laborsDetails.removeIf(labor -> labor.getLaborId().equals(laborId));
         LaborsDTO labors = new LaborsDTO();
         labors.setLaborsDetails(laborsDetails);
-        laborSelectionService.calculateTotalLaborsAmount(labors);
         entity.setLabors(labors);
-        budgetService.calculateBudget(entity);
-        return mapper.toResponse(repository.save(entity));
+        return mapper.toResponse(this.save(entity));
     }
 
     public ServiceOrderResponse addSupplyFromServiceOrder(String id, List<SupplysRequest> supplyIdList) {
@@ -123,23 +119,21 @@ public class ServiceOrderService {
                 (entity.getSupplys() == null) ? List.of() : entity.getSupplys().getSupplysDetails()
         );
         entity.setSupplys(supply);
-        budgetService.calculateBudget(entity);
-        return mapper.toResponse(repository.save(entity));
+        return mapper.toResponse(this.save(entity));
     }
 
     public ServiceOrderResponse removeSupplyFromServiceOrder(String id, String supplyId) {
         log.info("Removendo suprimento ID: {} da O.S. ID: {}", supplyId, id);
         ServiceOrderEntity entity = this.findEntityById(id);
         supplySelectionService.removeSupply(entity.getSupplys(), supplyId);
-        budgetService.calculateBudget(entity);
-        return mapper.toResponse(repository.save(entity));
+        return mapper.toResponse(this.save(entity));
     }
 
     public ServiceOrderResponse updateStatus(String id, ServiceOrderStatus status){
         log.info("Alterando status da O.S. ID: {} para {}", id, status);
         ServiceOrderEntity entity = this.findEntityById(id);
         statusService.updateStatus(entity, status);
-        ServiceOrderEntity saved = repository.save(entity);
+        ServiceOrderEntity saved = this.save(entity);
         log.info("Status da O.S. ID: {} alterado para {} com sucesso.", id, status);
         return mapper.toResponse(saved);
     }
@@ -170,7 +164,7 @@ public class ServiceOrderService {
         if(entity.getStatus().equals(ServiceOrderStatus.APROVADA)){
             statusService.updateStatus(entity, ServiceOrderStatus.EM_EXECUCAO);
         }
-        return mapper.toResponse(repository.save(entity));
+        return mapper.toResponse(this.save(entity));
     }
 
     public ServiceOrderResponse finishLabor(String id, String laborId){
@@ -202,6 +196,11 @@ public class ServiceOrderService {
             throw new NotFoundException("A O.S não possui este serviço");
         }
 
-        return mapper.toResponse(repository.save(entity));
+        return mapper.toResponse(this.save(entity));
+    }
+
+    public ServiceOrderEntity save(ServiceOrderEntity entity){
+        budgetService.calculateBudget(entity);
+        return repository.save(entity);
     }
 }

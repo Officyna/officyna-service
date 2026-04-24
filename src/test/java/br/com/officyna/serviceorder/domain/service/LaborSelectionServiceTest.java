@@ -5,6 +5,7 @@ import br.com.officyna.administrative.labor.domain.service.LaborService;
 import br.com.officyna.serviceorder.api.resources.LaborsRequest;
 import br.com.officyna.serviceorder.domain.dto.LaborDetailDTO;
 import br.com.officyna.serviceorder.domain.dto.LaborsDTO;
+import br.com.officyna.serviceorder.domain.enums.LaborSituation;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -50,7 +51,7 @@ class LaborSelectionServiceTest {
     @Test
     @DisplayName("Deve manter a lista de serviços existentes ao adicionar novos")
     void addLabors_ShouldMaintainExistingLabors() {
-        LaborDetailDTO existing = new LaborDetailDTO("old-1", "Alinhamento", "Desc", BigDecimal.valueOf(100.00), null, null);
+        LaborDetailDTO existing = new LaborDetailDTO("old-1", "Alinhamento", "Desc", BigDecimal.valueOf(100.00), null, null, LaborSituation.PENDING, LocalDateTime.now());
         LaborsRequest req = new LaborsRequest();
         req.setId("new-1");
 
@@ -62,49 +63,5 @@ class LaborSelectionServiceTest {
         assertThat(result.getTotalLaborsAmount()).isEqualByComparingTo("180.00");
     }
 
-    @Test
-    @DisplayName("Deve calcular o valor total como zero quando a lista de serviços for nula")
-    void calculateTotalLaborsAmount_ShouldReturnZero_WhenLaborsDetailsIsNull() {
-        // Arrange
-        LaborsDTO labors = new LaborsDTO();
-        labors.setLaborsDetails(null);
 
-        // Act
-        service.calculateTotalLaborsAmount(labors);
-
-        // Assert
-        assertThat(labors.getTotalLaborsAmount()).isEqualByComparingTo(BigDecimal.ZERO);
-    }
-
-    @Test
-    @DisplayName("Deve calcular o valor total como zero quando a lista de serviços estiver vazia")
-    void calculateTotalLaborsAmount_ShouldReturnZero_WhenLaborsDetailsIsEmpty() {
-        // Arrange
-        LaborsDTO labors = new LaborsDTO();
-        labors.setLaborsDetails(List.of());
-
-        // Act
-        service.calculateTotalLaborsAmount(labors);
-
-        // Assert
-        assertThat(labors.getTotalLaborsAmount()).isEqualByComparingTo(BigDecimal.ZERO);
-    }
-
-    @Test
-    @DisplayName("Deve calcular o valor total corretamente com múltiplos serviços")
-    void calculateTotalLaborsAmount_ShouldCalculateCorrectTotal() {
-        // Arrange
-        LaborDetailDTO labor1 = LaborDetailDTO.builder().laborPrice(new BigDecimal("100.50")).build();
-        LaborDetailDTO labor2 = LaborDetailDTO.builder().laborPrice(new BigDecimal("200.25")).build();
-        LaborDetailDTO labor3 = LaborDetailDTO.builder().laborPrice(new BigDecimal("50.00")).build();
-
-        LaborsDTO labors = new LaborsDTO();
-        labors.setLaborsDetails(List.of(labor1, labor2, labor3));
-
-        // Act
-        service.calculateTotalLaborsAmount(labors);
-
-        // Assert
-        assertThat(labors.getTotalLaborsAmount()).isEqualByComparingTo(new BigDecimal("350.75"));
-    }
 }

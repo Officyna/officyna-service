@@ -4,6 +4,7 @@ import br.com.officyna.infrastructure.exception.DomainException;
 import br.com.officyna.serviceorder.domain.dto.LaborDetailDTO;
 import br.com.officyna.serviceorder.domain.dto.LaborsDTO;
 import br.com.officyna.serviceorder.domain.entity.ServiceOrderEntity;
+import br.com.officyna.serviceorder.domain.enums.LaborSituation;
 import br.com.officyna.serviceorder.domain.enums.ServiceOrderStatus;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -48,6 +49,7 @@ public class StatusService {
             if (!ServiceOrderStatus.AGUARDANDO_APROVACAO.equals(entity.getStatus())) {
                 throw new DomainException("Apenas ordens AGUARDANDO APROVAÇÃO podem ser aprovadas.");
             }
+            this.validateLaborsForAProvalStatus(entity);
         }else if(status.equals(ServiceOrderStatus.EM_EXECUCAO)){
             if (!ServiceOrderStatus.APROVADA.equals(entity.getStatus())) {
                 throw new DomainException("Apenas ordens APROVADAS podem entrar em execução.");
@@ -89,5 +91,18 @@ public class StatusService {
                 throw new DomainException("Não é possível finalizar ordem com serviços em aberto");
             }
         });
+    }
+
+    private void validateLaborsForAProvalStatus(ServiceOrderEntity entity){
+        if(entity.getLabors() !=null && entity.getLabors().getLaborsDetails() != null){
+            entity.getLabors().getLaborsDetails()
+                    .forEach(item -> {
+                        if(item.getSituation().equals(LaborSituation.PENDING)){
+                            throw  new DomainException("Todos os serviços devem ser analisados e rejeitados ou aprovados");
+                        }
+                    });
+        } else{
+            throw new DomainException("A O.S precisa ter ao menos um serviço");
+        }
     }
 }

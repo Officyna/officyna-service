@@ -95,46 +95,4 @@ class SupplySelectionServiceTest {
                 .isInstanceOf(DomainException.class)
                 .hasMessage("A Ordem de Serviço não possui suprimentos cadastrados.");
     }
-
-    @Test
-    @DisplayName("Deve calcular o valor total como zero quando a lista de suprimentos for nula ou vazia")
-    void calculateTotalSupplyAmount_ShouldReturnZero_WhenSupplysDetailsIsNullOrEmpty() {
-        // Test Null
-        SupplyDTO supplysNull = new SupplyDTO();
-        supplysNull.setSupplysDetails(null);
-        service.calculateTotalSupplyAmount(supplysNull);
-        assertThat(supplysNull.getTotalSupplyAmount()).isEqualByComparingTo(BigDecimal.ZERO);
-
-        // Test Empty
-        SupplyDTO supplysEmpty = new SupplyDTO();
-        supplysEmpty.setSupplysDetails(new ArrayList<>());
-        service.calculateTotalSupplyAmount(supplysEmpty);
-        assertThat(supplysEmpty.getTotalSupplyAmount()).isEqualByComparingTo(BigDecimal.ZERO);
-    }
-
-    @Test
-    @DisplayName("Deve calcular o valor total corretamente com múltiplos suprimentos")
-    void calculateTotalSupplyAmount_ShouldCalculateCorrectTotal() {
-        // Arrange
-        SupplyDetailDTO item1 = new SupplyDetailDTO("1", "Pneu", "Desc", 4, BigDecimal.valueOf(400.00), null);
-        SupplyDetailDTO item2 = new SupplyDetailDTO("2", "Filtro", "Desc", 1, BigDecimal.valueOf(50.00), null);
-
-        SupplyDTO supplys = new SupplyDTO();
-        supplys.setSupplysDetails(List.of(item1, item2));
-
-        // Act
-        service.calculateTotalSupplyAmount(supplys);
-
-        // Assert
-        assertThat(item1.getTotalPrice()).isEqualByComparingTo("1600.00");
-        assertThat(item2.getTotalPrice()).isEqualByComparingTo("50.00");
-        assertThat(supplys.getTotalSupplyAmount()).isEqualByComparingTo("1650.00");
-    }
-
-    @Test
-    @DisplayName("Deve calcular o preço total por unidade corretamente")
-    void calculateTotalPriceForUnitSupply_ShouldReturnCorrectProduct() {
-        BigDecimal result = service.calculateTotalPriceForUnitSupply(3, new BigDecimal("15.50"));
-        assertThat(result).isEqualByComparingTo("46.50");
-    }
 }
