@@ -97,7 +97,7 @@ public interface ServiceOrderApi {
     })
     ResponseEntity<ServiceOrderResponse> createServiceOrder(@Valid NewServiceOrderRequest request);
 
-    @PutMapping("/{id}")
+    @PatchMapping("/{id}")
     @Operation(summary = "Update a Service order")
     @ApiResponses({
             @ApiResponse(
@@ -111,7 +111,7 @@ public interface ServiceOrderApi {
     ResponseEntity<ServiceOrderResponse> updateServiceOrder(@Param("Service order ID") @PathVariable String id, @Valid ExistServiceOrderRequest request);
 
 
-    @PutMapping("/{id}/add-labors")
+    @PatchMapping("/{id}/add-labors")
     @Operation(summary = "Add labors to a Service order")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Labors added to the service order")
@@ -125,7 +125,7 @@ public interface ServiceOrderApi {
     })
     ResponseEntity<ServiceOrderResponse> removeLaborFromServiceOrder(@Param("Service order ID") String id, @Param("Labor ID") String laborId);
 
-    @PutMapping("/{id}/add-supply")
+    @PatchMapping("/{id}/add-supply")
     @Operation(summary = "Add supplys to a Service order")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Supplys added to the service order")

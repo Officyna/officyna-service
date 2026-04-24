@@ -1,5 +1,6 @@
 package br.com.officyna.serviceorder.domain.dto;
 
+import br.com.officyna.serviceorder.domain.enums.LaborSituation;
 import lombok.*;
 
 import java.math.BigDecimal;
@@ -23,4 +24,8 @@ public class LaborDetailDTO {
     private LocalDateTime startDate;
 
     private LocalDateTime endDate;
+
+    private LaborSituation situation;
+
+    private LocalDateTime situationDate;
 }

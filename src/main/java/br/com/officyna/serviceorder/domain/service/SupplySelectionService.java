@@ -20,6 +20,8 @@ public class SupplySelectionService {
 
     private final SupplyService service;
 
+    private final BudgetService budgetService;
+
     SupplyDTO addSupplys(List<SupplysRequest> supplysIdList, List<SupplyDetailDTO> supplysDetails){
         List<SupplyDetailDTO> allSupplys = new ArrayList<>(supplysDetails != null ? supplysDetails : List.of());
 
@@ -32,14 +34,13 @@ public class SupplySelectionService {
                         response.description(),
                         id.getQuantity(),
                         response.salePrice(),
-                        this.calculateTotalPriceForUnitSupply(id.getQuantity(), response.salePrice())
+                        budgetService.calculateTotalPriceForUnitSupply(id.getQuantity(), response.salePrice())
                 );
             }).toList();
             allSupplys.addAll(newSupplys);
         }
         SupplyDTO supplys = new SupplyDTO();
         supplys.setSupplysDetails(allSupplys);
-        this.calculateTotalSupplyAmount(supplys);
         return supplys;
     }
 
@@ -47,22 +48,8 @@ public class SupplySelectionService {
         if(supplys.getSupplysDetails().isEmpty() || supplyId == null)
             throw new DomainException("A Ordem de Serviço não possui suprimentos cadastrados.");
         supplys.getSupplysDetails().removeIf(supply -> supply.getId().equals(supplyId));
-        this.calculateTotalSupplyAmount(supplys);
     }
 
-    public void calculateTotalSupplyAmount(SupplyDTO supplys) {
-        if (supplys.getSupplysDetails() == null || supplys.getSupplysDetails().isEmpty()) {
-            supplys.setTotalSupplyAmount(BigDecimal.ZERO);
-        } else {
-            supplys.setTotalSupplyAmount(BigDecimal.ZERO);
-            for (SupplyDetailDTO item : supplys.getSupplysDetails()){
-                item.setTotalPrice(item.getUnitPrice().multiply(BigDecimal.valueOf(item.getQuantity())));
-                supplys.setTotalSupplyAmount(supplys.getTotalSupplyAmount().add(item.getTotalPrice()));
-            }
-        }
-    }
 
-    public BigDecimal calculateTotalPriceForUnitSupply(Integer quantity, BigDecimal unitPrice){
-        return unitPrice.multiply(BigDecimal.valueOf(quantity));
-    }
+
 }

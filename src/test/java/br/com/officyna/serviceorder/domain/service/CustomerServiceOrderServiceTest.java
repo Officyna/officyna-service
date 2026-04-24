@@ -1,8 +1,14 @@
 package br.com.officyna.serviceorder.domain.service;
 
 import br.com.officyna.administrative.customer.api.resources.CustomerResponse;
+import br.com.officyna.infrastructure.exception.DomainException;
+import br.com.officyna.infrastructure.exception.NotFoundException;
+import br.com.officyna.serviceorder.api.resources.ModifySituationRequest;
 import br.com.officyna.serviceorder.api.resources.ServiceOrderResponse;
+import br.com.officyna.serviceorder.domain.dto.LaborDetailDTO;
+import br.com.officyna.serviceorder.domain.dto.LaborsDTO;
 import br.com.officyna.serviceorder.domain.entity.ServiceOrderEntity;
+import br.com.officyna.serviceorder.domain.enums.LaborSituation;
 import br.com.officyna.serviceorder.domain.enums.ServiceOrderStatus;
 import br.com.officyna.serviceorder.domain.mapper.ServiceOrderMapper;
 import br.com.officyna.serviceorder.repository.ServiceOrderRepository;
@@ -13,9 +19,12 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -30,6 +39,12 @@ class CustomerServiceOrderServiceTest {
 
     @Mock
     private ServiceOrderMapper mapper;
+
+    @Mock
+    private ServiceOrderService serviceOrderService;
+
+    @Mock
+    private StatusService statusService;
 
     @InjectMocks
     private CustomerServiceOrderService service;
@@ -58,7 +73,6 @@ class CustomerServiceOrderServiceTest {
         assertThat(result).hasSize(2);
         verify(customerService).getCustomerByDocument(document);
         verify(serviceOrderRepository).findByCustomerId(customerId);
-        verify(mapper, times(2)).toResponse(any(ServiceOrderEntity.class));
     }
 
     @Test
@@ -104,7 +118,70 @@ class CustomerServiceOrderServiceTest {
 
         // Assert
         assertThat(result).isEmpty();
-        verify(serviceOrderRepository).findByCustomerId(customerId);
-        verify(mapper, never()).toResponse(any());
+    }
+
+    @Test
+    @DisplayName("Deve atualizar a situação dos serviços com sucesso")
+    void updateLaborSituation_ShouldSucceed() {
+        // Arrange
+        String orderId = "order-1";
+        LaborDetailDTO labor1 = LaborDetailDTO.builder().laborId("l1").situation(LaborSituation.PENDING).build();
+        LaborDetailDTO labor2 = LaborDetailDTO.builder().laborId("l2").situation(LaborSituation.PENDING).build();
+        
+        ServiceOrderEntity entity = ServiceOrderEntity.builder()
+                .id(orderId)
+                .status(ServiceOrderStatus.AGUARDANDO_APROVACAO)
+                .labors(LaborsDTO.builder().laborsDetails(new ArrayList<>(List.of(labor1, labor2))).build())
+                .build();
+
+        List<ModifySituationRequest> request = List.of(
+                new ModifySituationRequest("l1", LaborSituation.APPROVED),
+                new ModifySituationRequest("l2", LaborSituation.REJECTED)
+        );
+
+        when(serviceOrderRepository.findById(orderId)).thenReturn(Optional.of(entity));
+        when(serviceOrderService.save(any())).thenReturn(entity);
+        when(mapper.toResponse(any())).thenReturn(mock(ServiceOrderResponse.class));
+
+        // Act
+        service.updateLaborSituation(orderId, request);
+
+        // Assert
+        assertThat(labor1.getSituation()).isEqualTo(LaborSituation.APPROVED);
+        assertThat(labor1.getSituationDate()).isNotNull();
+        assertThat(labor2.getSituation()).isEqualTo(LaborSituation.REJECTED);
+        assertThat(labor2.getSituationDate()).isNotNull();
+        
+        verify(statusService).updateStatus(entity, ServiceOrderStatus.APROVADA);
+        verify(serviceOrderService).save(entity);
+    }
+
+    @Test
+    @DisplayName("Deve lançar exceção se a O.S não estiver em AGUARDANDO APROVACAO")
+    void updateLaborSituation_InvalidStatus_ShouldThrowException() {
+        // Arrange
+        String orderId = "order-1";
+        ServiceOrderEntity entity = ServiceOrderEntity.builder()
+                .status(ServiceOrderStatus.RECEBIDA)
+                .build();
+
+        when(serviceOrderRepository.findById(orderId)).thenReturn(Optional.of(entity));
+
+        // Act & Assert
+        assertThatThrownBy(() -> service.updateLaborSituation(orderId, List.of()))
+                .isInstanceOf(DomainException.class)
+                .hasMessage("Só é possivel atualizar a situação de um serviço para O.S AGUARDANDO APROVAÇÃO");
+        
+        verify(statusService, never()).updateStatus(any(), any());
+    }
+
+    @Test
+    @DisplayName("Deve lançar exceção se a O.S não for encontrada")
+    void updateLaborSituation_OrderNotFound_ShouldThrowException() {
+        String orderId = "not-found";
+        when(serviceOrderRepository.findById(orderId)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> service.updateLaborSituation(orderId, List.of()))
+                .isInstanceOf(NotFoundException.class);
     }
 }

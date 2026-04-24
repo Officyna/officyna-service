@@ -5,6 +5,7 @@ import br.com.officyna.administrative.labor.domain.service.LaborService;
 import br.com.officyna.serviceorder.api.resources.LaborsRequest;
 import br.com.officyna.serviceorder.domain.dto.LaborDetailDTO;
 import br.com.officyna.serviceorder.domain.dto.LaborsDTO;
+import br.com.officyna.serviceorder.domain.enums.LaborSituation;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -26,25 +27,21 @@ public class LaborSelectionService {
             List<LaborDetailDTO> newLabors = laborsIdList.stream()
                     .map(id -> {
                         LaborResponse response = laborService.findById(id.getId());
-                        return new LaborDetailDTO(response.id(), response.name(), response.description(), response.price(), null, null);
+                        return new LaborDetailDTO(
+                                response.id(),
+                                response.name(),
+                                response.description(),
+                                response.price(),
+                                null,
+                                null,
+                                LaborSituation.PENDING,
+                                LocalDateTime.now());
                     })
                     .toList();
             allLabors.addAll(newLabors);
         }
         LaborsDTO labors = new LaborsDTO();
         labors.setLaborsDetails(allLabors);
-        this.calculateTotalLaborsAmount(labors);
         return labors;
-    }
-
-    public void calculateTotalLaborsAmount(LaborsDTO labors){
-        if(labors.getLaborsDetails() == null || labors.getLaborsDetails().isEmpty()){
-            labors.setTotalLaborsAmount(BigDecimal.ZERO);
-            return;
-        }
-        BigDecimal totalLaborsAmount = labors.getLaborsDetails().stream()
-                .map(LaborDetailDTO::getLaborPrice)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-        labors.setTotalLaborsAmount(totalLaborsAmount);
     }
 }
