@@ -1,5 +1,6 @@
 package br.com.officyna.serviceorder.domain.service;
 
+import br.com.officyna.administrative.supply.domain.service.StockService;
 import br.com.officyna.infrastructure.exception.DomainException;
 import br.com.officyna.serviceorder.domain.entity.ServiceOrderEntity;
 import br.com.officyna.serviceorder.domain.enums.ServiceOrderStatus;
@@ -29,8 +30,11 @@ class ServiceOrderServiceTest {
     @Mock
     private ServiceOrderMapper mapper;
 
+    @Mock
+    private BudgetService budgetService;
+
     @Spy
-    private StatusService statusService;
+    private StatusService statusService = new StatusService(mock(StockService.class));
 
     @InjectMocks
     private ServiceOrderService service;

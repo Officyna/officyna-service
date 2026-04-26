@@ -1,8 +1,10 @@
 package br.com.officyna.serviceorder.domain.service;
 
+import br.com.officyna.administrative.supply.domain.service.StockService;
 import br.com.officyna.infrastructure.exception.DomainException;
 import br.com.officyna.serviceorder.domain.dto.LaborDetailDTO;
 import br.com.officyna.serviceorder.domain.dto.LaborsDTO;
+import br.com.officyna.serviceorder.domain.dto.SupplyDetailDTO;
 import br.com.officyna.serviceorder.domain.entity.ServiceOrderEntity;
 import br.com.officyna.serviceorder.domain.enums.LaborSituation;
 import br.com.officyna.serviceorder.domain.enums.ServiceOrderStatus;
@@ -17,6 +19,8 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 public class StatusService {
+
+    private final StockService stockService;
 
     public void validateStatusForStartExecution(ServiceOrderEntity entity) {
         if (!(ServiceOrderStatus.APROVADA.equals(entity.getStatus()) || ServiceOrderStatus.EM_EXECUCAO.equals(entity.getStatus()))) {
@@ -69,15 +73,27 @@ public class StatusService {
             }
         }
         LocalDateTime now = LocalDateTime.now();
+        List<SupplyDetailDTO> supplies = entity.getSupplys() != null
+                ? entity.getSupplys().getSupplysDetails()
+                : null;
         switch (status) {
             case RECEBIDA -> entity.setRegistrationDate(now);
                 case EM_DIAGNOSTICO -> entity.setDiagnosisStartDate(now);
-                case AGUARDANDO_APROVACAO -> entity.setClientSendDate(now);
-                case APROVADA -> entity.setApprovalDate(now);
+                case AGUARDANDO_APROVACAO -> {
+                    entity.setClientSendDate(now);
+                    stockService.reserveSupplies(supplies);
+                }
+                case APROVADA -> {
+                    entity.setApprovalDate(now);
+                    stockService.consumeSupplies(supplies);
+                }
                 case EM_EXECUCAO -> entity.setExecutionStartDate(now);
                 case ENTREGUE -> entity.setDeliveryDate(now);
                 case FINALIZADA -> entity.setFinalizationDate(now);
-                case RECUSADA -> entity.setRefuseDate(now);
+                case RECUSADA -> {
+                    entity.setRefuseDate(now);
+                    stockService.releaseSupplies(supplies);
+                }
         }
         entity.setStatus(status);
     }
