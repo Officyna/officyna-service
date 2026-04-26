@@ -1,6 +1,7 @@
 package br.com.officyna.administrative.customer.api.resources;
 
 import br.com.officyna.administrative.customer.domain.CustomerType;
+import br.com.officyna.administrative.customer.domain.validation.ValidDocument;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
@@ -8,6 +9,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
+@ValidDocument
 @Schema(description = "Data for customer creation or update")
 public record CustomerRequest(
 

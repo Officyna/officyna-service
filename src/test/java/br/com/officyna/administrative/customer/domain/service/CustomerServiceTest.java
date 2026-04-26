@@ -37,6 +37,13 @@ class CustomerServiceTest {
     @InjectMocks
     private CustomerService customerService;
 
+    // Documentos normalizados (sem formatação) — representam dados no banco
+    private static final String CPF_NORMALIZED   = "12345678909";
+    private static final String CPF_ALT_NORMALIZED = "52998224725";
+    // Documento formatado — representa entrada do usuário
+    private static final String CPF_FORMATTED    = "123.456.789-09";
+    private static final String CPF_ALT_FORMATTED = "529.982.247-25";
+
     private CustomerEntity createCustomerEntity(String id, String document, boolean active) {
         return CustomerEntity.builder()
                 .id(id)
@@ -71,13 +78,15 @@ class CustomerServiceTest {
         return new CustomerResponse(id, "João Silva", document, CustomerType.INDIVIDUAL, "joao@email.com", "99999-9999", "11", "+55", address, true, LocalDateTime.now());
     }
 
+    // ─── findAll ──────────────────────────────────────────────────────────────
+
     @Test
     @DisplayName("Deve retornar todos os clientes ativos")
     void findAll_ShouldReturnActiveCustomers() {
-        CustomerEntity entity1 = createCustomerEntity("1", "111.111.111-11", true);
-        CustomerEntity entity2 = createCustomerEntity("2", "222.222.222-22", true);
-        CustomerResponse response1 = createCustomerResponse("1", "111.111.111-11");
-        CustomerResponse response2 = createCustomerResponse("2", "222.222.222-22");
+        CustomerEntity entity1 = createCustomerEntity("1", CPF_NORMALIZED, true);
+        CustomerEntity entity2 = createCustomerEntity("2", CPF_ALT_NORMALIZED, true);
+        CustomerResponse response1 = createCustomerResponse("1", CPF_NORMALIZED);
+        CustomerResponse response2 = createCustomerResponse("2", CPF_ALT_NORMALIZED);
 
         when(customerRepository.findByActiveTrue()).thenReturn(List.of(entity1, entity2));
         when(customerMapper.toResponse(entity1)).thenReturn(response1);
@@ -87,18 +96,18 @@ class CustomerServiceTest {
 
         assertNotNull(result);
         assertEquals(2, result.size());
-        assertEquals("111.111.111-11", result.get(0).document());
-        assertEquals("222.222.222-22", result.get(1).document());
-        verify(customerRepository, times(1)).findByActiveTrue();
+        verify(customerRepository).findByActiveTrue();
         verify(customerMapper, times(2)).toResponse(any(CustomerEntity.class));
     }
+
+    // ─── findById ─────────────────────────────────────────────────────────────
 
     @Test
     @DisplayName("Deve retornar um cliente pelo ID")
     void findById_ShouldReturnCustomerResponse() {
         String id = "123";
-        CustomerEntity entity = createCustomerEntity(id, "123.456.789-09", true);
-        CustomerResponse response = createCustomerResponse(id, "123.456.789-09");
+        CustomerEntity entity = createCustomerEntity(id, CPF_NORMALIZED, true);
+        CustomerResponse response = createCustomerResponse(id, CPF_NORMALIZED);
 
         when(customerRepository.findById(id)).thenReturn(Optional.of(entity));
         when(customerMapper.toResponse(entity)).thenReturn(response);
@@ -107,9 +116,8 @@ class CustomerServiceTest {
 
         assertNotNull(result);
         assertEquals(id, result.id());
-        assertEquals("123.456.789-09", result.document());
-        verify(customerRepository, times(1)).findById(id);
-        verify(customerMapper, times(1)).toResponse(entity);
+        verify(customerRepository).findById(id);
+        verify(customerMapper).toResponse(entity);
     }
 
     @Test
@@ -119,48 +127,65 @@ class CustomerServiceTest {
         when(customerRepository.findById(id)).thenReturn(Optional.empty());
 
         assertThrows(NotFoundException.class, () -> customerService.findById(id));
-        verify(customerRepository, times(1)).findById(id);
+        verify(customerRepository).findById(id);
         verify(customerMapper, never()).toResponse(any(CustomerEntity.class));
     }
 
-    @Test
-    @DisplayName("Deve retornar um cliente pelo documento")
-    void findByDocument_ShouldReturnCustomerResponse() {
-        String document = "123.456.789-09";
-        CustomerEntity entity = createCustomerEntity("123", document, true);
-        CustomerResponse response = createCustomerResponse("123", document);
+    // ─── findByDocument ───────────────────────────────────────────────────────
 
-        when(customerRepository.findByDocument(document)).thenReturn(Optional.of(entity));
+    @Test
+    @DisplayName("Deve retornar um cliente pelo documento normalizado")
+    void findByDocument_ShouldReturnCustomerResponse() {
+        CustomerEntity entity = createCustomerEntity("123", CPF_NORMALIZED, true);
+        CustomerResponse response = createCustomerResponse("123", CPF_NORMALIZED);
+
+        when(customerRepository.findByDocument(CPF_NORMALIZED)).thenReturn(Optional.of(entity));
         when(customerMapper.toResponse(entity)).thenReturn(response);
 
-        CustomerResponse result = customerService.findByDocument(document);
+        CustomerResponse result = customerService.findByDocument(CPF_NORMALIZED);
 
         assertNotNull(result);
-        assertEquals(document, result.document());
-        verify(customerRepository, times(1)).findByDocument(document);
-        verify(customerMapper, times(1)).toResponse(entity);
+        assertEquals(CPF_NORMALIZED, result.document());
+        verify(customerRepository).findByDocument(CPF_NORMALIZED);
+        verify(customerMapper).toResponse(entity);
+    }
+
+    @Test
+    @DisplayName("Deve normalizar documento formatado antes de buscar no repositório")
+    void findByDocument_ShouldNormalizeFormattedDocument() {
+        CustomerEntity entity = createCustomerEntity("123", CPF_NORMALIZED, true);
+        CustomerResponse response = createCustomerResponse("123", CPF_NORMALIZED);
+
+        when(customerRepository.findByDocument(CPF_NORMALIZED)).thenReturn(Optional.of(entity));
+        when(customerMapper.toResponse(entity)).thenReturn(response);
+
+        customerService.findByDocument(CPF_FORMATTED); // entrada formatada
+
+        // repositório deve ser chamado com o documento normalizado
+        verify(customerRepository).findByDocument(CPF_NORMALIZED);
     }
 
     @Test
     @DisplayName("Deve lançar NotFoundException quando o cliente não for encontrado pelo documento")
     void findByDocument_ShouldThrowNotFoundException() {
-        String document = "000.000.000-00";
-        when(customerRepository.findByDocument(document)).thenReturn(Optional.empty());
+        when(customerRepository.findByDocument(CPF_NORMALIZED)).thenReturn(Optional.empty());
 
-        assertThrows(NotFoundException.class, () -> customerService.findByDocument(document));
-        verify(customerRepository, times(1)).findByDocument(document);
+        assertThrows(NotFoundException.class, () -> customerService.findByDocument(CPF_FORMATTED));
+        verify(customerRepository).findByDocument(CPF_NORMALIZED);
         verify(customerMapper, never()).toResponse(any(CustomerEntity.class));
     }
+
+    // ─── create ───────────────────────────────────────────────────────────────
 
     @Test
     @DisplayName("Deve criar um novo cliente com sucesso")
     void create_ShouldReturnCreatedCustomerResponse() {
-        CustomerRequest request = createCustomerRequest("123.456.789-09");
-        CustomerEntity entity = createCustomerEntity(null, "123.456.789-09", true);
-        CustomerEntity savedEntity = createCustomerEntity("newId", "123.456.789-09", true);
-        CustomerResponse response = createCustomerResponse("newId", "123.456.789-09");
+        CustomerRequest request = createCustomerRequest(CPF_FORMATTED);
+        CustomerEntity entity = createCustomerEntity(null, CPF_NORMALIZED, true);
+        CustomerEntity savedEntity = createCustomerEntity("newId", CPF_NORMALIZED, true);
+        CustomerResponse response = createCustomerResponse("newId", CPF_NORMALIZED);
 
-        when(customerRepository.existsByDocument(request.document())).thenReturn(false);
+        when(customerRepository.existsByDocument(CPF_NORMALIZED)).thenReturn(false);
         when(customerMapper.toEntity(request)).thenReturn(entity);
         when(customerRepository.save(entity)).thenReturn(savedEntity);
         when(customerMapper.toResponse(savedEntity)).thenReturn(response);
@@ -169,36 +194,39 @@ class CustomerServiceTest {
 
         assertNotNull(result);
         assertEquals("newId", result.id());
-        assertEquals("123.456.789-09", result.document());
-        verify(customerRepository, times(1)).existsByDocument(request.document());
-        verify(customerMapper, times(1)).toEntity(request);
-        verify(customerRepository, times(1)).save(entity);
-        verify(customerMapper, times(1)).toResponse(savedEntity);
+        // verifica que a checagem de duplicidade usa o documento normalizado
+        verify(customerRepository).existsByDocument(CPF_NORMALIZED);
+        verify(customerMapper).toEntity(request);
+        verify(customerRepository).save(entity);
+        verify(customerMapper).toResponse(savedEntity);
     }
 
     @Test
     @DisplayName("Deve lançar DomainException ao tentar criar cliente com documento já existente")
     void create_ShouldThrowDomainException_WhenDocumentExists() {
-        CustomerRequest request = createCustomerRequest("123.456.789-09");
-        when(customerRepository.existsByDocument(request.document())).thenReturn(true);
+        CustomerRequest request = createCustomerRequest(CPF_FORMATTED);
+        when(customerRepository.existsByDocument(CPF_NORMALIZED)).thenReturn(true);
 
         assertThrows(DomainException.class, () -> customerService.create(request));
-        verify(customerRepository, times(1)).existsByDocument(request.document());
+        verify(customerRepository).existsByDocument(CPF_NORMALIZED);
         verify(customerMapper, never()).toEntity(any(CustomerRequest.class));
         verify(customerRepository, never()).save(any(CustomerEntity.class));
     }
 
+    // ─── update ───────────────────────────────────────────────────────────────
+
     @Test
-    @DisplayName("Deve atualizar um cliente existente com sucesso")
+    @DisplayName("Deve atualizar um cliente existente com sucesso quando o documento muda")
     void update_ShouldReturnUpdatedCustomerResponse() {
         String id = "123";
-        CustomerRequest request = createCustomerRequest("999.999.999-99");
-        CustomerEntity existingEntity = createCustomerEntity(id, "123.456.789-09", true);
-        CustomerEntity updatedEntity = createCustomerEntity(id, "999.999.999-99", true);
-        CustomerResponse response = createCustomerResponse(id, "999.999.999-99");
+        CustomerRequest request = createCustomerRequest(CPF_ALT_FORMATTED);
+        // entidade do banco já tem documento normalizado
+        CustomerEntity existingEntity = createCustomerEntity(id, CPF_NORMALIZED, true);
+        CustomerEntity updatedEntity = createCustomerEntity(id, CPF_ALT_NORMALIZED, true);
+        CustomerResponse response = createCustomerResponse(id, CPF_ALT_NORMALIZED);
 
         when(customerRepository.findById(id)).thenReturn(Optional.of(existingEntity));
-        when(customerRepository.existsByDocument(request.document())).thenReturn(false);
+        when(customerRepository.existsByDocument(CPF_ALT_NORMALIZED)).thenReturn(false);
         doNothing().when(customerMapper).updateEntity(existingEntity, request);
         when(customerRepository.save(existingEntity)).thenReturn(updatedEntity);
         when(customerMapper.toResponse(updatedEntity)).thenReturn(response);
@@ -207,37 +235,59 @@ class CustomerServiceTest {
 
         assertNotNull(result);
         assertEquals(id, result.id());
-        assertEquals("999.999.999-99", result.document());
-        verify(customerRepository, times(1)).findById(id);
-        verify(customerRepository, times(1)).existsByDocument(request.document());
-        verify(customerMapper, times(1)).updateEntity(existingEntity, request);
-        verify(customerRepository, times(1)).save(existingEntity);
-        verify(customerMapper, times(1)).toResponse(updatedEntity);
+        verify(customerRepository).findById(id);
+        verify(customerRepository).existsByDocument(CPF_ALT_NORMALIZED);
+        verify(customerMapper).updateEntity(existingEntity, request);
+        verify(customerRepository).save(existingEntity);
+        verify(customerMapper).toResponse(updatedEntity);
     }
 
     @Test
-    @DisplayName("Deve lançar DomainException ao tentar atualizar cliente com documento já existente")
-    void update_ShouldThrowDomainException_WhenDocumentExists() {
+    @DisplayName("Deve atualizar sem verificar duplicidade quando o documento normalizado não muda")
+    void update_ShouldNotCheckDuplicate_WhenNormalizedDocumentUnchanged() {
         String id = "123";
-        CustomerRequest request = createCustomerRequest("999.999.999-99");
-        CustomerEntity existingEntity = createCustomerEntity(id, "123.456.789-09", true);
+        // usuário envia o documento formatado, mas o banco tem o normalizado
+        CustomerRequest request = createCustomerRequest(CPF_FORMATTED);
+        CustomerEntity existingEntity = createCustomerEntity(id, CPF_NORMALIZED, true);
+        CustomerResponse response = createCustomerResponse(id, CPF_NORMALIZED);
 
         when(customerRepository.findById(id)).thenReturn(Optional.of(existingEntity));
-        when(customerRepository.existsByDocument(request.document())).thenReturn(true);
+        doNothing().when(customerMapper).updateEntity(existingEntity, request);
+        when(customerRepository.save(existingEntity)).thenReturn(existingEntity);
+        when(customerMapper.toResponse(existingEntity)).thenReturn(response);
+
+        customerService.update(id, request);
+
+        // documento normalizado é igual ao do banco: não deve verificar duplicidade
+        verify(customerRepository, never()).existsByDocument(any());
+        verify(customerMapper).updateEntity(existingEntity, request);
+    }
+
+    @Test
+    @DisplayName("Deve lançar DomainException ao tentar atualizar com documento já existente em outro cliente")
+    void update_ShouldThrowDomainException_WhenDocumentExistsInAnotherCustomer() {
+        String id = "123";
+        CustomerRequest request = createCustomerRequest(CPF_ALT_FORMATTED);
+        CustomerEntity existingEntity = createCustomerEntity(id, CPF_NORMALIZED, true);
+
+        when(customerRepository.findById(id)).thenReturn(Optional.of(existingEntity));
+        when(customerRepository.existsByDocument(CPF_ALT_NORMALIZED)).thenReturn(true);
 
         assertThrows(DomainException.class, () -> customerService.update(id, request));
-        verify(customerRepository, times(1)).findById(id);
-        verify(customerRepository, times(1)).existsByDocument(request.document());
-        verify(customerMapper, never()).updateEntity(any(CustomerEntity.class), any(CustomerRequest.class));
-        verify(customerRepository, never()).save(any(CustomerEntity.class));
+        verify(customerRepository).findById(id);
+        verify(customerRepository).existsByDocument(CPF_ALT_NORMALIZED);
+        verify(customerMapper, never()).updateEntity(any(), any());
+        verify(customerRepository, never()).save(any());
     }
+
+    // ─── delete ───────────────────────────────────────────────────────────────
 
     @Test
     @DisplayName("Deve desativar um cliente ao invés de deletar fisicamente")
     void delete_ShouldDeactivateCustomer() {
         String id = "123";
-        CustomerEntity entity = createCustomerEntity(id, "123.456.789-09", true);
-        CustomerEntity deactivatedEntity = createCustomerEntity(id, "123.456.789-09", false);
+        CustomerEntity entity = createCustomerEntity(id, CPF_NORMALIZED, true);
+        CustomerEntity deactivatedEntity = createCustomerEntity(id, CPF_NORMALIZED, false);
 
         when(customerRepository.findById(id)).thenReturn(Optional.of(entity));
         when(customerRepository.save(entity)).thenReturn(deactivatedEntity);
@@ -245,8 +295,8 @@ class CustomerServiceTest {
         customerService.delete(id);
 
         assertFalse(entity.getActive());
-        verify(customerRepository, times(1)).findById(id);
-        verify(customerRepository, times(1)).save(entity);
+        verify(customerRepository).findById(id);
+        verify(customerRepository).save(entity);
     }
 
     @Test
@@ -256,7 +306,7 @@ class CustomerServiceTest {
         when(customerRepository.findById(id)).thenReturn(Optional.empty());
 
         assertThrows(NotFoundException.class, () -> customerService.delete(id));
-        verify(customerRepository, times(1)).findById(id);
+        verify(customerRepository).findById(id);
         verify(customerRepository, never()).save(any(CustomerEntity.class));
     }
 }

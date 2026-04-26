@@ -6,6 +6,7 @@ import br.com.officyna.administrative.customer.api.resources.CustomerRequest;
 import br.com.officyna.administrative.customer.api.resources.CustomerResponse;
 import br.com.officyna.administrative.customer.domain.AddressEntity;
 import br.com.officyna.administrative.customer.domain.CustomerEntity;
+import br.com.officyna.administrative.customer.domain.validation.DocumentUtils;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -14,7 +15,7 @@ public class CustomerMapper {
     public CustomerEntity toEntity(CustomerRequest request) {
         return CustomerEntity.builder()
                 .name(request.name())
-                .document(request.document())
+                .document(DocumentUtils.normalize(request.document()))
                 .type(request.type())
                 .email(request.email())
                 .phone(request.phone())
@@ -43,7 +44,7 @@ public class CustomerMapper {
 
     public void updateEntity(CustomerEntity entity, CustomerRequest request) {
         entity.setName(request.name());
-        entity.setDocument(request.document());
+        entity.setDocument(DocumentUtils.normalize(request.document()));
         entity.setType(request.type());
         entity.setEmail(request.email());
         entity.setPhone(request.phone());
