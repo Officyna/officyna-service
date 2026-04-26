@@ -41,6 +41,7 @@ public class SupplySelectionService {
         }
         SupplyDTO supplys = new SupplyDTO();
         supplys.setSupplysDetails(allSupplys);
+        budgetService.calculateTotalSupplyAmount(supplys);
         return supplys;
     }
 
@@ -48,6 +49,7 @@ public class SupplySelectionService {
         if(supplys.getSupplysDetails().isEmpty() || supplyId == null)
             throw new DomainException("A Ordem de Serviço não possui suprimentos cadastrados.");
         supplys.getSupplysDetails().removeIf(supply -> supply.getId().equals(supplyId));
+        budgetService.calculateTotalSupplyAmount(supplys);
     }
 
 

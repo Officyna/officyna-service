@@ -20,6 +20,8 @@ public class LaborSelectionService {
 
     private final LaborService laborService;
 
+    private final BudgetService budgetService;
+
     LaborsDTO addLabors(List<LaborsRequest> laborsIdList, List<LaborDetailDTO> laborsDetails) {
         List<LaborDetailDTO> allLabors = new ArrayList<>(laborsDetails != null ? laborsDetails : List.of());
 
@@ -42,6 +44,7 @@ public class LaborSelectionService {
         }
         LaborsDTO labors = new LaborsDTO();
         labors.setLaborsDetails(allLabors);
+        budgetService.calculateTotalLaborsAmount(labors);
         return labors;
     }
 }
