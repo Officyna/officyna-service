@@ -63,8 +63,26 @@ services:
     networks:
       - officyna-network
 
+#  sonarqube:
+#    image: sonarqube:community
+#    container_name: officyna-sonarqube
+#    environment:
+#      SONAR_ES_BOOTSTRAP_CHECKS_DISABLE: "true"
+#    ports:
+#      - "9000:9000"
+#    volumes:
+#      - sonar_data:/opt/sonarqube/data
+#      - sonar_extensions:/opt/sonarqube/extensions
+#      - sonar_logs:/opt/sonarqube/logs
+#    restart: unless-stopped
+#    networks:
+#      - officyna-network
+
 volumes:
   mongo_data:
+#  sonar_data:
+#  sonar_extensions:
+#  sonar_logs:
 
 networks:
   officyna-network:
