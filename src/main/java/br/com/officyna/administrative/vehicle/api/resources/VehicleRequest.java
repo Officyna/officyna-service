@@ -12,7 +12,10 @@ public record VehicleRequest(
 
     @Schema(description = "Vehicle plate (format ABC-1234 or ABC1D23)", example = "ABC-1234")
     @NotBlank(message = "Plate is required")
-    @Size(max = 10)
+    @Pattern(
+        regexp = "^[A-Za-z]{3}-?[0-9]{4}$|^[A-Za-z]{3}[0-9][A-Za-z][0-9]{2}$",
+        message = "Plate must follow the old format (ABC-1234) or Mercosul (ABC1D23)"
+    )
     String plate,
 
     @Schema(description = "Vehicle brand", example = "Toyota")
