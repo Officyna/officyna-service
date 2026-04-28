@@ -5,6 +5,7 @@ import br.com.officyna.serviceorder.api.resources.ServiceOrderResponse;
 import br.com.officyna.serviceorder.domain.enums.LaborSituation;
 import br.com.officyna.serviceorder.domain.enums.ServiceOrderStatus;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -57,8 +58,8 @@ public interface CustomerServiceOrderApi {
             )
     })
     ResponseEntity<List<ServiceOrderResponse>> findByCustomerDocument(
-            @PathVariable String document,
-            @RequestParam(value = "status", required = false) ServiceOrderStatus status
+            @Parameter(description = "Customer document") @PathVariable String document,
+            @Parameter(description = "Service order status") @RequestParam(value = "status", required = false) ServiceOrderStatus status
     );
 
     @PatchMapping("/aproval-labors/{id}")
@@ -73,7 +74,7 @@ public interface CustomerServiceOrderApi {
             )
     })
     ResponseEntity<ServiceOrderResponse> aprovalLabors(
-            @Param("Service order ID") String id,
+            @Parameter(description = "Service order ID") @PathVariable String id,
             @RequestBody(required = true) List<ModifySituationRequest> request
             );
 }

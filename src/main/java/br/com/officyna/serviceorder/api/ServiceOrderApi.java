@@ -70,7 +70,8 @@ public interface ServiceOrderApi {
                             schema = @Schema(implementation = ServiceOrderResponse.class)
                     ))
     })
-    ResponseEntity<ServiceOrderResponse> findById(@Parameter(description = "Service order ID") @PathVariable String id);
+    ResponseEntity<ServiceOrderResponse> findById(
+            @Parameter(description = "Service order ID") @PathVariable String id);
 
     @GetMapping("/number/{serviceOrderNumber}")
     @Operation(summary = "Find Service Order by number")
@@ -82,7 +83,8 @@ public interface ServiceOrderApi {
                             schema = @Schema(implementation = ServiceOrderResponse.class)
                     ))
     })
-    ResponseEntity<ServiceOrderResponse> findByServiceOrderNumber(@Parameter(description = "Service order number") @PathVariable Long serviceOrderNumber);
+    ResponseEntity<ServiceOrderResponse> findByServiceOrderNumber(
+            @Parameter(description = "Service order number") @PathVariable Long serviceOrderNumber);
 
     @PostMapping()
     @Operation(summary = "Create a new Service order")
@@ -108,36 +110,46 @@ public interface ServiceOrderApi {
                     )
             )
     })
-    ResponseEntity<ServiceOrderResponse> updateServiceOrder(@Param("Service order ID") @PathVariable String id, @Valid ExistServiceOrderRequest request);
+    ResponseEntity<ServiceOrderResponse> updateServiceOrder(
+            @Parameter(description = "Service order ID") @PathVariable String id,
+            @Valid ExistServiceOrderRequest request);
 
 
-    @PatchMapping("/{id}/add-labors")
+    @PutMapping("/{id}/add-labors")
     @Operation(summary = "Add labors to a Service order")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Labors added to the service order")
     })
-    ResponseEntity<ServiceOrderResponse> addLaborInServiceOrder(@Param("Service order ID") String id, @RequestBody List<LaborsRequest> laborsIdList);
+    ResponseEntity<ServiceOrderResponse> addLaborInServiceOrder(
+            @Parameter(description = "Service order ID") @PathVariable String id,
+            @RequestBody List<LaborsRequest> laborsIdList);
 
-    @DeleteMapping("/{id}/remove-labors/{laborId}")
+    @PutMapping("/{id}/remove-labors/{laborId}")
     @Operation(summary = "Delete labor from a Service order")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Labor removed from the service order")
     })
-    ResponseEntity<ServiceOrderResponse> removeLaborFromServiceOrder(@Param("Service order ID") String id, @Param("Labor ID") String laborId);
+    ResponseEntity<ServiceOrderResponse> removeLaborFromServiceOrder(
+            @Parameter(description = "Service order ID") @PathVariable String id,
+            @Parameter(description = "Labor ID") @PathVariable String laborId);
 
-    @PatchMapping("/{id}/add-supply")
+    @PutMapping("/{id}/add-supply")
     @Operation(summary = "Add supplys to a Service order")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Supplys added to the service order")
     })
-    ResponseEntity<ServiceOrderResponse> addSupplyInServiceOrder(@Param("Service order ID") String id, @RequestBody List<SupplysRequest> laborsIdList);
+    ResponseEntity<ServiceOrderResponse> addSupplyInServiceOrder(
+            @Parameter(description = "Service order ID") @PathVariable String id,
+            @RequestBody List<SupplysRequest> laborsIdList);
 
-    @DeleteMapping("/{id}/remove-supply/{supplyId}")
+    @PutMapping("/{id}/remove-supply/{supplyId}")
     @Operation(summary = "Delete supplys from a Service order")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Supply removed from the service order")
     })
-    ResponseEntity<ServiceOrderResponse> removeSupplyFromServiceOrder(@Param("Service order ID") String id, @Param("Supply ID") String supplyId);
+    ResponseEntity<ServiceOrderResponse> removeSupplyFromServiceOrder(
+            @Parameter(description = "Service order ID") @PathVariable String id,
+            @Parameter(description = "Supply ID") @PathVariable String supplyId);
 
     @DeleteMapping("/{id}")
     @Operation(summary = "Delete a Service order")
@@ -147,33 +159,40 @@ public interface ServiceOrderApi {
                 description = "Service order deleted"
         )
     })
-    ResponseEntity<Void> deleteServiceOrder(@Parameter(description = "Service order ID") @PathVariable String id);
+    ResponseEntity<Void> deleteServiceOrder(
+            @Parameter(description = "Service order ID") @PathVariable String id);
 
     @PutMapping("/{id}/start-labor/{laborId}")
     @Operation(summary = "Start a labor in a Service order")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Labor started in the service order")
     })
-    ResponseEntity<ServiceOrderResponse> startLabor(@Param("Service order ID") String id, @Param("Labor ID") String laborId);
+    ResponseEntity<ServiceOrderResponse> startLabor(
+            @Parameter(description = "Service order ID") @PathVariable String id,
+            @Parameter(description = "Labor ID") @PathVariable String laborId);
 
     @PutMapping("/{id}/finish-labor/{laborId}")
     @Operation(summary = "Finish a labor in a Service order")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Labor finished in the service order")
     })
-    ResponseEntity<ServiceOrderResponse> finishLabor(@Param("Service order ID") String id, @Param("Labor ID") String laborId);
+    ResponseEntity<ServiceOrderResponse> finishLabor(
+            @Parameter(description = "Service order ID") @PathVariable String id,
+            @Parameter(description = "Labor ID") @PathVariable String laborId);
 
-    @PutMapping("/{id}/update-status/{status}")
+    @PatchMapping("/{id}/update-status/")
     @Operation(summary = "Status updated")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Status updated")
     })
-    ResponseEntity<ServiceOrderResponse> updateStatus(@Param("Service order ID") String id, @Param("Status") ServiceOrderStatus status);
+    ResponseEntity<ServiceOrderResponse> updateStatus(
+            @Parameter(description = "Service order ID") @PathVariable String id,
+            @Parameter(description = "Status") @RequestParam ServiceOrderStatus status);
 
     @PostMapping("{id}/send-os")
     @Operation(summary = "Service order send to customer")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Sucesfull")
     })
-    ResponseEntity<SendToCustomerResponse> sendToCustomer(@PathVariable String id);
+    ResponseEntity<SendToCustomerResponse> sendToCustomer(@Parameter(description = "Service order ID" )@PathVariable String id);
 }
