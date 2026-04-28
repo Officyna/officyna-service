@@ -169,4 +169,11 @@ public interface ServiceOrderApi {
             @ApiResponse(responseCode = "200", description = "Status updated")
     })
     ResponseEntity<ServiceOrderResponse> updateStatus(@Param("Service order ID") String id, @Param("Status") ServiceOrderStatus status);
+
+    @PostMapping("{id}/send-os")
+    @Operation(summary = "Service order send to customer")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Sucesfull")
+    })
+    ResponseEntity<SendToCustomerResponse> sendToCustomer(@PathVariable String id);
 }

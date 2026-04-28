@@ -8,7 +8,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -83,5 +82,10 @@ public class ServiceOrderController implements ServiceOrderApi {
     @Override
     public ResponseEntity<ServiceOrderResponse> updateStatus(String id, ServiceOrderStatus status) {
         return ResponseEntity.ok(service.updateStatus(id, status));
+    }
+
+    @Override
+    public ResponseEntity<SendToCustomerResponse> sendToCustomer(String id) {
+        return ResponseEntity.ok(service.sendToCustomer(id));
     }
 }
