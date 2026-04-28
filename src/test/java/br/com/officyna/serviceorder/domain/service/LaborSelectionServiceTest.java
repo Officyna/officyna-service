@@ -55,7 +55,7 @@ class LaborSelectionServiceTest {
     @Test
     @DisplayName("Deve manter a lista de serviços existentes ao adicionar novos")
     void addLabors_ShouldMaintainExistingLabors() {
-        LaborDetailDTO existing = new LaborDetailDTO("old-1", "Alinhamento", "Desc", BigDecimal.valueOf(100.00), null, null, LaborSituation.PENDING, LocalDateTime.now());
+        LaborDetailDTO existing = new LaborDetailDTO("old-1", "Alinhamento", "Desc", BigDecimal.valueOf(100.00), null, null, LaborSituation.PENDENTE, LocalDateTime.now());
         LaborsRequest req = new LaborsRequest();
         req.setId("new-1");
 

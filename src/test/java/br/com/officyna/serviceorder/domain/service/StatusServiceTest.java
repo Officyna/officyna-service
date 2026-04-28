@@ -50,7 +50,7 @@ class StatusServiceTest {
     private LaborDetailDTO buildApprovedLabor() {
         return LaborDetailDTO.builder()
                 .laborId("labor-1")
-                .situation(LaborSituation.APPROVED)
+                .situation(LaborSituation.APROVADO)
                 .build();
     }
 
