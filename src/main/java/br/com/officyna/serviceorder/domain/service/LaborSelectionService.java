@@ -9,7 +9,6 @@ import br.com.officyna.serviceorder.domain.enums.LaborSituation;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -36,7 +35,7 @@ public class LaborSelectionService {
                                 response.price(),
                                 null,
                                 null,
-                                LaborSituation.PENDING,
+                                LaborSituation.PENDENTE,
                                 LocalDateTime.now());
                     })
                     .toList();

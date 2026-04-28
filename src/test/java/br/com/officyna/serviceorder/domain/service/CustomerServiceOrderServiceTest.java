@@ -125,8 +125,8 @@ class CustomerServiceOrderServiceTest {
     void updateLaborSituation_ShouldSucceed() {
         // Arrange
         String orderId = "order-1";
-        LaborDetailDTO labor1 = LaborDetailDTO.builder().laborId("l1").situation(LaborSituation.PENDING).build();
-        LaborDetailDTO labor2 = LaborDetailDTO.builder().laborId("l2").situation(LaborSituation.PENDING).build();
+        LaborDetailDTO labor1 = LaborDetailDTO.builder().laborId("l1").situation(LaborSituation.PENDENTE).build();
+        LaborDetailDTO labor2 = LaborDetailDTO.builder().laborId("l2").situation(LaborSituation.PENDENTE).build();
         
         ServiceOrderEntity entity = ServiceOrderEntity.builder()
                 .id(orderId)
@@ -135,8 +135,8 @@ class CustomerServiceOrderServiceTest {
                 .build();
 
         List<ModifySituationRequest> request = List.of(
-                new ModifySituationRequest("l1", LaborSituation.APPROVED),
-                new ModifySituationRequest("l2", LaborSituation.REJECTED)
+                new ModifySituationRequest("l1", LaborSituation.APROVADO),
+                new ModifySituationRequest("l2", LaborSituation.REJEITADO)
         );
 
         when(serviceOrderRepository.findById(orderId)).thenReturn(Optional.of(entity));
@@ -147,9 +147,9 @@ class CustomerServiceOrderServiceTest {
         service.updateLaborSituation(orderId, request);
 
         // Assert
-        assertThat(labor1.getSituation()).isEqualTo(LaborSituation.APPROVED);
+        assertThat(labor1.getSituation()).isEqualTo(LaborSituation.APROVADO);
         assertThat(labor1.getSituationDate()).isNotNull();
-        assertThat(labor2.getSituation()).isEqualTo(LaborSituation.REJECTED);
+        assertThat(labor2.getSituation()).isEqualTo(LaborSituation.REJEITADO);
         assertThat(labor2.getSituationDate()).isNotNull();
         
         verify(statusService).updateStatus(entity, ServiceOrderStatus.APROVADA);

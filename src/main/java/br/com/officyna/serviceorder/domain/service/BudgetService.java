@@ -40,7 +40,7 @@ public class BudgetService {
             return;
         }
         BigDecimal totalLaborsAmount = labors.getLaborsDetails().stream()
-                .filter(item -> item.getSituation() != LaborSituation.REJECTED)
+                .filter(item -> item.getSituation() != LaborSituation.REJEITADO)
                 .map(LaborDetailDTO::getLaborPrice)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
         labors.setTotalLaborsAmount(totalLaborsAmount);

@@ -101,7 +101,7 @@ public class StatusService {
     private void validateLaborsForFinishServiceOrder(ServiceOrderEntity entity) {
         log.debug("Verificando se todos os serviços foram concluídos para finalizar a O.S. ID: {}", entity.getId());
         List<LaborDetailDTO> labors = entity.getLabors().getLaborsDetails().stream()
-                .filter(item->item.getSituation()!=LaborSituation.REJECTED)
+                .filter(item->item.getSituation()!=LaborSituation.REJEITADO)
                 .toList();
         labors.forEach(item -> {
             if (item.getStartDate() == null || item.getEndDate() == null) {
@@ -115,7 +115,7 @@ public class StatusService {
         if(entity.getLabors() !=null && entity.getLabors().getLaborsDetails() != null){
             entity.getLabors().getLaborsDetails()
                     .forEach(item -> {
-                        if(item.getSituation().equals(LaborSituation.PENDING)){
+                        if(item.getSituation().equals(LaborSituation.PENDENTE)){
                             throw  new DomainException("Todos os serviços devem ser analisados e rejeitados ou aprovados");
                         }
                     });

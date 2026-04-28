@@ -31,7 +31,7 @@ class BudgetServiceTest {
         // Adicionando um serviço de 100.00
         LaborDetailDTO labor = LaborDetailDTO.builder()
                 .laborPrice(new BigDecimal("100.00"))
-                .situation(LaborSituation.APPROVED)
+                .situation(LaborSituation.APROVADO)
                 .build();
         LaborsDTO labors = LaborsDTO.builder()
                 .laborsDetails(List.of(labor))
@@ -60,11 +60,11 @@ class BudgetServiceTest {
         // Arrange
         LaborDetailDTO labor1 = LaborDetailDTO.builder()
                 .laborPrice(new BigDecimal("100.00"))
-                .situation(LaborSituation.APPROVED)
+                .situation(LaborSituation.APROVADO)
                 .build();
         LaborDetailDTO labor2 = LaborDetailDTO.builder()
                 .laborPrice(new BigDecimal("50.00"))
-                .situation(LaborSituation.REJECTED)
+                .situation(LaborSituation.REJEITADO)
                 .build();
         
         LaborsDTO labors = LaborsDTO.builder()
