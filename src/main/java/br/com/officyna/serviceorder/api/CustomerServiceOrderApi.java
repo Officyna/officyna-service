@@ -57,7 +57,7 @@ public interface CustomerServiceOrderApi {
             )
     })
     ResponseEntity<List<ServiceOrderResponse>> findByCustomerDocument(
-            String document,
+            @PathVariable String document,
             @RequestParam(value = "status", required = false) ServiceOrderStatus status
     );
 

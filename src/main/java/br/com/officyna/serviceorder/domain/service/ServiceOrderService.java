@@ -203,4 +203,11 @@ public class ServiceOrderService {
         budgetService.calculateBudget(entity);
         return repository.save(entity);
     }
+
+    public SendToCustomerResponse sendToCustomer(String id) {
+        ServiceOrderEntity serviceOrder = this.findEntityById(id);
+        statusService.updateStatus(serviceOrder, ServiceOrderStatus.AGUARDANDO_APROVACAO);
+        repository.save(serviceOrder);
+        return new SendToCustomerResponse("Ordem de serviço enviada para o cliente");
+    }
 }
