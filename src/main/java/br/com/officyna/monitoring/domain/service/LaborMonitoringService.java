@@ -22,6 +22,10 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class LaborMonitoringService {
 
+    // 1 dia útil = 8 horas = 28800 segundos
+    private static final double WORK_DAY_SECONDS_DOUBLE = 28800.0;
+    private static final int WORK_DAY_SECONDS_INT = 28800;
+
     private final LaborMonitoringRepository monitoringRepository;
     private final LaborRepository laborRepository;
     private final ServiceOrderRepository serviceOrderRepository;
@@ -35,7 +39,7 @@ public class LaborMonitoringService {
 
     @Async
     public void updateExecutionTimeInDays(String laborId, LocalDateTime startDate, LocalDateTime endDate) {
-        long durationInDays = ChronoUnit.DAYS.between(startDate, endDate);
+        double durationInDays = ChronoUnit.SECONDS.between(startDate, endDate) / WORK_DAY_SECONDS_DOUBLE;
 
         if (durationInDays < 0) {
             log.warn("Ignorando atualização de tempo médio para laborId={}: endDate anterior ao startDate", laborId);
@@ -61,7 +65,7 @@ public class LaborMonitoringService {
                     .laborId(laborId)
                     .laborName(labor.getName())
                     .laborDescription(labor.getDescription())
-                    .averageExecutionTimeInDays((double) durationInDays)
+                    .averageExecutionTimeInDays(durationInDays)
                     .totalExecutions(1)
                     .build();
             monitoringRepository.save(newEntity);
@@ -94,14 +98,14 @@ public class LaborMonitoringService {
         int processed = 0;
 
         for (LaborEntity labor : labors) {
-            List<Long> durations = serviceOrderRepository
+            List<Double> durations = serviceOrderRepository
                     .findByLaborIdWithCompletedExecutions(labor.getId())
                     .stream()
                     .flatMap(so -> so.getLabors().getLaborsDetails().stream())
                     .filter(detail -> labor.getId().equals(detail.getLaborId())
                             && detail.getStartDate() != null
                             && detail.getEndDate() != null)
-                    .map(detail -> ChronoUnit.DAYS.between(detail.getStartDate(), detail.getEndDate()))
+                    .map(detail -> ChronoUnit.SECONDS.between(detail.getStartDate(), detail.getEndDate()) / WORK_DAY_SECONDS_DOUBLE)
                     .filter(duration -> duration >= 0)
                     .toList();
 
@@ -114,7 +118,7 @@ public class LaborMonitoringService {
             entity.setLaborName(labor.getName());
             entity.setLaborDescription(labor.getDescription());
             entity.setAverageExecutionTimeInDays(
-                    durations.stream().mapToLong(Long::longValue).average().orElse(0)
+                    durations.stream().mapToDouble(Double::doubleValue).average().orElse(0)
             );
             entity.setTotalExecutions(durations.size());
             monitoringRepository.save(entity);
@@ -124,15 +128,15 @@ public class LaborMonitoringService {
         return new ForceRecalcResponse(processed);
     }
 
-    private double calculateNewAverage(double currentAverage, int totalExecutions, long newDuration) {
+    private double calculateNewAverage(double currentAverage, int totalExecutions, double newDuration) {
         return (currentAverage * totalExecutions + newDuration) / (totalExecutions + 1);
     }
 
     private String formatDays(Double days) {
         if (days == null) return null;
-        long totalSeconds = Math.round(days * 86400);
-        long d = totalSeconds / 86400;
-        long h = (totalSeconds % 86400) / 3600;
+        long totalSeconds = Math.round(days * WORK_DAY_SECONDS_INT);
+        long d = totalSeconds / WORK_DAY_SECONDS_INT;
+        long h = (totalSeconds % WORK_DAY_SECONDS_INT) / 3600;
         long m = (totalSeconds % 3600) / 60;
         long s = totalSeconds % 60;
         if (d > 0) {

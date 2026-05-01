@@ -1,12 +1,12 @@
 db = db.getSiblingDB('officyna');
 
-const adminExists = db.users.findOne({ email: 'administrator@email.com' });
+const adminExists = db.users.findOne({ email: 'admin@officyna.com' });
 
 if (!adminExists) {
     db.users.insertOne({
         name: 'Administrador',
-        email: 'administrator@email.com',
-        password: '$2a$10$nLzmKErAAIPGJqlEWBcOAOTYErAB.3qQY3M57lZNYyXkpnN2a9LNC',
+        email: 'admin@officyna.com',
+        password: '$2a$12$h1MbmnYDyKvQajySFEs0YONMFrg0D1.Yj.yUZuyvGD045GDGQQtoq',
         userRole: 'ADMIN',
         active: true,
         createdAt: new Date(),
