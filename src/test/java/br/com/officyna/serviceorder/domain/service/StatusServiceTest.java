@@ -171,6 +171,19 @@ class StatusServiceTest {
     }
 
     @Test
+    @DisplayName("validateStatusForStartExecution deve falhar se labors details for null")
+    void validateStatusForStartExecution_LaborsDetailsNull_ShouldThrowException() {
+        ServiceOrderEntity entity = ServiceOrderEntity.builder()
+                .status(ServiceOrderStatus.APROVADA)
+                .labors(LaborsDTO.builder().laborsDetails(null).build())
+                .build();
+
+        assertThatThrownBy(() -> service.validateStatusForStartExecution(entity))
+                .isInstanceOf(DomainException.class)
+                .hasMessage("A ordem de serviço não possui serviços cadastrados.");
+    }
+
+    @Test
     @DisplayName("validateStatusForStartExecution deve falhar se status for inválido")
     void validateStatusForStartExecution_InvalidStatus_ShouldThrowException() {
         ServiceOrderEntity entity = ServiceOrderEntity.builder()
@@ -180,6 +193,19 @@ class StatusServiceTest {
         assertThatThrownBy(() -> service.validateStatusForStartExecution(entity))
                 .isInstanceOf(DomainException.class)
                 .hasMessageStartingWith("Um serviço só pode ser iniciado ou finalizado");
+    }
+
+    @Test
+    @DisplayName("updateStatus to APROVADA deve falhar se labors details for null")
+    void updateStatus_ToAprovada_LaborsDetailsNull_ShouldThrowException() {
+        ServiceOrderEntity entity = ServiceOrderEntity.builder()
+                .status(ServiceOrderStatus.AGUARDANDO_APROVACAO)
+                .labors(LaborsDTO.builder().laborsDetails(null).build())
+                .build();
+
+        assertThatThrownBy(() -> service.updateStatus(entity, ServiceOrderStatus.APROVADA))
+                .isInstanceOf(DomainException.class)
+                .hasMessage("A O.S precisa ter ao menos um serviço");
     }
 
     // ─── integração com StockService ─────────────────────────────────────────
