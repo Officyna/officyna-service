@@ -41,8 +41,9 @@ public class SecurityConfig {
                                 "/api-docs",
                                 "/actuator/health"
                         ).permitAll()
-                        //.requestMatchers(HttpMethod.POST, "/api/users").permitAll()
-                        .anyRequest().authenticated()
+                        .requestMatchers(HttpMethod.POST, "/api/users").permitAll()
+
+//                        .anyRequest().permitAll()
                 )
                 .authenticationProvider(authenticationProvider())
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
