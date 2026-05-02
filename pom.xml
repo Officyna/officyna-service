@@ -26,11 +26,11 @@
 			${project.build.directory}/site/jacoco/jacoco.xml
 		</sonar.coverage.jacoco.xmlReportPaths>
 		<sonar.exclusions>
-			**/infrastructure/**,
-			**/*Entity.java,
-			**/dto/**,
-			**/enums/**,
-			**/*Application.java
+			**/infrastructure/config/AsyncConfig.class,
+			**/infrastructure/config/SwaggerConfig.class,
+			**/infrastructure/exception/**,
+			**/serviceorder/api/controller/**,
+			**/ApplicationService.class
 		</sonar.exclusions>
 	</properties>
 
@@ -170,11 +170,11 @@
 				<configuration>
 					<!-- Classes excluídas da métrica: sem lógica testável -->
 					<excludes>
-						<exclude>**/infrastructure/**</exclude>
-						<exclude>**/*Entity.class</exclude>
-						<exclude>**/dto/**</exclude>
-						<exclude>**/enums/**</exclude>
-						<exclude>**/*Application.class</exclude>
+						<exclude>**/infrastructure/config/AsyncConfig.class</exclude>
+						<exclude>**/infrastructure/config/SwaggerConfig.class</exclude>
+						<exclude>**/infrastructure/exception/**</exclude>
+						<exclude>**/serviceorder/api/controller/**</exclude>
+						<exclude>**/ApplicationService.class</exclude>
 					</excludes>
 				</configuration>
 				<executions>
