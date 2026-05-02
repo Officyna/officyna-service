@@ -112,7 +112,7 @@ public interface ServiceOrderApi {
     })
     ResponseEntity<ServiceOrderResponse> updateServiceOrder(
             @Parameter(description = "Service order ID") @PathVariable String id,
-            @Valid ExistServiceOrderRequest request);
+            @Valid @RequestBody ExistServiceOrderRequest request);
 
 
     @PutMapping("/{id}/add-labors")
