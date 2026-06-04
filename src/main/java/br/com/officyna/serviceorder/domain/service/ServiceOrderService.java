@@ -14,6 +14,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.Comparator;
 import java.util.List;
 
 @Slf4j
@@ -45,9 +46,29 @@ public class ServiceOrderService {
     }
 
     public List<ServiceOrderResponse> findAll() {
-        return repository.findAll()
+        List<ServiceOrderEntity> ordersServiceEntity =  repository.findAll();
+
+        return sortOrdersServiceByStatusAndDate(ordersServiceEntity)
                 .stream()
                 .map(mapper::toResponse)
+                .toList();
+    }
+
+    private List<ServiceOrderEntity> sortOrdersServiceByStatusAndDate(
+            List<ServiceOrderEntity> ordersServiceEntity) {
+
+        return ordersServiceEntity.stream()
+                .filter(order ->
+                        order.getStatus() == ServiceOrderStatus.EM_EXECUCAO
+                                || order.getStatus() == ServiceOrderStatus.AGUARDANDO_APROVACAO
+                                || order.getStatus() == ServiceOrderStatus.EM_DIAGNOSTICO
+                                || order.getStatus() == ServiceOrderStatus.RECEBIDA)
+                .sorted(
+                        Comparator
+                                .comparingInt((ServiceOrderEntity order) ->
+                                        order.getStatus().getPriority())
+                                .thenComparing(ServiceOrderEntity::getRegistrationDate)
+                )
                 .toList();
     }
 
