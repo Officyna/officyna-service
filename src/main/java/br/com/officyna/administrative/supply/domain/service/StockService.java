@@ -33,11 +33,6 @@ public class StockService {
         if (supplies == null || supplies.isEmpty()) return;
         supplies.forEach(item -> {
             SupplyEntity supply = findById(item.getId());
-            if (supply.getStockQuantity() < item.getQuantity()) {
-                throw new DomainException("Estoque insuficiente para o insumo '" + supply.getName() +
-                        "'. Disponível: " + supply.getStockQuantity() +
-                        ", Necessário: " + item.getQuantity());
-            }
             supply.setStockQuantity(supply.getStockQuantity() - item.getQuantity());
             supply.setReservedQuantity(Math.max(0, supply.getReservedQuantity() - item.getQuantity()));
             supplyRepository.save(supply);
