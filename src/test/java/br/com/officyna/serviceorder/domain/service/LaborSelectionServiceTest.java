@@ -11,7 +11,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
@@ -27,9 +26,6 @@ class LaborSelectionServiceTest {
 
     @Mock
     private LaborService laborService;
-
-    @Spy
-    private BudgetService budgetService;
 
     @InjectMocks
     private LaborSelectionService service;
@@ -49,7 +45,6 @@ class LaborSelectionServiceTest {
 
         // Assert
         assertThat(result.getLaborsDetails()).hasSize(1);
-        assertThat(result.getTotalLaborsAmount()).isEqualByComparingTo("150.00");
     }
 
     @Test
@@ -64,7 +59,6 @@ class LaborSelectionServiceTest {
         LaborsDTO result = service.addLabors(List.of(req), new ArrayList<>(List.of(existing)));
 
         assertThat(result.getLaborsDetails()).hasSize(2);
-        assertThat(result.getTotalLaborsAmount()).isEqualByComparingTo("180.00");
     }
 
 

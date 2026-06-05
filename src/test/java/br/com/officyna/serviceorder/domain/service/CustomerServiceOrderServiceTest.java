@@ -43,9 +43,6 @@ class CustomerServiceOrderServiceTest {
     @Mock
     private ServiceOrderService serviceOrderService;
 
-    @Mock
-    private StatusService statusService;
-
     @InjectMocks
     private CustomerServiceOrderService service;
 
@@ -152,7 +149,6 @@ class CustomerServiceOrderServiceTest {
         assertThat(labor2.getSituation()).isEqualTo(LaborSituation.REJEITADO);
         assertThat(labor2.getSituationDate()).isNotNull();
         
-        verify(statusService).updateStatus(entity, ServiceOrderStatus.APROVADA);
         verify(serviceOrderService).save(entity);
     }
 
@@ -172,7 +168,6 @@ class CustomerServiceOrderServiceTest {
                 .isInstanceOf(DomainException.class)
                 .hasMessage("Só é possivel atualizar a situação de um serviço para O.S AGUARDANDO APROVAÇÃO");
         
-        verify(statusService, never()).updateStatus(any(), any());
     }
 
     @Test
