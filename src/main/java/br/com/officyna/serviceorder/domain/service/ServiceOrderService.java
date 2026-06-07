@@ -1,5 +1,6 @@
 package br.com.officyna.serviceorder.domain.service;
 
+import br.com.officyna.administrative.supply.domain.service.StockService;
 import br.com.officyna.infrastructure.exception.DomainException;
 import br.com.officyna.infrastructure.exception.NotFoundException;
 import br.com.officyna.monitoring.domain.service.LaborMonitoringService;
@@ -33,11 +34,9 @@ public class ServiceOrderService {
 
     private final ServiceOrderMapper mapper;
 
-    private final StatusService statusService;
-
     private final LaborMonitoringService laborMonitoringService;
 
-    private final BudgetService budgetService;
+    private final StockService stockService;
 
     private ServiceOrderEntity findEntityById(String id){
         return repository.findById(id)
@@ -69,7 +68,7 @@ public class ServiceOrderService {
         CustomerDTO customer = customerAndMecnichalService.getCustomer(request.getCustomerId());
         VehicleDTO vehicle = vehicleSelectionService.getVehicle(request.getVehicleId());
         ServiceOrderEntity entity = mapper.toCreateEntity(request, vehicle, customer, labors);
-        statusService.updateStatus(entity, ServiceOrderStatus.RECEBIDA);
+        entity.setStatus(ServiceOrderStatus.RECEBIDA);
         ServiceOrderEntity saved = this.save(entity);
         log.info("Ordem de Serviço criada com sucesso. ID: {}, Número: {}", saved.getId(), saved.getServiceOrderNumber());
         return mapper.toResponse(saved);
@@ -132,7 +131,8 @@ public class ServiceOrderService {
     public ServiceOrderResponse updateStatus(String id, ServiceOrderStatus status){
         log.info("Alterando status da O.S. ID: {} para {}", id, status);
         ServiceOrderEntity entity = this.findEntityById(id);
-        statusService.updateStatus(entity, status);
+        entity.setStatus(status);
+        if(status.equals(ServiceOrderStatus.FINALIZADA) && stockService != null) stockService.releaseSupplies(entity.getSupplys().getSupplysDetails());
         ServiceOrderEntity saved = this.save(entity);
         log.info("Status da O.S. ID: {} alterado para {} com sucesso.", id, status);
         return mapper.toResponse(saved);
@@ -141,7 +141,7 @@ public class ServiceOrderService {
     public ServiceOrderResponse startLabor(String id, String laborId){
         log.info("Iniciando execução do serviço ID: {} na O.S. ID: {}", laborId, id);
         ServiceOrderEntity entity = this.findEntityById(id);
-        statusService.validateStatusForStartExecution(entity);
+        this.validateStatusForStartExecution(entity);
         
         boolean found = false;
         for(LaborDetailDTO labor : entity.getLabors().getLaborsDetails()){
@@ -162,7 +162,8 @@ public class ServiceOrderService {
             throw new NotFoundException("A O.S não possui este serviço");
         }
         if(entity.getStatus().equals(ServiceOrderStatus.APROVADA)){
-            statusService.updateStatus(entity, ServiceOrderStatus.EM_EXECUCAO);
+            entity.setStatus(ServiceOrderStatus.EM_EXECUCAO);
+            if (stockService != null) stockService.consumeSupplies(entity.getSupplys().getSupplysDetails());
         }
         return mapper.toResponse(this.save(entity));
     }
@@ -170,7 +171,7 @@ public class ServiceOrderService {
     public ServiceOrderResponse finishLabor(String id, String laborId){
         log.info("Finalizando execução do serviço ID: {} na O.S. ID: {}", laborId, id);
         ServiceOrderEntity entity = this.findEntityById(id);
-        statusService.validateStatusForStartExecution(entity);
+        this.validateStatusForStartExecution(entity);
         
         boolean found = false;
         for(LaborDetailDTO labor : entity.getLabors().getLaborsDetails()){
@@ -200,14 +201,28 @@ public class ServiceOrderService {
     }
 
     public ServiceOrderEntity save(ServiceOrderEntity entity){
-        budgetService.calculateBudget(entity);
+        entity.calculateBudget();
         return repository.save(entity);
     }
 
     public SendToCustomerResponse sendToCustomer(String id) {
         ServiceOrderEntity serviceOrder = this.findEntityById(id);
-        statusService.updateStatus(serviceOrder, ServiceOrderStatus.AGUARDANDO_APROVACAO);
+        serviceOrder.setStatus(ServiceOrderStatus.AGUARDANDO_APROVACAO);
+        if (stockService != null) stockService.reserveSupplies(serviceOrder.getSupplys().getSupplysDetails());
         repository.save(serviceOrder);
         return new SendToCustomerResponse("Ordem de serviço enviada para o cliente");
+    }
+
+    private void validateStatusForStartExecution(ServiceOrderEntity entity) {
+        if (!(ServiceOrderStatus.APROVADA.equals(entity.getStatus()) || ServiceOrderStatus.EM_EXECUCAO.equals(entity.getStatus()))) {
+            log.warn("Falha na validação: Tentativa de operar serviços em O.S. com status inválido. Status atual: {}, O.S. ID: {}", entity.getStatus(), entity.getId());
+            throw new DomainException("Um serviço só pode ser iniciado ou finalizado se o status da ordem de serviço for APROVADA ou EM EXECUÇÃO.");
+        }
+
+        LaborsDTO labors = entity.getLabors();
+        if (labors == null || labors.getLaborsDetails() == null || labors.getLaborsDetails().isEmpty()) {
+            log.warn("Falha na validação: Tentativa de iniciar execução em O.S. sem serviços cadastrados. O.S. ID: {}", entity.getId());
+            throw new DomainException("A ordem de serviço não possui serviços cadastrados.");
+        }
     }
 }

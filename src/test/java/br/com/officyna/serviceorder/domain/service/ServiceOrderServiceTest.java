@@ -1,12 +1,12 @@
 package br.com.officyna.serviceorder.domain.service;
 
-import br.com.officyna.administrative.supply.domain.service.StockService;
 import br.com.officyna.infrastructure.exception.DomainException;
 import br.com.officyna.infrastructure.exception.NotFoundException;
 import br.com.officyna.monitoring.domain.service.LaborMonitoringService;
 import br.com.officyna.serviceorder.api.resources.*;
 import br.com.officyna.serviceorder.domain.dto.*;
 import br.com.officyna.serviceorder.domain.entity.ServiceOrderEntity;
+import br.com.officyna.serviceorder.domain.enums.LaborSituation;
 import br.com.officyna.serviceorder.domain.enums.ServiceOrderStatus;
 import br.com.officyna.serviceorder.domain.mapper.ServiceOrderMapper;
 import br.com.officyna.serviceorder.repository.ServiceOrderRepository;
@@ -15,7 +15,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
@@ -39,9 +38,6 @@ class ServiceOrderServiceTest {
     private ServiceOrderMapper mapper;
 
     @Mock
-    private BudgetService budgetService;
-
-    @Mock
     private LaborSelectionService laborSelectionService;
 
     @Mock
@@ -55,9 +51,6 @@ class ServiceOrderServiceTest {
 
     @Mock
     private LaborMonitoringService laborMonitoringService;
-
-    @Spy
-    private StatusService statusService = new StatusService(mock(StockService.class));
 
     @InjectMocks
     private ServiceOrderService service;
@@ -165,7 +158,7 @@ class ServiceOrderServiceTest {
                 .informationText("Diagnóstico inicial")
                 .build();
 
-        LaborsDTO labors = new LaborsDTO();
+        LaborsDTO labors = new LaborsDTO(new ArrayList<>(), BigDecimal.ZERO);
         CustomerDTO customer = new CustomerDTO();
         VehicleDTO vehicle = new VehicleDTO();
         ServiceOrderEntity entity = buildEntity(null, null);
@@ -244,7 +237,8 @@ class ServiceOrderServiceTest {
         ServiceOrderEntity entity = buildEntity("id-1", ServiceOrderStatus.RECEBIDA);
         entity.setLabors(existingLabors);
 
-        LaborsDTO updatedLabors = new LaborsDTO(List.of(new LaborDetailDTO()), BigDecimal.TEN);
+        LaborDetailDTO labor = new LaborDetailDTO("lab-1", "Serviço", "Desc", BigDecimal.TEN, null, null, LaborSituation.PENDENTE, LocalDateTime.now());
+        LaborsDTO updatedLabors = new LaborsDTO(List.of(labor), BigDecimal.TEN);
         ServiceOrderResponse response = buildResponse();
 
         when(repository.findById("id-1")).thenReturn(Optional.of(entity));
@@ -263,8 +257,7 @@ class ServiceOrderServiceTest {
     @Test
     @DisplayName("removeLaborFromServiceOrder deve remover serviço pelo laborId e salvar")
     void removeLaborFromServiceOrder_ShouldRemoveLaborAndSave() {
-        LaborDetailDTO labor = new LaborDetailDTO();
-        labor.setLaborId("lab-1");
+        LaborDetailDTO labor = new LaborDetailDTO("lab-1", "Serviço", "Desc", BigDecimal.TEN, null, null, LaborSituation.PENDENTE, LocalDateTime.now());
         List<LaborDetailDTO> details = new ArrayList<>(List.of(labor));
         LaborsDTO labors = new LaborsDTO(details, BigDecimal.TEN);
 
@@ -392,8 +385,7 @@ class ServiceOrderServiceTest {
     @Test
     @DisplayName("startLabor deve iniciar serviço e mudar status para EM_EXECUCAO quando APROVADA")
     void startLabor_ShouldStart_AndTransitionToEmExecucao() {
-        LaborDetailDTO labor = new LaborDetailDTO();
-        labor.setLaborId("lab-1");
+        LaborDetailDTO labor = new LaborDetailDTO("lab-1", "Serviço", "Desc", BigDecimal.TEN, null, null, LaborSituation.PENDENTE, LocalDateTime.now());
         labor.setStartDate(null);
 
         List<LaborDetailDTO> details = new ArrayList<>(List.of(labor));
@@ -416,8 +408,7 @@ class ServiceOrderServiceTest {
     @Test
     @DisplayName("startLabor deve lançar DomainException quando serviço já iniciado")
     void startLabor_ShouldThrow_WhenLaborAlreadyStarted() {
-        LaborDetailDTO labor = new LaborDetailDTO();
-        labor.setLaborId("lab-1");
+        LaborDetailDTO labor = new LaborDetailDTO("lab-1", "Serviço", "Desc", BigDecimal.TEN, null, null, LaborSituation.PENDENTE, LocalDateTime.now());
         labor.setStartDate(LocalDateTime.now());
 
         List<LaborDetailDTO> details = new ArrayList<>(List.of(labor));
@@ -436,8 +427,7 @@ class ServiceOrderServiceTest {
     @Test
     @DisplayName("startLabor deve lançar NotFoundException quando serviço não pertence à OS")
     void startLabor_ShouldThrow_WhenLaborNotFound() {
-        LaborDetailDTO labor = new LaborDetailDTO();
-        labor.setLaborId("lab-1");
+        LaborDetailDTO labor = new LaborDetailDTO("lab-1", "Serviço", "Desc", BigDecimal.TEN, null, null, LaborSituation.PENDENTE, LocalDateTime.now());
         labor.setStartDate(null);
 
         List<LaborDetailDTO> details = new ArrayList<>(List.of(labor));
@@ -457,8 +447,7 @@ class ServiceOrderServiceTest {
     @DisplayName("startLabor deve lançar DomainException quando status da OS não permite execução")
     void startLabor_ShouldThrow_WhenStatusNotAllowed() {
         ServiceOrderEntity entity = buildEntity("id-1", ServiceOrderStatus.RECEBIDA);
-        LaborDetailDTO labor = new LaborDetailDTO();
-        labor.setLaborId("lab-1");
+        LaborDetailDTO labor = new LaborDetailDTO("lab-1", "Serviço", "Desc", BigDecimal.TEN, null, null, LaborSituation.PENDENTE, LocalDateTime.now());
         entity.setLabors(new LaborsDTO(new ArrayList<>(List.of(labor)), BigDecimal.ZERO));
 
         when(repository.findById("id-1")).thenReturn(Optional.of(entity));
@@ -473,8 +462,7 @@ class ServiceOrderServiceTest {
     @DisplayName("finishLabor deve finalizar serviço e registrar endDate")
     void finishLabor_ShouldFinish_AndRegisterEndDate() {
         LocalDateTime start = LocalDateTime.now().minusHours(4);
-        LaborDetailDTO labor = new LaborDetailDTO();
-        labor.setLaborId("lab-1");
+        LaborDetailDTO labor = new LaborDetailDTO("lab-1", "Serviço", "Desc", BigDecimal.TEN, null, null, LaborSituation.PENDENTE, LocalDateTime.now());
         labor.setStartDate(start);
         labor.setEndDate(null);
 
@@ -499,8 +487,7 @@ class ServiceOrderServiceTest {
     @Test
     @DisplayName("finishLabor deve lançar DomainException quando serviço não foi iniciado")
     void finishLabor_ShouldThrow_WhenLaborNotStarted() {
-        LaborDetailDTO labor = new LaborDetailDTO();
-        labor.setLaborId("lab-1");
+        LaborDetailDTO labor = new LaborDetailDTO("lab-1", "Serviço", "Desc", BigDecimal.TEN, null, null, LaborSituation.PENDENTE, LocalDateTime.now());
         labor.setStartDate(null);
         labor.setEndDate(null);
 
@@ -520,8 +507,7 @@ class ServiceOrderServiceTest {
     @Test
     @DisplayName("finishLabor deve lançar NotFoundException quando serviço não pertence à OS")
     void finishLabor_ShouldThrow_WhenLaborNotFound() {
-        LaborDetailDTO labor = new LaborDetailDTO();
-        labor.setLaborId("lab-1");
+        LaborDetailDTO labor = new LaborDetailDTO("lab-1", "Serviço", "Desc", BigDecimal.TEN, null, null, LaborSituation.PENDENTE, LocalDateTime.now());
         labor.setStartDate(LocalDateTime.now().minusHours(2));
         labor.setEndDate(null);
 
@@ -555,7 +541,7 @@ class ServiceOrderServiceTest {
         verify(repository).save(entity);
     }
 
-    // ─────────────── save ───────────────
+    // ─────────────── save ─────────────��─
 
     @Test
     @DisplayName("save deve calcular orçamento e persistir entidade")
@@ -567,7 +553,6 @@ class ServiceOrderServiceTest {
         ServiceOrderEntity result = service.save(entity);
 
         assertThat(result).isEqualTo(entity);
-        verify(budgetService).calculateBudget(entity);
         verify(repository).save(entity);
     }
 }

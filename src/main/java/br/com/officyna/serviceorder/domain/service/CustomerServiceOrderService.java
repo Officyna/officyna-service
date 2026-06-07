@@ -32,7 +32,6 @@ public class CustomerServiceOrderService {
     private final ServiceOrderMapper mapper;
 
     private final ServiceOrderService serviceOrderService;
-    private final StatusService statusService;
 
     public List<ServiceOrderResponse> findByCustomerDocument(String document, ServiceOrderStatus status) {
         log.info("Iniciando consulta de ordens de serviço para o documento: {} com status: {}", document, status != null ? status : "TODOS");
@@ -76,7 +75,7 @@ public class CustomerServiceOrderService {
                         item.setSituation(newSituation);
                         item.setSituationDate(now);
                     });
-            statusService.updateStatus(entity, ServiceOrderStatus.APROVADA);
+            entity.setStatus(ServiceOrderStatus.APROVADA);
         } else {
             throw new DomainException("Só é possivel atualizar a situação de um serviço para O.S AGUARDANDO APROVAÇÃO");
         }

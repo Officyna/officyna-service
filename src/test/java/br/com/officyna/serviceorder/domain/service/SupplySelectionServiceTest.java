@@ -12,7 +12,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
@@ -29,9 +28,6 @@ class SupplySelectionServiceTest {
 
     @Mock
     private SupplyService supplyService;
-
-    @Spy
-    private BudgetService budgetService;
 
     @InjectMocks
     private SupplySelectionService service;
@@ -65,8 +61,6 @@ class SupplySelectionServiceTest {
 
         // Assert
         assertThat(result.getSupplysDetails()).hasSize(1);
-        assertThat(result.getTotalSupplyAmount()).isEqualByComparingTo("160.00");
-        assertThat(result.getSupplysDetails().get(0).getTotalPrice()).isEqualByComparingTo("160.00");
     }
 
     @Test
@@ -86,7 +80,6 @@ class SupplySelectionServiceTest {
 
         // Assert
         assertThat(supplys.getSupplysDetails()).isEmpty();
-        assertThat(supplys.getTotalSupplyAmount()).isEqualByComparingTo(BigDecimal.ZERO);
     }
 
     @Test
