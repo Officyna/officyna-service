@@ -71,7 +71,6 @@ class ServiceOrderServiceTest {
     }
 
     // ─────────────── findAll ───────────────
-
     @Test
     @DisplayName("findAll deve retornar lista de respostas mapeadas")
     void findAll_ShouldReturnMappedList() {
@@ -84,6 +83,9 @@ class ServiceOrderServiceTest {
         List<ServiceOrderResponse> result = service.findAll();
 
         assertThat(result).hasSize(1).contains(response);
+
+        verify(repository).findAll();
+        verify(mapper).toResponse(entity);
     }
 
     @Test
@@ -96,6 +98,103 @@ class ServiceOrderServiceTest {
         assertThat(result).isEmpty();
     }
 
+    @Test
+    @DisplayName("findAll deve filtrar e ordenar por prioridade do status e data de criação")
+    void findAll_ShouldFilterAndSortByStatusAndCreatedAt() {
+
+        ServiceOrderEntity recebidaMaisNova = ServiceOrderEntity.builder()
+                .id("1")
+                .status(ServiceOrderStatus.RECEBIDA)
+                .createdAt(LocalDateTime.of(2025, 1, 20, 10, 0))
+                .build();
+
+        ServiceOrderEntity recebidaMaisAntiga = ServiceOrderEntity.builder()
+                .id("2")
+                .status(ServiceOrderStatus.RECEBIDA)
+                .createdAt(LocalDateTime.of(2025, 1, 10, 10, 0))
+                .build();
+
+        ServiceOrderEntity emDiagnostico = ServiceOrderEntity.builder()
+                .id("3")
+                .status(ServiceOrderStatus.EM_DIAGNOSTICO)
+                .createdAt(LocalDateTime.of(2025, 1, 15, 10, 0))
+                .build();
+
+        ServiceOrderEntity aguardandoAprovacao = ServiceOrderEntity.builder()
+                .id("4")
+                .status(ServiceOrderStatus.AGUARDANDO_APROVACAO)
+                .createdAt(LocalDateTime.of(2025, 1, 15, 10, 0))
+                .build();
+
+        ServiceOrderEntity emExecucao = ServiceOrderEntity.builder()
+                .id("5")
+                .status(ServiceOrderStatus.EM_EXECUCAO)
+                .createdAt(LocalDateTime.of(2025, 1, 15, 10, 0))
+                .build();
+
+
+        when(repository.findAll()).thenReturn(List.of(
+                recebidaMaisNova,
+                emDiagnostico,
+                aguardandoAprovacao,
+                recebidaMaisAntiga,
+                emExecucao
+        ));
+
+        ServiceOrderResponse responseExecucao = buildResponse();
+        ServiceOrderResponse responseAguardando = buildResponse();
+        ServiceOrderResponse responseDiagnostico = buildResponse();
+        ServiceOrderResponse responseRecebidaAntiga = buildResponse();
+        ServiceOrderResponse responseRecebidaNova = buildResponse();
+
+        when(mapper.toResponse(emExecucao)).thenReturn(responseExecucao);
+        when(mapper.toResponse(aguardandoAprovacao)).thenReturn(responseAguardando);
+        when(mapper.toResponse(emDiagnostico)).thenReturn(responseDiagnostico);
+        when(mapper.toResponse(recebidaMaisAntiga)).thenReturn(responseRecebidaAntiga);
+        when(mapper.toResponse(recebidaMaisNova)).thenReturn(responseRecebidaNova);
+
+        List<ServiceOrderResponse> result = service.findAll();
+
+        assertThat(result).containsExactly(
+                responseExecucao,
+                responseAguardando,
+                responseDiagnostico,
+                responseRecebidaAntiga,
+                responseRecebidaNova
+        );
+
+    }
+
+    @Test
+    @DisplayName("findAll deve ignorar ordens com status não permitidos")
+    void findAll_ShouldFilterUnsupportedStatuses() {
+
+        ServiceOrderEntity recebida = buildEntity(
+                "1",
+                ServiceOrderStatus.RECEBIDA
+        );
+
+        ServiceOrderEntity finalizada = buildEntity(
+                "2",
+                ServiceOrderStatus.FINALIZADA
+        );
+
+        ServiceOrderResponse response = buildResponse();
+
+        when(repository.findAll()).thenReturn(
+                List.of(recebida, finalizada)
+        );
+
+        when(mapper.toResponse(recebida)).thenReturn(response);
+
+        List<ServiceOrderResponse> result = service.findAll();
+
+        assertThat(result)
+                .hasSize(1)
+                .containsExactly(response);
+
+        verify(mapper, never()).toResponse(finalizada);
+    }
     // ─────────────── findById ───────────────
 
     @Test

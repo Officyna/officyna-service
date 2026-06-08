@@ -30,4 +30,14 @@ public enum ServiceOrderStatus {
         }
         throw new IllegalArgumentException("Invalid ServiceOrderStatus ID: " + id);
     }
+
+    public int getPriority() {
+        return switch (this) {
+            case EM_EXECUCAO -> 1;
+            case AGUARDANDO_APROVACAO -> 2;
+            case EM_DIAGNOSTICO -> 3;
+            case RECEBIDA -> 4;
+            default -> Integer.MAX_VALUE;
+        };
+    }
 }
