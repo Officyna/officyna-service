@@ -67,7 +67,7 @@ public class ServiceOrderService {
                         Comparator
                                 .comparingInt((ServiceOrderEntity order) ->
                                         order.getStatus().getPriority())
-                                .thenComparing(ServiceOrderEntity::getRegistrationDate)
+                                .thenComparing(ServiceOrderEntity::getCreatedAt)
                 )
                 .toList();
     }
