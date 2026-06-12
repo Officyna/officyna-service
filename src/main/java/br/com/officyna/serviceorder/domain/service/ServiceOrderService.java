@@ -60,6 +60,7 @@ public class ServiceOrderService {
                 .filter(order ->
                         order.getStatus() == ServiceOrderStatus.EM_EXECUCAO
                                 || order.getStatus() == ServiceOrderStatus.AGUARDANDO_APROVACAO
+                                || order.getStatus() == ServiceOrderStatus.APROVADA
                                 || order.getStatus() == ServiceOrderStatus.EM_DIAGNOSTICO
                                 || order.getStatus() == ServiceOrderStatus.RECEBIDA)
                 .sorted(

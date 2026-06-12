@@ -35,8 +35,9 @@ public enum ServiceOrderStatus {
         return switch (this) {
             case EM_EXECUCAO -> 1;
             case AGUARDANDO_APROVACAO -> 2;
-            case EM_DIAGNOSTICO -> 3;
-            case RECEBIDA -> 4;
+            case APROVADA -> 3;
+            case EM_DIAGNOSTICO -> 4;
+            case RECEBIDA -> 5;
             default -> Integer.MAX_VALUE;
         };
     }
