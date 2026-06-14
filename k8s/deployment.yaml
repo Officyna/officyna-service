@@ -38,23 +38,17 @@ spec:
               cpu: "1000m"
               memory: "1Gi"
           startupProbe:
-            httpGet:
-              path: /actuator/health
+            tcpSocket:
               port: http
-            periodSeconds: 10
-            timeoutSeconds: 5
-            failureThreshold: 30
+            periodSeconds: 5
+            failureThreshold: 40
           readinessProbe:
-            httpGet:
-              path: /actuator/health
+            tcpSocket:
               port: http
             periodSeconds: 10
-            timeoutSeconds: 5
             failureThreshold: 6
           livenessProbe:
-            httpGet:
-              path: /actuator/health
+            tcpSocket:
               port: http
             periodSeconds: 15
-            timeoutSeconds: 5
             failureThreshold: 3
