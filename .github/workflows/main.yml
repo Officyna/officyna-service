@@ -158,3 +158,13 @@ jobs:
         run: |
           kubectl rollout status deployment/officyna-service --namespace officyna --timeout=180s
           kubectl get pods,svc,hpa --namespace officyna
+
+      - name: Diagnóstico em caso de falha
+        if: failure()
+        run: |
+          echo "===== PODS ====="
+          kubectl get pods -n officyna -o wide
+          echo "===== DESCRIBE ====="
+          kubectl describe pods -n officyna
+          echo "===== LOGS ====="
+          kubectl logs -n officyna -l app.kubernetes.io/name=officyna --tail=120 --all-containers || true
