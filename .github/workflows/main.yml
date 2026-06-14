@@ -144,15 +144,10 @@ jobs:
 
       - name: Aplicar Deployment, Service e HPA
         run: |
+          sed -i "s|image: ${IMAGE_NAME}:latest|image: ${IMAGE_NAME}:sha-${GITHUB_SHA::7}|" k8s/deployment.yaml
           kubectl apply -f k8s/deployment.yaml
           kubectl apply -f k8s/service.yaml
           kubectl apply -f k8s/hpa.yaml
-
-      - name: Atualizar imagem do Deployment para o SHA atual
-        run: |
-          kubectl set image deployment/officyna-service \
-            officyna-service=${{ env.IMAGE_NAME }}:sha-${GITHUB_SHA::7} \
-            --namespace officyna
 
       - name: Aguardar rollout da aplicação
         run: |
@@ -166,5 +161,9 @@ jobs:
           kubectl get pods -n officyna -o wide
           echo "===== DESCRIBE ====="
           kubectl describe pods -n officyna
-          echo "===== LOGS ====="
-          kubectl logs -n officyna -l app.kubernetes.io/name=officyna --tail=120 --all-containers || true
+          echo "===== LOGS (por pod) ====="
+          for p in $(kubectl get pods -n officyna -o name); do
+            echo "----- $p -----"
+            kubectl logs -n officyna "$p" --tail=150 || true
+            kubectl logs -n officyna "$p" --previous --tail=60 2>/dev/null || true
+          done
