@@ -1,0 +1,162 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+      - developer
+      - feat/112-automacao-ciclo-vida
+  pull_request:
+    branches:
+      - main
+      - developer
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  IMAGE_NAME: ghcr.io/${{ github.repository_owner }}/officyna-service
+  JAVA_VERSION: "21"
+
+jobs:
+  build-test:
+    name: Build e Testes
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout do código
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Configurar JDK ${{ env.JAVA_VERSION }} (Temurin)
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ env.JAVA_VERSION }}
+          cache: maven
+
+      - name: Compilar e executar testes (mvn verify)
+        run: mvn --batch-mode --update-snapshots verify
+
+      - name: Análise de qualidade (SonarCloud)
+        if: ${{ env.SONAR_TOKEN != '' }}
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: |
+          mvn --batch-mode sonar:sonar \
+            -Dsonar.host.url=https://sonarcloud.io \
+            -Dsonar.organization=${{ vars.SONAR_ORGANIZATION }} \
+            -Dsonar.projectKey=${{ vars.SONAR_PROJECT_KEY }} \
+            -Dsonar.token=${{ secrets.SONAR_TOKEN }}
+
+      - name: Publicar relatório de testes
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-reports
+          path: |
+            target/surefire-reports/
+            target/failsafe-reports/
+          if-no-files-found: ignore
+
+  docker:
+    name: Build e Push da Imagem Docker
+    runs-on: ubuntu-latest
+    needs: build-test
+    if: github.event_name == 'push'
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      image_tag: ${{ steps.meta.outputs.version }}
+    steps:
+      - name: Checkout do código
+        uses: actions/checkout@v4
+
+      - name: Login no GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Definir tags e metadados da imagem
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.IMAGE_NAME }}
+          tags: |
+            type=sha
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=ref,event=branch
+
+      - name: Build e push da imagem
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  deploy:
+    name: Deploy no Kubernetes
+    runs-on: ubuntu-latest
+    needs: docker
+    if: github.event_name == 'push'
+    permissions:
+      contents: read
+      packages: read
+    steps:
+      - name: Checkout do código
+        uses: actions/checkout@v4
+
+      - name: Criar cluster Kubernetes (kind)
+        uses: helm/kind-action@v1
+        with:
+          cluster_name: officyna
+
+      - name: Instalar metrics-server (necessário para o HPA)
+        run: |
+          kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
+          kubectl patch -n kube-system deployment metrics-server --type=json \
+            -p='[{"op":"add","path":"/spec/template/spec/containers/0/args/-","value":"--kubelet-insecure-tls"}]'
+
+      - name: Carregar a imagem no cluster kind
+        run: |
+          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+          docker pull ${{ env.IMAGE_NAME }}:sha-${GITHUB_SHA::7}
+          kind load docker-image ${{ env.IMAGE_NAME }}:sha-${GITHUB_SHA::7} --name officyna
+
+      - name: Aplicar namespace e configmap
+        run: |
+          kubectl apply -f k8s/namespace.yaml
+          kubectl apply -f k8s/configmap.yaml
+
+      - name: Criar Secret a partir dos GitHub Secrets
+        run: |
+          kubectl create secret generic officyna-secret \
+            --namespace officyna \
+            --from-literal=MONGODB_URI="${{ secrets.MONGODB_URI }}" \
+            --from-literal=JWT_SECRET="${{ secrets.JWT_SECRET }}" \
+            --dry-run=client -o yaml | kubectl apply -f -
+
+      - name: Aplicar Deployment, Service e HPA
+        run: |
+          kubectl apply -f k8s/deployment.yaml
+          kubectl apply -f k8s/service.yaml
+          kubectl apply -f k8s/hpa.yaml
+
+      - name: Atualizar imagem do Deployment para o SHA atual
+        run: |
+          kubectl set image deployment/officyna-service \
+            officyna-service=${{ env.IMAGE_NAME }}:sha-${GITHUB_SHA::7} \
+            --namespace officyna
+
+      - name: Aguardar rollout da aplicação
+        run: |
+          kubectl rollout status deployment/officyna-service --namespace officyna --timeout=180s
+          kubectl get pods,svc,hpa --namespace officyna
