@@ -5,11 +5,11 @@ import br.com.officyna.infrastructure.exception.DomainException;
 import br.com.officyna.infrastructure.exception.NotFoundException;
 import br.com.officyna.serviceorder.api.resources.ModifySituationRequest;
 import br.com.officyna.serviceorder.api.resources.ServiceOrderResponse;
-import br.com.officyna.serviceorder.domain.entity.ServiceOrderEntity;
+import br.com.officyna.serviceorder.domain.entity.ServiceOrder;
 import br.com.officyna.serviceorder.domain.enums.LaborSituation;
 import br.com.officyna.serviceorder.domain.enums.ServiceOrderStatus;
 import br.com.officyna.serviceorder.domain.mapper.ServiceOrderMapper;
-import br.com.officyna.serviceorder.domain.repository.IServiceOrderRepository;
+import br.com.officyna.serviceorder.domain.repository.ServiceOrderRepository;
 import lombok.extern.slf4j.Slf4j;
 
 import java.time.LocalDateTime;
@@ -21,7 +21,7 @@ import java.util.stream.Collectors;
 @Slf4j
 public class CustomerServiceOrderService {
 
-    private final IServiceOrderRepository serviceOrderRepository;
+    private final ServiceOrderRepository repository;
 
     private final CustomerAndMecnichalService customerService;
 
@@ -29,11 +29,11 @@ public class CustomerServiceOrderService {
 
     private final ServiceOrderService serviceOrderService;
 
-    public CustomerServiceOrderService(IServiceOrderRepository serviceOrderRepository,
+    public CustomerServiceOrderService(ServiceOrderRepository repository,
                                        CustomerAndMecnichalService customerService,
                                        ServiceOrderMapper mapper,
                                        ServiceOrderService serviceOrderService) {
-        this.serviceOrderRepository = serviceOrderRepository;
+        this.repository = repository;
         this.customerService = customerService;
         this.mapper = mapper;
         this.serviceOrderService = serviceOrderService;
@@ -45,7 +45,7 @@ public class CustomerServiceOrderService {
         CustomerResponse customerResponse = customerService.getCustomerByDocument(document);
         log.debug("Cliente identificado para o documento {}: ID {}", document, customerResponse.id());
 
-        List<ServiceOrderEntity> entityList = serviceOrderRepository.findByCustomerId(customerResponse.id());
+        List<ServiceOrder> entityList = repository.findByCustomerId(customerResponse.id());
         log.debug("Total de ordens encontradas no banco para o cliente {}: {}", customerResponse.id(), entityList.size());
 
         List<ServiceOrderResponse> response = new ArrayList<>();
@@ -65,7 +65,7 @@ public class CustomerServiceOrderService {
     }
 
     public ServiceOrderResponse updateLaborSituation(String serviceOrderId, List<ModifySituationRequest> request) {
-        ServiceOrderEntity entity = serviceOrderRepository.findById(serviceOrderId)
+        ServiceOrder entity = repository.findById(serviceOrderId)
                 .orElseThrow(() -> NotFoundException.of("Service Order", serviceOrderId));
         if(entity.getStatus().equals(ServiceOrderStatus.AGUARDANDO_APROVACAO)) {
             LocalDateTime now = LocalDateTime.now();

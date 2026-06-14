@@ -1,7 +1,7 @@
 package br.com.officyna.infrastructure.persistence.mongodb.gateway;
 
-import br.com.officyna.administrative.user.domain.UserEntity;
-import br.com.officyna.administrative.user.domain.repository.IUserRepository;
+import br.com.officyna.administrative.user.domain.entity.User;
+import br.com.officyna.administrative.user.domain.repository.UserRepository;
 import br.com.officyna.infrastructure.persistence.mapper.UserEntityDocumentMapper;
 import br.com.officyna.infrastructure.persistence.mongodb.repository.UserMongoRepository;
 import lombok.RequiredArgsConstructor;
@@ -17,25 +17,25 @@ import java.util.Optional;
  */
 @Component
 @RequiredArgsConstructor
-public class UserRepositoryGateway implements IUserRepository {
+public class UserRepositoryGateway implements UserRepository {
 
     private final UserMongoRepository mongoRepository;
     private final UserEntityDocumentMapper mapper;
 
     @Override
-    public UserEntity save(UserEntity entity) {
+    public User save(User entity) {
         var document = mapper.toDocument(entity);
         var saved = mongoRepository.save(document);
         return mapper.toEntity(saved);
     }
 
     @Override
-    public Optional<UserEntity> findById(String id) {
+    public Optional<User> findById(String id) {
         return mongoRepository.findById(id).map(mapper::toEntity);
     }
 
     @Override
-    public List<UserEntity> findAll() {
+    public List<User> findAll() {
         return mongoRepository.findAll()
                 .stream()
                 .map(mapper::toEntity)
@@ -53,7 +53,7 @@ public class UserRepositoryGateway implements IUserRepository {
     }
 
     @Override
-    public Optional<UserEntity> findByEmail(String email) {
+    public Optional<User> findByEmail(String email) {
         return mongoRepository.findByEmail(email).map(mapper::toEntity);
     }
 
@@ -63,7 +63,7 @@ public class UserRepositoryGateway implements IUserRepository {
     }
 
     @Override
-    public List<UserEntity> findByActiveTrue() {
+    public List<User> findByActiveTrue() {
         return mongoRepository.findByActiveTrue()
                 .stream()
                 .map(mapper::toEntity)

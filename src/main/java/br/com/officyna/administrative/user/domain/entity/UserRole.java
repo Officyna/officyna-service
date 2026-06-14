@@ -1,4 +1,4 @@
-package br.com.officyna.administrative.user.domain;
+package br.com.officyna.administrative.user.domain.entity;
 
 import lombok.Getter;
 

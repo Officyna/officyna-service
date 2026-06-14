@@ -1,4 +1,4 @@
-package br.com.officyna.administrative.customer.domain;
+package br.com.officyna.administrative.customer.domain.entity;
 
 import lombok.*;
 
@@ -6,7 +6,7 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class AddressEntity {
+public class Address {
 
     private String street;
     private String number;

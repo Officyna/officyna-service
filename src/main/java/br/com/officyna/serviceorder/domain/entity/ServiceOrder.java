@@ -17,7 +17,7 @@ import static lombok.AccessLevel.NONE;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class ServiceOrderEntity {
+public class ServiceOrder {
 
     private String id;
 

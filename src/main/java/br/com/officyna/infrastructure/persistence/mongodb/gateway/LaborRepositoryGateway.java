@@ -1,7 +1,7 @@
 package br.com.officyna.infrastructure.persistence.mongodb.gateway;
 
-import br.com.officyna.administrative.labor.domain.LaborEntity;
-import br.com.officyna.administrative.labor.domain.repository.ILaborRepository;
+import br.com.officyna.administrative.labor.domain.entity.Labor;
+import br.com.officyna.administrative.labor.domain.repository.LaborRepository;
 import br.com.officyna.infrastructure.persistence.mapper.LaborEntityDocumentMapper;
 import br.com.officyna.infrastructure.persistence.mongodb.repository.LaborMongoRepository;
 import lombok.RequiredArgsConstructor;
@@ -17,25 +17,25 @@ import java.util.Optional;
  */
 @Component
 @RequiredArgsConstructor
-public class LaborRepositoryGateway implements ILaborRepository {
+public class LaborRepositoryGateway implements LaborRepository {
 
     private final LaborMongoRepository mongoRepository;
     private final LaborEntityDocumentMapper mapper;
 
     @Override
-    public LaborEntity save(LaborEntity entity) {
+    public Labor save(Labor entity) {
         var document = mapper.toDocument(entity);
         var saved = mongoRepository.save(document);
         return mapper.toEntity(saved);
     }
 
     @Override
-    public Optional<LaborEntity> findById(String id) {
+    public Optional<Labor> findById(String id) {
         return mongoRepository.findById(id).map(mapper::toEntity);
     }
 
     @Override
-    public List<LaborEntity> findAll() {
+    public List<Labor> findAll() {
         return mongoRepository.findAll()
                 .stream()
                 .map(mapper::toEntity)
@@ -53,7 +53,7 @@ public class LaborRepositoryGateway implements ILaborRepository {
     }
 
     @Override
-    public Optional<LaborEntity> findByName(String name) {
+    public Optional<Labor> findByName(String name) {
         return mongoRepository.findByName(name).map(mapper::toEntity);
     }
 
@@ -63,7 +63,7 @@ public class LaborRepositoryGateway implements ILaborRepository {
     }
 
     @Override
-    public List<LaborEntity> findByActiveTrue() {
+    public List<Labor> findByActiveTrue() {
         return mongoRepository.findByActiveTrue()
                 .stream()
                 .map(mapper::toEntity)

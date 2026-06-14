@@ -1,5 +1,8 @@
 package br.com.officyna.administrative.customer.domain;
 
+import br.com.officyna.administrative.customer.domain.entity.Address;
+import br.com.officyna.administrative.customer.domain.entity.Customer;
+import br.com.officyna.administrative.customer.domain.entity.CustomerType;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -7,7 +10,7 @@ import java.time.LocalDateTime;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class CustomerEntityTest {
+class CustomerTest {
 
     @Test
     @DisplayName("Deve validar a criação da entidade via Builder e Getters")
@@ -21,7 +24,7 @@ class CustomerEntityTest {
         String countryCode = "+55";
         LocalDateTime now = LocalDateTime.now();
 
-        AddressEntity address = AddressEntity.builder()
+        Address address = Address.builder()
                 .street("Rua das Flores")
                 .number("100")
                 .complement("Apto 10")
@@ -32,7 +35,7 @@ class CustomerEntityTest {
                 .country("Brasil")
                 .build();
 
-        CustomerEntity entity = CustomerEntity.builder()
+        Customer entity = Customer.builder()
                 .id(id)
                 .name(name)
                 .document(document)

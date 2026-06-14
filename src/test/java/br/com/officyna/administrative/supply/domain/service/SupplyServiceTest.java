@@ -2,10 +2,10 @@ package br.com.officyna.administrative.supply.domain.service;
 
 import br.com.officyna.administrative.supply.api.resources.SupplyRequest;
 import br.com.officyna.administrative.supply.api.resources.SupplyResponse;
-import br.com.officyna.administrative.supply.domain.SupplyEntity;
-import br.com.officyna.administrative.supply.domain.SupplyType;
+import br.com.officyna.administrative.supply.domain.entity.Supply;
+import br.com.officyna.administrative.supply.domain.entity.SupplyType;
 import br.com.officyna.administrative.supply.domain.mapper.SupplyMapper;
-import br.com.officyna.administrative.supply.repository.SupplyRepository;
+import br.com.officyna.administrative.supply.domain.repository.SupplyRepository;
 import br.com.officyna.infrastructure.exception.DomainException;
 import br.com.officyna.infrastructure.exception.NotFoundException;
 import org.junit.jupiter.api.DisplayName;
@@ -36,8 +36,8 @@ class SupplyServiceTest {
     @InjectMocks
     private SupplyService supplyService;
 
-    private SupplyEntity createSupplyEntity(String id, String name, SupplyType type, boolean active) {
-        return SupplyEntity.builder()
+    private Supply createSupplyEntity(String id, String name, SupplyType type, boolean active) {
+        return Supply.builder()
                 .id(id)
                 .name(name)
                 .description("Descrição de " + name)
@@ -68,8 +68,8 @@ class SupplyServiceTest {
     @Test
     @DisplayName("Deve retornar todos os insumos e peças ativos")
     void findAll_ShouldReturnActiveSupplies() {
-        SupplyEntity entity1 = createSupplyEntity("1", "Óleo Motor", SupplyType.SUPPLY, true);
-        SupplyEntity entity2 = createSupplyEntity("2", "Pastilha de Freio", SupplyType.PART, true);
+        Supply entity1 = createSupplyEntity("1", "Óleo Motor", SupplyType.SUPPLY, true);
+        Supply entity2 = createSupplyEntity("2", "Pastilha de Freio", SupplyType.PART, true);
         SupplyResponse response1 = createSupplyResponse("1", "Óleo Motor");
         SupplyResponse response2 = createSupplyResponse("2", "Pastilha de Freio");
 
@@ -84,13 +84,13 @@ class SupplyServiceTest {
         assertEquals("Óleo Motor", result.get(0).name());
         assertEquals("Pastilha de Freio", result.get(1).name());
         verify(supplyRepository, times(1)).findByActiveTrue();
-        verify(supplyMapper, times(2)).toResponse(any(SupplyEntity.class));
+        verify(supplyMapper, times(2)).toResponse(any(Supply.class));
     }
 
     @Test
     @DisplayName("Deve retornar insumos e peças filtrados por tipo")
     void findByType_ShouldReturnSuppliesByType() {
-        SupplyEntity entity = createSupplyEntity("1", "Óleo Motor", SupplyType.SUPPLY, true);
+        Supply entity = createSupplyEntity("1", "Óleo Motor", SupplyType.SUPPLY, true);
         SupplyResponse response = createSupplyResponse("1", "Óleo Motor");
 
         when(supplyRepository.findByActiveTrueAndType(SupplyType.SUPPLY)).thenReturn(List.of(entity));
@@ -102,14 +102,14 @@ class SupplyServiceTest {
         assertEquals(1, result.size());
         assertEquals("Óleo Motor", result.get(0).name());
         verify(supplyRepository, times(1)).findByActiveTrueAndType(SupplyType.SUPPLY);
-        verify(supplyMapper, times(1)).toResponse(any(SupplyEntity.class));
+        verify(supplyMapper, times(1)).toResponse(any(Supply.class));
     }
 
     @Test
     @DisplayName("Deve retornar um insumo pelo ID")
     void findById_ShouldReturnSupplyResponse() {
         String id = "123";
-        SupplyEntity entity = createSupplyEntity(id, "Óleo Motor", SupplyType.SUPPLY, true);
+        Supply entity = createSupplyEntity(id, "Óleo Motor", SupplyType.SUPPLY, true);
         SupplyResponse response = createSupplyResponse(id, "Óleo Motor");
 
         when(supplyRepository.findById(id)).thenReturn(Optional.of(entity));
@@ -132,15 +132,15 @@ class SupplyServiceTest {
 
         assertThrows(NotFoundException.class, () -> supplyService.findById(id));
         verify(supplyRepository, times(1)).findById(id);
-        verify(supplyMapper, never()).toResponse(any(SupplyEntity.class));
+        verify(supplyMapper, never()).toResponse(any(Supply.class));
     }
 
     @Test
     @DisplayName("Deve criar um novo insumo com sucesso")
     void create_ShouldReturnCreatedSupplyResponse() {
         SupplyRequest request = createSupplyRequest("Novo Insumo");
-        SupplyEntity entity = createSupplyEntity(null, "Novo Insumo", SupplyType.SUPPLY, true);
-        SupplyEntity savedEntity = createSupplyEntity("newId", "Novo Insumo", SupplyType.SUPPLY, true);
+        Supply entity = createSupplyEntity(null, "Novo Insumo", SupplyType.SUPPLY, true);
+        Supply savedEntity = createSupplyEntity("newId", "Novo Insumo", SupplyType.SUPPLY, true);
         SupplyResponse response = createSupplyResponse("newId", "Novo Insumo");
 
         when(supplyRepository.existsByName(request.name())).thenReturn(false);
@@ -168,7 +168,7 @@ class SupplyServiceTest {
         assertThrows(DomainException.class, () -> supplyService.create(request));
         verify(supplyRepository, times(1)).existsByName(request.name());
         verify(supplyMapper, never()).toEntity(any(SupplyRequest.class));
-        verify(supplyRepository, never()).save(any(SupplyEntity.class));
+        verify(supplyRepository, never()).save(any(Supply.class));
     }
 
     @Test
@@ -176,8 +176,8 @@ class SupplyServiceTest {
     void update_ShouldReturnUpdatedSupplyResponse() {
         String id = "123";
         SupplyRequest request = createSupplyRequest("Insumo Atualizado");
-        SupplyEntity existingEntity = createSupplyEntity(id, "Insumo Original", SupplyType.SUPPLY, true);
-        SupplyEntity updatedEntity = createSupplyEntity(id, "Insumo Atualizado", SupplyType.SUPPLY, true);
+        Supply existingEntity = createSupplyEntity(id, "Insumo Original", SupplyType.SUPPLY, true);
+        Supply updatedEntity = createSupplyEntity(id, "Insumo Atualizado", SupplyType.SUPPLY, true);
         SupplyResponse response = createSupplyResponse(id, "Insumo Atualizado");
 
         when(supplyRepository.findById(id)).thenReturn(Optional.of(existingEntity));
@@ -203,7 +203,7 @@ class SupplyServiceTest {
     void update_ShouldThrowDomainException_WhenNameExists() {
         String id = "123";
         SupplyRequest request = createSupplyRequest("Nome Já Existente");
-        SupplyEntity existingEntity = createSupplyEntity(id, "Insumo Original", SupplyType.SUPPLY, true);
+        Supply existingEntity = createSupplyEntity(id, "Insumo Original", SupplyType.SUPPLY, true);
 
         when(supplyRepository.findById(id)).thenReturn(Optional.of(existingEntity));
         when(supplyRepository.existsByName(request.name())).thenReturn(true);
@@ -211,16 +211,16 @@ class SupplyServiceTest {
         assertThrows(DomainException.class, () -> supplyService.update(id, request));
         verify(supplyRepository, times(1)).findById(id);
         verify(supplyRepository, times(1)).existsByName(request.name());
-        verify(supplyMapper, never()).updateEntity(any(SupplyEntity.class), any(SupplyRequest.class));
-        verify(supplyRepository, never()).save(any(SupplyEntity.class));
+        verify(supplyMapper, never()).updateEntity(any(Supply.class), any(SupplyRequest.class));
+        verify(supplyRepository, never()).save(any(Supply.class));
     }
 
     @Test
     @DisplayName("Deve desativar um insumo ao invés de deletar fisicamente")
     void delete_ShouldDeactivateSupply() {
         String id = "123";
-        SupplyEntity entity = createSupplyEntity(id, "Insumo para Deletar", SupplyType.SUPPLY, true);
-        SupplyEntity deactivatedEntity = createSupplyEntity(id, "Insumo para Deletar", SupplyType.SUPPLY, false);
+        Supply entity = createSupplyEntity(id, "Insumo para Deletar", SupplyType.SUPPLY, true);
+        Supply deactivatedEntity = createSupplyEntity(id, "Insumo para Deletar", SupplyType.SUPPLY, false);
 
         when(supplyRepository.findById(id)).thenReturn(Optional.of(entity));
         when(supplyRepository.save(entity)).thenReturn(deactivatedEntity);
@@ -240,6 +240,6 @@ class SupplyServiceTest {
 
         assertThrows(NotFoundException.class, () -> supplyService.delete(id));
         verify(supplyRepository, times(1)).findById(id);
-        verify(supplyRepository, never()).save(any(SupplyEntity.class));
+        verify(supplyRepository, never()).save(any(Supply.class));
     }
 }

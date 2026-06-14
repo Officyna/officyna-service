@@ -1,17 +1,17 @@
 package br.com.officyna.administrative.vehicle.domain.mapper;
 
 
-import br.com.officyna.administrative.customer.domain.CustomerEntity;
+import br.com.officyna.administrative.customer.domain.entity.Customer;
 import br.com.officyna.administrative.vehicle.api.resources.VehicleRequest;
 import br.com.officyna.administrative.vehicle.api.resources.VehicleResponse;
-import br.com.officyna.administrative.vehicle.domain.VehicleEntity;
+import br.com.officyna.administrative.vehicle.domain.entity.Vehicle;
 import org.springframework.stereotype.Component;
 
 @Component
 public class VehicleMapper {
 
-    public VehicleEntity toEntity(VehicleRequest request, CustomerEntity customer) {
-        return VehicleEntity.builder()
+    public Vehicle toEntity(VehicleRequest request, Customer customer) {
+        return Vehicle.builder()
                 .customerId(customer.getId())
                 .customerName(customer.getName())
                 .plate(request.plate().toUpperCase())
@@ -23,7 +23,7 @@ public class VehicleMapper {
                 .build();
     }
 
-    public VehicleResponse toResponse(VehicleEntity entity) {
+    public VehicleResponse toResponse(Vehicle entity) {
         return new VehicleResponse(
                 entity.getId(),
                 entity.getCustomerId(),
@@ -38,7 +38,7 @@ public class VehicleMapper {
         );
     }
 
-    public void updateEntity(VehicleEntity entity, VehicleRequest request, CustomerEntity customer) {
+    public void updateEntity(Vehicle entity, VehicleRequest request, Customer customer) {
         entity.setCustomerId(customer.getId());
         entity.setCustomerName(customer.getName());
         entity.setPlate(request.plate().toUpperCase());

@@ -1,7 +1,7 @@
 package br.com.officyna.infrastructure.persistence.mongodb.gateway;
 
-import br.com.officyna.administrative.customer.domain.CustomerEntity;
-import br.com.officyna.administrative.customer.domain.repository.ICustomerRepository;
+import br.com.officyna.administrative.customer.domain.entity.Customer;
+import br.com.officyna.administrative.customer.domain.repository.CustomerRepository;
 import br.com.officyna.infrastructure.persistence.mapper.CustomerEntityDocumentMapper;
 import br.com.officyna.infrastructure.persistence.mongodb.repository.CustomerMongoRepository;
 import lombok.RequiredArgsConstructor;
@@ -17,25 +17,25 @@ import java.util.Optional;
  */
 @Component
 @RequiredArgsConstructor
-public class CustomerRepositoryGateway implements ICustomerRepository {
+public class CustomerRepositoryGateway implements CustomerRepository {
 
     private final CustomerMongoRepository mongoRepository;
     private final CustomerEntityDocumentMapper mapper;
 
     @Override
-    public CustomerEntity save(CustomerEntity entity) {
+    public Customer save(Customer entity) {
         var document = mapper.toDocument(entity);
         var saved = mongoRepository.save(document);
         return mapper.toEntity(saved);
     }
 
     @Override
-    public Optional<CustomerEntity> findById(String id) {
+    public Optional<Customer> findById(String id) {
         return mongoRepository.findById(id).map(mapper::toEntity);
     }
 
     @Override
-    public List<CustomerEntity> findAll() {
+    public List<Customer> findAll() {
         return mongoRepository.findAll()
                 .stream()
                 .map(mapper::toEntity)
@@ -53,7 +53,7 @@ public class CustomerRepositoryGateway implements ICustomerRepository {
     }
 
     @Override
-    public Optional<CustomerEntity> findByDocument(String document) {
+    public Optional<Customer> findByDocument(String document) {
         return mongoRepository.findByDocument(document).map(mapper::toEntity);
     }
 
@@ -63,7 +63,7 @@ public class CustomerRepositoryGateway implements ICustomerRepository {
     }
 
     @Override
-    public List<CustomerEntity> findByActiveTrue() {
+    public List<Customer> findByActiveTrue() {
         return mongoRepository.findByActiveTrue()
                 .stream()
                 .map(mapper::toEntity)

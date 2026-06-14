@@ -11,7 +11,7 @@ import static lombok.AccessLevel.NONE;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class LaborMonitoringEntity {
+public class LaborMonitoring {
 
     private String id;
 

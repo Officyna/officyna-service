@@ -3,7 +3,7 @@ package br.com.officyna.administrative.customer.api.controller;
 import br.com.officyna.administrative.customer.api.resources.AddressDTO;
 import br.com.officyna.administrative.customer.api.resources.CustomerRequest;
 import br.com.officyna.administrative.customer.api.resources.CustomerResponse;
-import br.com.officyna.administrative.customer.domain.CustomerType;
+import br.com.officyna.administrative.customer.domain.entity.CustomerType;
 import br.com.officyna.administrative.customer.domain.service.CustomerService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;

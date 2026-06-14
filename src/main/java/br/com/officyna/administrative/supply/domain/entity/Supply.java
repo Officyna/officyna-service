@@ -1,4 +1,4 @@
-package br.com.officyna.administrative.supply.domain;
+package br.com.officyna.administrative.supply.domain.entity;
 
 import br.com.officyna.infrastructure.exception.DomainException;
 import lombok.*;
@@ -13,7 +13,7 @@ import static lombok.AccessLevel.NONE;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class SupplyEntity {
+public class Supply {
 
     private String id;
 

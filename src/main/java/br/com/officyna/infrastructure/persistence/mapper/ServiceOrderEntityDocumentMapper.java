@@ -1,6 +1,6 @@
 package br.com.officyna.infrastructure.persistence.mapper;
 
-import br.com.officyna.serviceorder.domain.entity.ServiceOrderEntity;
+import br.com.officyna.serviceorder.domain.entity.ServiceOrder;
 import br.com.officyna.infrastructure.persistence.mongodb.model.ServiceOrderDocument;
 import org.springframework.stereotype.Component;
 
@@ -10,7 +10,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class ServiceOrderEntityDocumentMapper {
 
-    public ServiceOrderDocument toDocument(ServiceOrderEntity entity) {
+    public ServiceOrderDocument toDocument(ServiceOrder entity) {
         if (entity == null) {
             return null;
         }
@@ -38,11 +38,11 @@ public class ServiceOrderEntityDocumentMapper {
                 .build();
     }
 
-    public ServiceOrderEntity toEntity(ServiceOrderDocument document) {
+    public ServiceOrder toEntity(ServiceOrderDocument document) {
         if (document == null) {
             return null;
         }
-        return ServiceOrderEntity.builder()
+        return ServiceOrder.builder()
                 .id(document.getId())
                 .serviceOrderNumber(document.getServiceOrderNumber())
                 .vehicle((br.com.officyna.serviceorder.domain.dto.VehicleDTO) document.getVehicle())

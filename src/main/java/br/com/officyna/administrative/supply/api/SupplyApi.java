@@ -2,7 +2,7 @@ package br.com.officyna.administrative.supply.api;
 
 import br.com.officyna.administrative.supply.api.resources.SupplyRequest;
 import br.com.officyna.administrative.supply.api.resources.SupplyResponse;
-import br.com.officyna.administrative.supply.domain.SupplyType;
+import br.com.officyna.administrative.supply.domain.entity.SupplyType;
 import br.com.officyna.infrastructure.exception.ErrorResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;

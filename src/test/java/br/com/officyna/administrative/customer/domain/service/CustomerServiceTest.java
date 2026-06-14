@@ -3,11 +3,11 @@ package br.com.officyna.administrative.customer.domain.service;
 import br.com.officyna.administrative.customer.api.resources.AddressDTO;
 import br.com.officyna.administrative.customer.api.resources.CustomerRequest;
 import br.com.officyna.administrative.customer.api.resources.CustomerResponse;
-import br.com.officyna.administrative.customer.domain.AddressEntity;
-import br.com.officyna.administrative.customer.domain.CustomerEntity;
-import br.com.officyna.administrative.customer.domain.CustomerType;
+import br.com.officyna.administrative.customer.domain.entity.Address;
+import br.com.officyna.administrative.customer.domain.entity.Customer;
+import br.com.officyna.administrative.customer.domain.entity.CustomerType;
 import br.com.officyna.administrative.customer.domain.mapper.CustomerMapper;
-import br.com.officyna.administrative.customer.repository.CustomerRepository;
+import br.com.officyna.administrative.customer.domain.repository.CustomerRepository;
 import br.com.officyna.infrastructure.exception.DomainException;
 import br.com.officyna.infrastructure.exception.NotFoundException;
 import org.junit.jupiter.api.DisplayName;
@@ -44,8 +44,8 @@ class CustomerServiceTest {
     private static final String CPF_FORMATTED    = "123.456.789-09";
     private static final String CPF_ALT_FORMATTED = "529.982.247-25";
 
-    private CustomerEntity createCustomerEntity(String id, String document, boolean active) {
-        return CustomerEntity.builder()
+    private Customer createCustomerEntity(String id, String document, boolean active) {
+        return Customer.builder()
                 .id(id)
                 .name("João Silva")
                 .document(document)
@@ -54,7 +54,7 @@ class CustomerServiceTest {
                 .phone("99999-9999")
                 .areaCode("11")
                 .countryCode("+55")
-                .address(AddressEntity.builder()
+                .address(Address.builder()
                         .street("Rua das Flores")
                         .number("100")
                         .neighborhood("Centro")
@@ -83,8 +83,8 @@ class CustomerServiceTest {
     @Test
     @DisplayName("Deve retornar todos os clientes ativos")
     void findAll_ShouldReturnActiveCustomers() {
-        CustomerEntity entity1 = createCustomerEntity("1", CPF_NORMALIZED, true);
-        CustomerEntity entity2 = createCustomerEntity("2", CPF_ALT_NORMALIZED, true);
+        Customer entity1 = createCustomerEntity("1", CPF_NORMALIZED, true);
+        Customer entity2 = createCustomerEntity("2", CPF_ALT_NORMALIZED, true);
         CustomerResponse response1 = createCustomerResponse("1", CPF_NORMALIZED);
         CustomerResponse response2 = createCustomerResponse("2", CPF_ALT_NORMALIZED);
 
@@ -97,7 +97,7 @@ class CustomerServiceTest {
         assertNotNull(result);
         assertEquals(2, result.size());
         verify(customerRepository).findByActiveTrue();
-        verify(customerMapper, times(2)).toResponse(any(CustomerEntity.class));
+        verify(customerMapper, times(2)).toResponse(any(Customer.class));
     }
 
     // ─── findById ─────────────────────────────────────────────────────────────
@@ -106,7 +106,7 @@ class CustomerServiceTest {
     @DisplayName("Deve retornar um cliente pelo ID")
     void findById_ShouldReturnCustomerResponse() {
         String id = "123";
-        CustomerEntity entity = createCustomerEntity(id, CPF_NORMALIZED, true);
+        Customer entity = createCustomerEntity(id, CPF_NORMALIZED, true);
         CustomerResponse response = createCustomerResponse(id, CPF_NORMALIZED);
 
         when(customerRepository.findById(id)).thenReturn(Optional.of(entity));
@@ -128,7 +128,7 @@ class CustomerServiceTest {
 
         assertThrows(NotFoundException.class, () -> customerService.findById(id));
         verify(customerRepository).findById(id);
-        verify(customerMapper, never()).toResponse(any(CustomerEntity.class));
+        verify(customerMapper, never()).toResponse(any(Customer.class));
     }
 
     // ─── findByDocument ───────────────────────────────────────────────────────
@@ -136,7 +136,7 @@ class CustomerServiceTest {
     @Test
     @DisplayName("Deve retornar um cliente pelo documento normalizado")
     void findByDocument_ShouldReturnCustomerResponse() {
-        CustomerEntity entity = createCustomerEntity("123", CPF_NORMALIZED, true);
+        Customer entity = createCustomerEntity("123", CPF_NORMALIZED, true);
         CustomerResponse response = createCustomerResponse("123", CPF_NORMALIZED);
 
         when(customerRepository.findByDocument(CPF_NORMALIZED)).thenReturn(Optional.of(entity));
@@ -153,7 +153,7 @@ class CustomerServiceTest {
     @Test
     @DisplayName("Deve normalizar documento formatado antes de buscar no repositório")
     void findByDocument_ShouldNormalizeFormattedDocument() {
-        CustomerEntity entity = createCustomerEntity("123", CPF_NORMALIZED, true);
+        Customer entity = createCustomerEntity("123", CPF_NORMALIZED, true);
         CustomerResponse response = createCustomerResponse("123", CPF_NORMALIZED);
 
         when(customerRepository.findByDocument(CPF_NORMALIZED)).thenReturn(Optional.of(entity));
@@ -172,7 +172,7 @@ class CustomerServiceTest {
 
         assertThrows(NotFoundException.class, () -> customerService.findByDocument(CPF_FORMATTED));
         verify(customerRepository).findByDocument(CPF_NORMALIZED);
-        verify(customerMapper, never()).toResponse(any(CustomerEntity.class));
+        verify(customerMapper, never()).toResponse(any(Customer.class));
     }
 
     // ─── create ───────────────────────────────────────────────────────────────
@@ -181,8 +181,8 @@ class CustomerServiceTest {
     @DisplayName("Deve criar um novo cliente com sucesso")
     void create_ShouldReturnCreatedCustomerResponse() {
         CustomerRequest request = createCustomerRequest(CPF_FORMATTED);
-        CustomerEntity entity = createCustomerEntity(null, CPF_NORMALIZED, true);
-        CustomerEntity savedEntity = createCustomerEntity("newId", CPF_NORMALIZED, true);
+        Customer entity = createCustomerEntity(null, CPF_NORMALIZED, true);
+        Customer savedEntity = createCustomerEntity("newId", CPF_NORMALIZED, true);
         CustomerResponse response = createCustomerResponse("newId", CPF_NORMALIZED);
 
         when(customerRepository.existsByDocument(CPF_NORMALIZED)).thenReturn(false);
@@ -210,7 +210,7 @@ class CustomerServiceTest {
         assertThrows(DomainException.class, () -> customerService.create(request));
         verify(customerRepository).existsByDocument(CPF_NORMALIZED);
         verify(customerMapper, never()).toEntity(any(CustomerRequest.class));
-        verify(customerRepository, never()).save(any(CustomerEntity.class));
+        verify(customerRepository, never()).save(any(Customer.class));
     }
 
     // ─── update ───────────────────────────────────────────────────────────────
@@ -221,8 +221,8 @@ class CustomerServiceTest {
         String id = "123";
         CustomerRequest request = createCustomerRequest(CPF_ALT_FORMATTED);
         // entidade do banco já tem documento normalizado
-        CustomerEntity existingEntity = createCustomerEntity(id, CPF_NORMALIZED, true);
-        CustomerEntity updatedEntity = createCustomerEntity(id, CPF_ALT_NORMALIZED, true);
+        Customer existingEntity = createCustomerEntity(id, CPF_NORMALIZED, true);
+        Customer updatedEntity = createCustomerEntity(id, CPF_ALT_NORMALIZED, true);
         CustomerResponse response = createCustomerResponse(id, CPF_ALT_NORMALIZED);
 
         when(customerRepository.findById(id)).thenReturn(Optional.of(existingEntity));
@@ -248,7 +248,7 @@ class CustomerServiceTest {
         String id = "123";
         // usuário envia o documento formatado, mas o banco tem o normalizado
         CustomerRequest request = createCustomerRequest(CPF_FORMATTED);
-        CustomerEntity existingEntity = createCustomerEntity(id, CPF_NORMALIZED, true);
+        Customer existingEntity = createCustomerEntity(id, CPF_NORMALIZED, true);
         CustomerResponse response = createCustomerResponse(id, CPF_NORMALIZED);
 
         when(customerRepository.findById(id)).thenReturn(Optional.of(existingEntity));
@@ -268,7 +268,7 @@ class CustomerServiceTest {
     void update_ShouldThrowDomainException_WhenDocumentExistsInAnotherCustomer() {
         String id = "123";
         CustomerRequest request = createCustomerRequest(CPF_ALT_FORMATTED);
-        CustomerEntity existingEntity = createCustomerEntity(id, CPF_NORMALIZED, true);
+        Customer existingEntity = createCustomerEntity(id, CPF_NORMALIZED, true);
 
         when(customerRepository.findById(id)).thenReturn(Optional.of(existingEntity));
         when(customerRepository.existsByDocument(CPF_ALT_NORMALIZED)).thenReturn(true);
@@ -286,8 +286,8 @@ class CustomerServiceTest {
     @DisplayName("Deve desativar um cliente ao invés de deletar fisicamente")
     void delete_ShouldDeactivateCustomer() {
         String id = "123";
-        CustomerEntity entity = createCustomerEntity(id, CPF_NORMALIZED, true);
-        CustomerEntity deactivatedEntity = createCustomerEntity(id, CPF_NORMALIZED, false);
+        Customer entity = createCustomerEntity(id, CPF_NORMALIZED, true);
+        Customer deactivatedEntity = createCustomerEntity(id, CPF_NORMALIZED, false);
 
         when(customerRepository.findById(id)).thenReturn(Optional.of(entity));
         when(customerRepository.save(entity)).thenReturn(deactivatedEntity);
@@ -307,6 +307,6 @@ class CustomerServiceTest {
 
         assertThrows(NotFoundException.class, () -> customerService.delete(id));
         verify(customerRepository).findById(id);
-        verify(customerRepository, never()).save(any(CustomerEntity.class));
+        verify(customerRepository, never()).save(any(Customer.class));
     }
 }

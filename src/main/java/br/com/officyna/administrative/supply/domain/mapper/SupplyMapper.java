@@ -2,7 +2,7 @@ package br.com.officyna.administrative.supply.domain.mapper;
 
 import br.com.officyna.administrative.supply.api.resources.SupplyRequest;
 import br.com.officyna.administrative.supply.api.resources.SupplyResponse;
-import br.com.officyna.administrative.supply.domain.SupplyEntity;
+import br.com.officyna.administrative.supply.domain.entity.Supply;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
@@ -11,8 +11,8 @@ import java.math.RoundingMode;
 @Component
 public class SupplyMapper {
 
-    public SupplyEntity toEntity(SupplyRequest request) {
-        return SupplyEntity.builder()
+    public Supply toEntity(SupplyRequest request) {
+        return Supply.builder()
                 .name(request.name())
                 .description(request.description())
                 .type(request.type())
@@ -25,7 +25,7 @@ public class SupplyMapper {
                 .build();
     }
 
-    public SupplyResponse toResponse(SupplyEntity entity) {
+    public SupplyResponse toResponse(Supply entity) {
         int available = entity.getStockQuantity() - entity.getReservedQuantity();
         BigDecimal markup = calculateMarkup(entity.getPurchasePrice(), entity.getSalePrice());
         return new SupplyResponse(
@@ -47,7 +47,7 @@ public class SupplyMapper {
         );
     }
 
-    public void updateEntity(SupplyEntity entity, SupplyRequest request) {
+    public void updateEntity(Supply entity, SupplyRequest request) {
         entity.setName(request.name());
         entity.setDescription(request.description());
         entity.setType(request.type());

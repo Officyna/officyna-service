@@ -1,8 +1,8 @@
 package br.com.officyna.infrastructure.persistence.mapper;
 
-import br.com.officyna.administrative.customer.domain.AddressEntity;
-import br.com.officyna.administrative.customer.domain.CustomerEntity;
-import br.com.officyna.administrative.customer.domain.CustomerType;
+import br.com.officyna.administrative.customer.domain.entity.Address;
+import br.com.officyna.administrative.customer.domain.entity.Customer;
+import br.com.officyna.administrative.customer.domain.entity.CustomerType;
 import br.com.officyna.infrastructure.persistence.mongodb.model.AddressDocument;
 import br.com.officyna.infrastructure.persistence.mongodb.model.CustomerDocument;
 import org.springframework.stereotype.Component;
@@ -13,7 +13,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class CustomerEntityDocumentMapper {
 
-    public CustomerDocument toDocument(CustomerEntity entity) {
+    public CustomerDocument toDocument(Customer entity) {
         if (entity == null) {
             return null;
         }
@@ -33,11 +33,11 @@ public class CustomerEntityDocumentMapper {
                 .build();
     }
 
-    public CustomerEntity toEntity(CustomerDocument document) {
+    public Customer toEntity(CustomerDocument document) {
         if (document == null) {
             return null;
         }
-        return CustomerEntity.builder()
+        return Customer.builder()
                 .id(document.getId())
                 .name(document.getName())
                 .document(document.getDocument())
@@ -53,7 +53,7 @@ public class CustomerEntityDocumentMapper {
                 .build();
     }
 
-    private AddressDocument toAddressDocument(AddressEntity address) {
+    private AddressDocument toAddressDocument(Address address) {
         if (address == null) {
             return null;
         }
@@ -69,11 +69,11 @@ public class CustomerEntityDocumentMapper {
                 .build();
     }
 
-    private AddressEntity toAddressEntity(AddressDocument address) {
+    private Address toAddressEntity(AddressDocument address) {
         if (address == null) {
             return null;
         }
-        return AddressEntity.builder()
+        return Address.builder()
                 .street(address.getStreet())
                 .number(address.getNumber())
                 .complement(address.getComplement())

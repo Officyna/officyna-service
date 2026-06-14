@@ -2,8 +2,8 @@ package br.com.officyna.infrastructure.persistence.mongodb.gateway;
 
 import br.com.officyna.infrastructure.persistence.mapper.ServiceOrderEntityDocumentMapper;
 import br.com.officyna.infrastructure.persistence.mongodb.repository.ServiceOrderMongoRepository;
-import br.com.officyna.serviceorder.domain.entity.ServiceOrderEntity;
-import br.com.officyna.serviceorder.domain.repository.IServiceOrderRepository;
+import br.com.officyna.serviceorder.domain.entity.ServiceOrder;
+import br.com.officyna.serviceorder.domain.repository.ServiceOrderRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -17,25 +17,25 @@ import java.util.Optional;
  */
 @Component
 @RequiredArgsConstructor
-public class ServiceOrderRepositoryGateway implements IServiceOrderRepository {
+public class ServiceOrderRepositoryGateway implements ServiceOrderRepository {
 
     private final ServiceOrderMongoRepository mongoRepository;
     private final ServiceOrderEntityDocumentMapper mapper;
 
     @Override
-    public ServiceOrderEntity save(ServiceOrderEntity entity) {
+    public ServiceOrder save(ServiceOrder entity) {
         var document = mapper.toDocument(entity);
         var saved = mongoRepository.save(document);
         return mapper.toEntity(saved);
     }
 
     @Override
-    public Optional<ServiceOrderEntity> findById(String id) {
+    public Optional<ServiceOrder> findById(String id) {
         return mongoRepository.findById(id).map(mapper::toEntity);
     }
 
     @Override
-    public List<ServiceOrderEntity> findAll() {
+    public List<ServiceOrder> findAll() {
         return mongoRepository.findAll()
                 .stream()
                 .map(mapper::toEntity)
@@ -53,7 +53,7 @@ public class ServiceOrderRepositoryGateway implements IServiceOrderRepository {
     }
 
     @Override
-    public List<ServiceOrderEntity> findByLaborIdWithCompletedExecutions(String laborId) {
+    public List<ServiceOrder> findByLaborIdWithCompletedExecutions(String laborId) {
         return mongoRepository.findByLaborIdWithCompletedExecutions(laborId)
                 .stream()
                 .map(mapper::toEntity)
@@ -61,12 +61,12 @@ public class ServiceOrderRepositoryGateway implements IServiceOrderRepository {
     }
 
     @Override
-    public Optional<ServiceOrderEntity> findByServiceOrderNumber(Long serviceOrderNumber) {
+    public Optional<ServiceOrder> findByServiceOrderNumber(Long serviceOrderNumber) {
         return mongoRepository.findByServiceOrderNumber(serviceOrderNumber).map(mapper::toEntity);
     }
 
     @Override
-    public List<ServiceOrderEntity> findByCustomerId(String id) {
+    public List<ServiceOrder> findByCustomerId(String id) {
         return mongoRepository.findByCustomerId(id)
                 .stream()
                 .map(mapper::toEntity)

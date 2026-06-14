@@ -2,9 +2,9 @@ package br.com.officyna.administrative.labor.domain.service;
 
 import br.com.officyna.administrative.labor.api.resources.LaborRequest;
 import br.com.officyna.administrative.labor.api.resources.LaborResponse;
-import br.com.officyna.administrative.labor.domain.LaborEntity;
+import br.com.officyna.administrative.labor.domain.entity.Labor;
 import br.com.officyna.administrative.labor.domain.mapper.LaborMapper;
-import br.com.officyna.administrative.labor.repository.LaborRepository;
+import br.com.officyna.administrative.labor.domain.repository.LaborRepository;
 import br.com.officyna.infrastructure.exception.DomainException;
 import br.com.officyna.infrastructure.exception.NotFoundException;
 import br.com.officyna.monitoring.domain.service.LaborMonitoringService;
@@ -39,8 +39,8 @@ class LaborServiceTest {
     @InjectMocks
     private LaborService laborService;
 
-    private LaborEntity createLaborEntity(String id, String name, boolean active) {
-        return LaborEntity.builder()
+    private Labor createLaborEntity(String id, String name, boolean active) {
+        return Labor.builder()
                 .id(id)
                 .name(name)
                 .description("sbrubles " + name)
@@ -63,8 +63,8 @@ class LaborServiceTest {
     @Test
     @DisplayName("Deve retornar todos os serviços ativos")
     void findAll_ShouldReturnActiveLabors() {
-        LaborEntity entity1 = createLaborEntity("1", "Labor 1", true);
-        LaborEntity entity2 = createLaborEntity("2", "Labor 2", true);
+        Labor entity1 = createLaborEntity("1", "Labor 1", true);
+        Labor entity2 = createLaborEntity("2", "Labor 2", true);
         LaborResponse response1 = createLaborResponse("1", "Labor 1");
         LaborResponse response2 = createLaborResponse("2", "Labor 2");
 
@@ -79,14 +79,14 @@ class LaborServiceTest {
         assertEquals("Labor 1", result.get(0).name());
         assertEquals("Labor 2", result.get(1).name());
         verify(laborRepository, times(1)).findByActiveTrue();
-        verify(laborMapper, times(2)).toResponse(any(LaborEntity.class));
+        verify(laborMapper, times(2)).toResponse(any(Labor.class));
     }
 
     @Test
     @DisplayName("Deve retornar um serviço pelo ID")
     void findById_ShouldReturnLaborResponse() {
         String id = "123";
-        LaborEntity entity = createLaborEntity(id, "Test Labor", true);
+        Labor entity = createLaborEntity(id, "Test Labor", true);
         LaborResponse response = createLaborResponse(id, "Test Labor");
 
         when(laborRepository.findById(id)).thenReturn(Optional.of(entity));
@@ -109,15 +109,15 @@ class LaborServiceTest {
 
         assertThrows(NotFoundException.class, () -> laborService.findById(id));
         verify(laborRepository, times(1)).findById(id);
-        verify(laborMapper, never()).toResponse(any(LaborEntity.class));
+        verify(laborMapper, never()).toResponse(any(Labor.class));
     }
 
     @Test
     @DisplayName("Deve criar um novo serviço com sucesso")
     void create_ShouldReturnCreatedLaborResponse() {
         LaborRequest request = createLaborRequest("New Labor");
-        LaborEntity entity = createLaborEntity(null, "New Labor", true); // ID will be generated
-        LaborEntity savedEntity = createLaborEntity("newId", "New Labor", true);
+        Labor entity = createLaborEntity(null, "New Labor", true); // ID will be generated
+        Labor savedEntity = createLaborEntity("newId", "New Labor", true);
         LaborResponse response = createLaborResponse("newId", "New Labor");
 
         when(laborRepository.existsByName(request.name())).thenReturn(false);
@@ -145,7 +145,7 @@ class LaborServiceTest {
         assertThrows(DomainException.class, () -> laborService.create(request));
         verify(laborRepository, times(1)).existsByName(request.name());
         verify(laborMapper, never()).toEntity(any(LaborRequest.class));
-        verify(laborRepository, never()).save(any(LaborEntity.class));
+        verify(laborRepository, never()).save(any(Labor.class));
     }
 
     @Test
@@ -153,8 +153,8 @@ class LaborServiceTest {
     void update_ShouldReturnUpdatedLaborResponse() {
         String id = "123";
         LaborRequest request = createLaborRequest("Updated Labor Name");
-        LaborEntity existingEntity = createLaborEntity(id, "Original Labor Name", true);
-        LaborEntity updatedEntity = createLaborEntity(id, "Updated Labor Name", true);
+        Labor existingEntity = createLaborEntity(id, "Original Labor Name", true);
+        Labor updatedEntity = createLaborEntity(id, "Updated Labor Name", true);
         LaborResponse response = createLaborResponse(id, "Updated Labor Name");
 
         when(laborRepository.findById(id)).thenReturn(Optional.of(existingEntity));
@@ -180,7 +180,7 @@ class LaborServiceTest {
     void update_ShouldThrowDomainException_WhenNameExists() {
         String id = "123";
         LaborRequest request = createLaborRequest("Existing Labor Name");
-        LaborEntity existingEntity = createLaborEntity(id, "Original Labor Name", true);
+        Labor existingEntity = createLaborEntity(id, "Original Labor Name", true);
 
         when(laborRepository.findById(id)).thenReturn(Optional.of(existingEntity));
         when(laborRepository.existsByName(request.name())).thenReturn(true);
@@ -188,16 +188,16 @@ class LaborServiceTest {
         assertThrows(DomainException.class, () -> laborService.update(id, request));
         verify(laborRepository, times(1)).findById(id);
         verify(laborRepository, times(1)).existsByName(request.name());
-        verify(laborMapper, never()).updateEntity(any(LaborEntity.class), any(LaborRequest.class));
-        verify(laborRepository, never()).save(any(LaborEntity.class));
+        verify(laborMapper, never()).updateEntity(any(Labor.class), any(LaborRequest.class));
+        verify(laborRepository, never()).save(any(Labor.class));
     }
 
     @Test
     @DisplayName("Deve desativar um serviço ao invés de deletar fisicamente")
     void delete_ShouldDeactivateLabor() {
         String id = "123";
-        LaborEntity entity = createLaborEntity(id, "Labor to Delete", true);
-        LaborEntity deactivatedEntity = createLaborEntity(id, "Labor to Delete", false);
+        Labor entity = createLaborEntity(id, "Labor to Delete", true);
+        Labor deactivatedEntity = createLaborEntity(id, "Labor to Delete", false);
 
         when(laborRepository.findById(id)).thenReturn(Optional.of(entity));
         when(laborRepository.save(entity)).thenReturn(deactivatedEntity);
@@ -217,6 +217,6 @@ class LaborServiceTest {
 
         assertThrows(NotFoundException.class, () -> laborService.delete(id));
         verify(laborRepository, times(1)).findById(id);
-        verify(laborRepository, never()).save(any(LaborEntity.class));
+        verify(laborRepository, never()).save(any(Labor.class));
     }
 }

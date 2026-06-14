@@ -1,12 +1,12 @@
 package br.com.officyna.administrative.vehicle.domain.service;
 
-import br.com.officyna.administrative.customer.domain.CustomerEntity;
+import br.com.officyna.administrative.customer.domain.entity.Customer;
 import br.com.officyna.administrative.customer.domain.service.CustomerService;
 import br.com.officyna.administrative.vehicle.api.resources.VehicleRequest;
 import br.com.officyna.administrative.vehicle.api.resources.VehicleResponse;
-import br.com.officyna.administrative.vehicle.domain.VehicleEntity;
+import br.com.officyna.administrative.vehicle.domain.entity.Vehicle;
 import br.com.officyna.administrative.vehicle.domain.mapper.VehicleMapper;
-import br.com.officyna.administrative.vehicle.repository.VehicleRepository;
+import br.com.officyna.administrative.vehicle.domain.repository.VehicleRepository;
 import br.com.officyna.infrastructure.exception.DomainException;
 import br.com.officyna.infrastructure.exception.NotFoundException;
 import org.junit.jupiter.api.DisplayName;
@@ -39,8 +39,8 @@ class VehicleServiceTest {
     @InjectMocks
     private VehicleService vehicleService;
 
-    private VehicleEntity createVehicleEntity(String id, String plate, boolean active) {
-        return VehicleEntity.builder()
+    private Vehicle createVehicleEntity(String id, String plate, boolean active) {
+        return Vehicle.builder()
                 .id(id)
                 .customerId("customer-1")
                 .customerName("João Silva")
@@ -55,8 +55,8 @@ class VehicleServiceTest {
                 .build();
     }
 
-    private CustomerEntity createCustomerEntity(String id) {
-        return CustomerEntity.builder()
+    private Customer createCustomerEntity(String id) {
+        return Customer.builder()
                 .id(id)
                 .name("João Silva")
                 .document("123.456.789-09")
@@ -75,8 +75,8 @@ class VehicleServiceTest {
     @Test
     @DisplayName("Deve retornar todos os veículos")
     void findAll_ShouldReturnAllVehicles() {
-        VehicleEntity entity1 = createVehicleEntity("1", "ABC-1234", true);
-        VehicleEntity entity2 = createVehicleEntity("2", "XYZ-5678", true);
+        Vehicle entity1 = createVehicleEntity("1", "ABC-1234", true);
+        Vehicle entity2 = createVehicleEntity("2", "XYZ-5678", true);
         VehicleResponse response1 = createVehicleResponse("1", "ABC-1234");
         VehicleResponse response2 = createVehicleResponse("2", "XYZ-5678");
 
@@ -91,14 +91,14 @@ class VehicleServiceTest {
         assertEquals("ABC-1234", result.get(0).plate());
         assertEquals("XYZ-5678", result.get(1).plate());
         verify(vehicleRepository, times(1)).findAll();
-        verify(vehicleMapper, times(2)).toResponse(any(VehicleEntity.class));
+        verify(vehicleMapper, times(2)).toResponse(any(Vehicle.class));
     }
 
     @Test
     @DisplayName("Deve retornar um veículo pelo ID")
     void findById_ShouldReturnVehicleResponse() {
         String id = "123";
-        VehicleEntity entity = createVehicleEntity(id, "ABC-1234", true);
+        Vehicle entity = createVehicleEntity(id, "ABC-1234", true);
         VehicleResponse response = createVehicleResponse(id, "ABC-1234");
 
         when(vehicleRepository.findById(id)).thenReturn(Optional.of(entity));
@@ -121,14 +121,14 @@ class VehicleServiceTest {
 
         assertThrows(NotFoundException.class, () -> vehicleService.findById(id));
         verify(vehicleRepository, times(1)).findById(id);
-        verify(vehicleMapper, never()).toResponse(any(VehicleEntity.class));
+        verify(vehicleMapper, never()).toResponse(any(Vehicle.class));
     }
 
     @Test
     @DisplayName("Deve retornar veículos pelo ID do cliente")
     void findByCustomer_ShouldReturnVehiclesForCustomer() {
         String customerId = "customer-1";
-        VehicleEntity entity = createVehicleEntity("1", "ABC-1234", true);
+        Vehicle entity = createVehicleEntity("1", "ABC-1234", true);
         VehicleResponse response = createVehicleResponse("1", "ABC-1234");
 
         when(vehicleRepository.findByCustomerId(customerId)).thenReturn(List.of(entity));
@@ -140,16 +140,16 @@ class VehicleServiceTest {
         assertEquals(1, result.size());
         assertEquals("ABC-1234", result.get(0).plate());
         verify(vehicleRepository, times(1)).findByCustomerId(customerId);
-        verify(vehicleMapper, times(1)).toResponse(any(VehicleEntity.class));
+        verify(vehicleMapper, times(1)).toResponse(any(Vehicle.class));
     }
 
     @Test
     @DisplayName("Deve criar um novo veículo com sucesso")
     void create_ShouldReturnCreatedVehicleResponse() {
         VehicleRequest request = createVehicleRequest("ABC-1234");
-        CustomerEntity customer = createCustomerEntity("customer-1");
-        VehicleEntity entity = createVehicleEntity(null, "ABC-1234", true);
-        VehicleEntity savedEntity = createVehicleEntity("newId", "ABC-1234", true);
+        Customer customer = createCustomerEntity("customer-1");
+        Vehicle entity = createVehicleEntity(null, "ABC-1234", true);
+        Vehicle savedEntity = createVehicleEntity("newId", "ABC-1234", true);
         VehicleResponse response = createVehicleResponse("newId", "ABC-1234");
 
         when(vehicleRepository.existsByPlate(request.plate().toUpperCase())).thenReturn(false);
@@ -178,8 +178,8 @@ class VehicleServiceTest {
 
         assertThrows(DomainException.class, () -> vehicleService.create(request));
         verify(vehicleRepository, times(1)).existsByPlate(request.plate().toUpperCase());
-        verify(vehicleMapper, never()).toEntity(any(VehicleRequest.class), any(CustomerEntity.class));
-        verify(vehicleRepository, never()).save(any(VehicleEntity.class));
+        verify(vehicleMapper, never()).toEntity(any(VehicleRequest.class), any(Customer.class));
+        verify(vehicleRepository, never()).save(any(Vehicle.class));
     }
 
     @Test
@@ -187,9 +187,9 @@ class VehicleServiceTest {
     void update_ShouldReturnUpdatedVehicleResponse() {
         String id = "123";
         VehicleRequest request = createVehicleRequest("NEW-9999");
-        CustomerEntity customer = createCustomerEntity("customer-1");
-        VehicleEntity existingEntity = createVehicleEntity(id, "ABC-1234", true);
-        VehicleEntity updatedEntity = createVehicleEntity(id, "NEW-9999", true);
+        Customer customer = createCustomerEntity("customer-1");
+        Vehicle existingEntity = createVehicleEntity(id, "ABC-1234", true);
+        Vehicle updatedEntity = createVehicleEntity(id, "NEW-9999", true);
         VehicleResponse response = createVehicleResponse(id, "NEW-9999");
 
         when(vehicleRepository.findById(id)).thenReturn(Optional.of(existingEntity));
@@ -216,7 +216,7 @@ class VehicleServiceTest {
     void update_ShouldThrowDomainException_WhenPlateExists() {
         String id = "123";
         VehicleRequest request = createVehicleRequest("EXISTING-PLATE");
-        VehicleEntity existingEntity = createVehicleEntity(id, "ABC-1234", true);
+        Vehicle existingEntity = createVehicleEntity(id, "ABC-1234", true);
 
         when(vehicleRepository.findById(id)).thenReturn(Optional.of(existingEntity));
         when(vehicleRepository.existsByPlate(request.plate().toUpperCase())).thenReturn(true);
@@ -224,16 +224,16 @@ class VehicleServiceTest {
         assertThrows(DomainException.class, () -> vehicleService.update(id, request));
         verify(vehicleRepository, times(1)).findById(id);
         verify(vehicleRepository, times(1)).existsByPlate(request.plate().toUpperCase());
-        verify(vehicleMapper, never()).updateEntity(any(VehicleEntity.class), any(VehicleRequest.class), any(CustomerEntity.class));
-        verify(vehicleRepository, never()).save(any(VehicleEntity.class));
+        verify(vehicleMapper, never()).updateEntity(any(Vehicle.class), any(VehicleRequest.class), any(Customer.class));
+        verify(vehicleRepository, never()).save(any(Vehicle.class));
     }
 
     @Test
     @DisplayName("Deve desativar um veículo ao invés de deletar fisicamente")
     void delete_ShouldDeactivateVehicle() {
         String id = "123";
-        VehicleEntity entity = createVehicleEntity(id, "ABC-1234", true);
-        VehicleEntity deactivatedEntity = createVehicleEntity(id, "ABC-1234", false);
+        Vehicle entity = createVehicleEntity(id, "ABC-1234", true);
+        Vehicle deactivatedEntity = createVehicleEntity(id, "ABC-1234", false);
 
         when(vehicleRepository.findById(id)).thenReturn(Optional.of(entity));
         when(vehicleRepository.save(entity)).thenReturn(deactivatedEntity);
@@ -253,6 +253,6 @@ class VehicleServiceTest {
 
         assertThrows(NotFoundException.class, () -> vehicleService.delete(id));
         verify(vehicleRepository, times(1)).findById(id);
-        verify(vehicleRepository, never()).save(any(VehicleEntity.class));
+        verify(vehicleRepository, never()).save(any(Vehicle.class));
     }
 }

@@ -1,7 +1,9 @@
-package br.com.officyna.administrative.user.domain;
+package br.com.officyna.administrative.labor.domain.entity;
+
 
 import lombok.*;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 import static lombok.AccessLevel.NONE;
@@ -11,23 +13,23 @@ import static lombok.AccessLevel.NONE;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class UserEntity {
+public class Labor {
 
     private String id;
 
     private String name;
 
-    private String email;
+    private String description;
 
-    private String password;
+    private BigDecimal price;
 
-    private UserRole userRole;
-
-    private Boolean active;
+    private Integer executionTimeInDays;
 
     @Setter(NONE)
     private LocalDateTime createdAt;
 
     @Setter(NONE)
     private LocalDateTime updatedAt;
+
+    private Boolean active;
 }

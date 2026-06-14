@@ -1,12 +1,12 @@
 package br.com.officyna.monitoring.domain.service;
 
-import br.com.officyna.administrative.labor.domain.LaborEntity;
-import br.com.officyna.administrative.labor.domain.repository.ILaborRepository;
+import br.com.officyna.administrative.labor.domain.entity.Labor;
+import br.com.officyna.administrative.labor.domain.repository.LaborRepository;
 import br.com.officyna.monitoring.api.resources.ForceRecalcResponse;
 import br.com.officyna.monitoring.api.resources.LaborMonitoringResponse;
-import br.com.officyna.monitoring.domain.entity.LaborMonitoringEntity;
-import br.com.officyna.monitoring.domain.repository.ILaborMonitoringRepository;
-import br.com.officyna.serviceorder.domain.repository.IServiceOrderRepository;
+import br.com.officyna.monitoring.domain.entity.LaborMonitoring;
+import br.com.officyna.monitoring.domain.repository.LaborMonitoringRepository;
+import br.com.officyna.serviceorder.domain.repository.ServiceOrderRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
 
@@ -18,12 +18,12 @@ import java.util.Optional;
 @Slf4j
 public class LaborMonitoringService {
 
-    private final ILaborMonitoringRepository monitoringRepository;
-    private final ILaborRepository laborRepository;
-    private final IServiceOrderRepository serviceOrderRepository;
+    private final LaborMonitoringRepository repository;
+    private final LaborRepository laborRepository;
+    private final ServiceOrderRepository serviceOrderRepository;
 
-    public LaborMonitoringService(ILaborMonitoringRepository monitoringRepository, ILaborRepository laborRepository, IServiceOrderRepository serviceOrderRepository) {
-        this.monitoringRepository = monitoringRepository;
+    public LaborMonitoringService(LaborMonitoringRepository monitoringRepository, LaborRepository laborRepository, ServiceOrderRepository serviceOrderRepository) {
+        this.repository = monitoringRepository;
         this.laborRepository = laborRepository;
         this.serviceOrderRepository = serviceOrderRepository;
     }
@@ -35,7 +35,7 @@ public class LaborMonitoringService {
 
 
     public List<LaborMonitoringResponse> findAll() {
-        return monitoringRepository.findAll()
+        return repository.findAll()
                 .stream()
                 .map(this::toResponse)
                 .toList();
@@ -50,58 +50,58 @@ public class LaborMonitoringService {
             return;
         }
 
-        Optional<LaborMonitoringEntity> existing = monitoringRepository.findByLaborId(laborId);
+        Optional<LaborMonitoring> existing = repository.findByLaborId(laborId);
 
         if (existing.isPresent()) {
-            LaborMonitoringEntity entity = existing.get();
+            LaborMonitoring entity = existing.get();
             double newAverage = calculateNewAverage(entity.getAverageExecutionTimeInDays(), entity.getTotalExecutions(), durationInDays);
             entity.setAverageExecutionTimeInDays(newAverage);
             entity.setTotalExecutions(entity.getTotalExecutions() + 1);
-            monitoringRepository.save(entity);
+            repository.save(entity);
         } else {
-            Optional<LaborEntity> laborOpt = laborRepository.findById(laborId);
+            Optional<Labor> laborOpt = laborRepository.findById(laborId);
             if (laborOpt.isEmpty()) {
                 log.warn("Labor não encontrado para laborId={}, ignorando atualização de monitoramento", laborId);
                 return;
             }
-            LaborEntity labor = laborOpt.get();
-            LaborMonitoringEntity newEntity = LaborMonitoringEntity.builder()
+            Labor labor = laborOpt.get();
+            LaborMonitoring newEntity = LaborMonitoring.builder()
                     .laborId(laborId)
                     .laborName(labor.getName())
                     .laborDescription(labor.getDescription())
                     .averageExecutionTimeInDays(durationInDays)
                     .totalExecutions(1)
                     .build();
-            monitoringRepository.save(newEntity);
+            repository.save(newEntity);
         }
     }
 
     public void initializeFromEstimate(String laborId, String laborName, String laborDescription, Integer estimatedDays) {
         if (estimatedDays == null) return;
-        monitoringRepository.findByLaborId(laborId).ifPresentOrElse(
+        repository.findByLaborId(laborId).ifPresentOrElse(
                 entity -> {
                     entity.setLaborName(laborName);
                     entity.setLaborDescription(laborDescription);
-                    monitoringRepository.save(entity);
+                    repository.save(entity);
                 },
                 () -> {
-                    LaborMonitoringEntity entity = LaborMonitoringEntity.builder()
+                    LaborMonitoring entity = LaborMonitoring.builder()
                             .laborId(laborId)
                             .laborName(laborName)
                             .laborDescription(laborDescription)
                             .averageExecutionTimeInDays((double) estimatedDays)
                             .totalExecutions(0)
                             .build();
-                    monitoringRepository.save(entity);
+                    repository.save(entity);
                 }
         );
     }
 
     public ForceRecalcResponse forceRecalc() {
-        List<LaborEntity> labors = laborRepository.findByActiveTrue();
+        List<Labor> labors = laborRepository.findByActiveTrue();
         int processed = 0;
 
-        for (LaborEntity labor : labors) {
+        for (Labor labor : labors) {
             List<Double> durations = serviceOrderRepository
                     .findByLaborIdWithCompletedExecutions(labor.getId())
                     .stream()
@@ -116,8 +116,8 @@ public class LaborMonitoringService {
             if (durations.isEmpty())
                 continue;
 
-            LaborMonitoringEntity entity = monitoringRepository.findByLaborId(labor.getId())
-                    .orElseGet(() -> LaborMonitoringEntity.builder().laborId(labor.getId()).build());
+            LaborMonitoring entity = repository.findByLaborId(labor.getId())
+                    .orElseGet(() -> LaborMonitoring.builder().laborId(labor.getId()).build());
 
             entity.setLaborName(labor.getName());
             entity.setLaborDescription(labor.getDescription());
@@ -125,7 +125,7 @@ public class LaborMonitoringService {
                     durations.stream().mapToDouble(Double::doubleValue).average().orElse(0)
             );
             entity.setTotalExecutions(durations.size());
-            monitoringRepository.save(entity);
+            repository.save(entity);
             processed++;
         }
 
@@ -149,7 +149,7 @@ public class LaborMonitoringService {
         return String.format("%02d:%02d:%02d", h, m, s);
     }
 
-    private LaborMonitoringResponse toResponse(LaborMonitoringEntity entity) {
+    private LaborMonitoringResponse toResponse(LaborMonitoring entity) {
         return new LaborMonitoringResponse(
                 entity.getLaborId(),
                 entity.getLaborName(),

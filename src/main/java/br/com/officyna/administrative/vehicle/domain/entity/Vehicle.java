@@ -1,4 +1,4 @@
-package br.com.officyna.administrative.vehicle.domain;
+package br.com.officyna.administrative.vehicle.domain.entity;
 
 import lombok.*;
 
@@ -8,7 +8,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class VehicleEntity {
+public class Vehicle {
 
     private String id;
 

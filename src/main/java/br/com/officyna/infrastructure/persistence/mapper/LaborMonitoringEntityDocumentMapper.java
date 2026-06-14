@@ -1,6 +1,6 @@
 package br.com.officyna.infrastructure.persistence.mapper;
 
-import br.com.officyna.monitoring.domain.entity.LaborMonitoringEntity;
+import br.com.officyna.monitoring.domain.entity.LaborMonitoring;
 import br.com.officyna.infrastructure.persistence.mongodb.model.LaborMonitoringDocument;
 import org.springframework.stereotype.Component;
 
@@ -10,7 +10,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class LaborMonitoringEntityDocumentMapper {
 
-    public LaborMonitoringDocument toDocument(LaborMonitoringEntity entity) {
+    public LaborMonitoringDocument toDocument(LaborMonitoring entity) {
         if (entity == null) {
             return null;
         }
@@ -25,11 +25,11 @@ public class LaborMonitoringEntityDocumentMapper {
                 .build();
     }
 
-    public LaborMonitoringEntity toEntity(LaborMonitoringDocument document) {
+    public LaborMonitoring toEntity(LaborMonitoringDocument document) {
         if (document == null) {
             return null;
         }
-        return LaborMonitoringEntity.builder()
+        return LaborMonitoring.builder()
                 .id(document.getId())
                 .laborId(document.getLaborId())
                 .laborName(document.getLaborName())

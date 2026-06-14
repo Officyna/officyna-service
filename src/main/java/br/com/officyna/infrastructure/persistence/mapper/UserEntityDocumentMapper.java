@@ -1,7 +1,7 @@
 package br.com.officyna.infrastructure.persistence.mapper;
 
-import br.com.officyna.administrative.user.domain.UserEntity;
-import br.com.officyna.administrative.user.domain.UserRole;
+import br.com.officyna.administrative.user.domain.entity.User;
+import br.com.officyna.administrative.user.domain.entity.UserRole;
 import br.com.officyna.infrastructure.persistence.mongodb.model.UserDocument;
 import org.springframework.stereotype.Component;
 
@@ -11,7 +11,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class UserEntityDocumentMapper {
 
-    public UserDocument toDocument(UserEntity entity) {
+    public UserDocument toDocument(User entity) {
         if (entity == null) {
             return null;
         }
@@ -27,11 +27,11 @@ public class UserEntityDocumentMapper {
                 .build();
     }
 
-    public UserEntity toEntity(UserDocument document) {
+    public User toEntity(UserDocument document) {
         if (document == null) {
             return null;
         }
-        return UserEntity.builder()
+        return User.builder()
                 .id(document.getId())
                 .name(document.getName())
                 .email(document.getEmail())

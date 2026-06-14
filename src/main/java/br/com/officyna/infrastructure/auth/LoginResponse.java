@@ -1,6 +1,6 @@
 package br.com.officyna.infrastructure.auth;
 
-import br.com.officyna.administrative.user.domain.UserRole;
+import br.com.officyna.administrative.user.domain.entity.UserRole;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 

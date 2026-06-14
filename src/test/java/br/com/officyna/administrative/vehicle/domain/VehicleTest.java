@@ -1,5 +1,6 @@
 package br.com.officyna.administrative.vehicle.domain;
 
+import br.com.officyna.administrative.vehicle.domain.entity.Vehicle;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -7,7 +8,7 @@ import java.time.LocalDateTime;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class VehicleEntityTest {
+class VehicleTest {
 
     @Test
     @DisplayName("Deve validar a criação da entidade via Builder e Getters")
@@ -22,7 +23,7 @@ class VehicleEntityTest {
         String color = "Prata";
         LocalDateTime now = LocalDateTime.now();
 
-        VehicleEntity entity = VehicleEntity.builder()
+        Vehicle entity = Vehicle.builder()
                 .id(id)
                 .customerId(customerId)
                 .customerName(customerName)

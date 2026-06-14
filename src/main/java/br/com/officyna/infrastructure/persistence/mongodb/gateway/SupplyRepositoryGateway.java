@@ -1,8 +1,8 @@
 package br.com.officyna.infrastructure.persistence.mongodb.gateway;
 
-import br.com.officyna.administrative.supply.domain.SupplyEntity;
-import br.com.officyna.administrative.supply.domain.SupplyType;
-import br.com.officyna.administrative.supply.domain.repository.ISupplyRepository;
+import br.com.officyna.administrative.supply.domain.entity.Supply;
+import br.com.officyna.administrative.supply.domain.entity.SupplyType;
+import br.com.officyna.administrative.supply.domain.repository.SupplyRepository;
 import br.com.officyna.infrastructure.persistence.mapper.SupplyEntityDocumentMapper;
 import br.com.officyna.infrastructure.persistence.mongodb.repository.SupplyMongoRepository;
 import lombok.RequiredArgsConstructor;
@@ -18,25 +18,25 @@ import java.util.Optional;
  */
 @Component
 @RequiredArgsConstructor
-public class SupplyRepositoryGateway implements ISupplyRepository {
+public class SupplyRepositoryGateway implements SupplyRepository {
 
     private final SupplyMongoRepository mongoRepository;
     private final SupplyEntityDocumentMapper mapper;
 
     @Override
-    public SupplyEntity save(SupplyEntity entity) {
+    public Supply save(Supply entity) {
         var document = mapper.toDocument(entity);
         var saved = mongoRepository.save(document);
         return mapper.toEntity(saved);
     }
 
     @Override
-    public Optional<SupplyEntity> findById(String id) {
+    public Optional<Supply> findById(String id) {
         return mongoRepository.findById(id).map(mapper::toEntity);
     }
 
     @Override
-    public List<SupplyEntity> findAll() {
+    public List<Supply> findAll() {
         return mongoRepository.findAll()
                 .stream()
                 .map(mapper::toEntity)
@@ -59,7 +59,7 @@ public class SupplyRepositoryGateway implements ISupplyRepository {
     }
 
     @Override
-    public List<SupplyEntity> findByActiveTrue() {
+    public List<Supply> findByActiveTrue() {
         return mongoRepository.findByActiveTrue()
                 .stream()
                 .map(mapper::toEntity)
@@ -67,7 +67,7 @@ public class SupplyRepositoryGateway implements ISupplyRepository {
     }
 
     @Override
-    public List<SupplyEntity> findByActiveTrueAndType(SupplyType type) {
+    public List<Supply> findByActiveTrueAndType(SupplyType type) {
         return mongoRepository.findByActiveTrueAndType(type.name())
                 .stream()
                 .map(mapper::toEntity)

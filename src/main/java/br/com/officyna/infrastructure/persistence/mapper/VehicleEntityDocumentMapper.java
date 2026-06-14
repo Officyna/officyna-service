@@ -1,6 +1,6 @@
 package br.com.officyna.infrastructure.persistence.mapper;
 
-import br.com.officyna.administrative.vehicle.domain.VehicleEntity;
+import br.com.officyna.administrative.vehicle.domain.entity.Vehicle;
 import br.com.officyna.infrastructure.persistence.mongodb.model.VehicleDocument;
 import org.springframework.stereotype.Component;
 
@@ -10,7 +10,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class VehicleEntityDocumentMapper {
 
-    public VehicleDocument toDocument(VehicleEntity entity) {
+    public VehicleDocument toDocument(Vehicle entity) {
         if (entity == null) {
             return null;
         }
@@ -29,11 +29,11 @@ public class VehicleEntityDocumentMapper {
                 .build();
     }
 
-    public VehicleEntity toEntity(VehicleDocument document) {
+    public Vehicle toEntity(VehicleDocument document) {
         if (document == null) {
             return null;
         }
-        return VehicleEntity.builder()
+        return Vehicle.builder()
                 .id(document.getId())
                 .customerId(document.getCustomerId())
                 .customerName(document.getCustomerName())

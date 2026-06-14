@@ -1,73 +1,67 @@
 package br.com.officyna.infrastructure.persistence.config;
 
 import br.com.officyna.administrative.customer.domain.mapper.CustomerMapper;
-import br.com.officyna.administrative.customer.domain.repository.ICustomerRepository;
+import br.com.officyna.administrative.customer.domain.repository.CustomerRepository;
 import br.com.officyna.administrative.customer.domain.service.CustomerService;
 import br.com.officyna.administrative.labor.domain.mapper.LaborMapper;
-import br.com.officyna.administrative.labor.domain.repository.ILaborRepository;
+import br.com.officyna.administrative.labor.domain.repository.LaborRepository;
 import br.com.officyna.administrative.labor.domain.service.LaborService;
 import br.com.officyna.administrative.supply.domain.mapper.SupplyMapper;
-import br.com.officyna.administrative.supply.domain.repository.ISupplyRepository;
+import br.com.officyna.administrative.supply.domain.repository.SupplyRepository;
 import br.com.officyna.administrative.supply.domain.service.StockService;
 import br.com.officyna.administrative.supply.domain.service.SupplyService;
 import br.com.officyna.administrative.user.domain.mapper.UserMapper;
-import br.com.officyna.administrative.user.domain.repository.IUserRepository;
+import br.com.officyna.administrative.user.domain.repository.UserRepository;
 import br.com.officyna.administrative.user.domain.service.UserService;
 import br.com.officyna.administrative.vehicle.domain.mapper.VehicleMapper;
-import br.com.officyna.administrative.vehicle.domain.repository.IVehicleRepository;
+import br.com.officyna.administrative.vehicle.domain.repository.VehicleRepository;
 import br.com.officyna.administrative.vehicle.domain.service.VehicleService;
-import br.com.officyna.monitoring.domain.repository.ILaborMonitoringRepository;
+import br.com.officyna.monitoring.domain.repository.LaborMonitoringRepository;
 import br.com.officyna.monitoring.domain.service.LaborMonitoringService;
 import br.com.officyna.serviceorder.domain.mapper.ServiceOrderMapper;
-import br.com.officyna.serviceorder.domain.repository.IServiceOrderRepository;
+import br.com.officyna.serviceorder.domain.repository.ServiceOrderRepository;
 import br.com.officyna.serviceorder.domain.service.*;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
-/**
- * Configuration class responsible for manual instantiation of domain services.
- * This enables decoupling domain services from Spring annotations and allows
- * wiring infrastructure gateways (implementing domain repository interfaces)
- * into the domain layer following Dependency Inversion.
- */
 @Configuration
 public class PersistenceBeanConfig {
 
     @Bean
-    public CustomerService customerService(ICustomerRepository customerRepository, CustomerMapper customerMapper) {
+    public CustomerService customerService(CustomerRepository customerRepository, CustomerMapper customerMapper) {
         return new CustomerService(customerRepository, customerMapper);
     }
 
     @Bean
-    public LaborMonitoringService laborMonitoringService(ILaborMonitoringRepository monitoringRepository,
-                                                          ILaborRepository laborRepository,
-                                                          IServiceOrderRepository serviceOrderRepository) {
+    public LaborMonitoringService laborMonitoringService(LaborMonitoringRepository monitoringRepository,
+                                                         LaborRepository laborRepository,
+                                                         ServiceOrderRepository serviceOrderRepository) {
         return new LaborMonitoringService(monitoringRepository, laborRepository, serviceOrderRepository);
     }
 
     @Bean
-    public LaborService laborService(ILaborRepository laborRepository, LaborMapper laborMapper, LaborMonitoringService laborMonitoringService) {
+    public LaborService laborService(LaborRepository laborRepository, LaborMapper laborMapper, LaborMonitoringService laborMonitoringService) {
         return new LaborService(laborRepository, laborMapper, laborMonitoringService);
     }
 
     @Bean
-    public SupplyService supplyService(ISupplyRepository supplyRepository, SupplyMapper supplyMapper) {
+    public SupplyService supplyService(SupplyRepository supplyRepository, SupplyMapper supplyMapper) {
         return new SupplyService(supplyRepository, supplyMapper);
     }
 
     @Bean
-    public StockService stockService(ISupplyRepository supplyRepository) {
+    public StockService stockService(SupplyRepository supplyRepository) {
         return new StockService(supplyRepository);
     }
 
     @Bean
-    public VehicleService vehicleService(IVehicleRepository vehicleRepository, VehicleMapper vehicleMapper, CustomerService customerService) {
+    public VehicleService vehicleService(VehicleRepository vehicleRepository, VehicleMapper vehicleMapper, CustomerService customerService) {
         return new VehicleService(vehicleRepository, vehicleMapper, customerService);
     }
 
     @Bean
-    public UserService userService(IUserRepository userRepository, UserMapper userMapper, PasswordEncoder passwordEncoder) {
+    public UserService userService(UserRepository userRepository, UserMapper userMapper, PasswordEncoder passwordEncoder) {
         return new UserService(userRepository, userMapper, passwordEncoder);
     }
 
@@ -93,7 +87,7 @@ public class PersistenceBeanConfig {
     }
 
     @Bean
-    public ServiceOrderService serviceOrderService(IServiceOrderRepository serviceOrderRepository,
+    public ServiceOrderService serviceOrderService(ServiceOrderRepository serviceOrderRepository,
                                                    LaborSelectionService laborSelectionService,
                                                    SupplySelectionService supplySelectionService,
                                                    CustomerAndMecnichalService customerAndMecnichalService,
@@ -112,10 +106,10 @@ public class PersistenceBeanConfig {
     }
 
     @Bean
-    public CustomerServiceOrderService customerServiceOrderService(IServiceOrderRepository serviceOrderRepository,
-                                                                     CustomerAndMecnichalService customerAndMecnichalService,
-                                                                     ServiceOrderMapper mapper,
-                                                                     ServiceOrderService serviceOrderService) {
+    public CustomerServiceOrderService customerServiceOrderService(ServiceOrderRepository serviceOrderRepository,
+                                                                   CustomerAndMecnichalService customerAndMecnichalService,
+                                                                   ServiceOrderMapper mapper,
+                                                                   ServiceOrderService serviceOrderService) {
         return new CustomerServiceOrderService(serviceOrderRepository, customerAndMecnichalService, mapper, serviceOrderService);
     }
 }

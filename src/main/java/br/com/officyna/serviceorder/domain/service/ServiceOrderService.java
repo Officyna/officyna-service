@@ -6,10 +6,10 @@ import br.com.officyna.infrastructure.exception.NotFoundException;
 import br.com.officyna.monitoring.domain.service.LaborMonitoringService;
 import br.com.officyna.serviceorder.api.resources.*;
 import br.com.officyna.serviceorder.domain.dto.*;
-import br.com.officyna.serviceorder.domain.entity.ServiceOrderEntity;
+import br.com.officyna.serviceorder.domain.entity.ServiceOrder;
 import br.com.officyna.serviceorder.domain.enums.ServiceOrderStatus;
 import br.com.officyna.serviceorder.domain.mapper.ServiceOrderMapper;
-import br.com.officyna.serviceorder.domain.repository.IServiceOrderRepository;
+import br.com.officyna.serviceorder.domain.repository.ServiceOrderRepository;
 import lombok.extern.slf4j.Slf4j;
 
 import java.time.LocalDateTime;
@@ -19,7 +19,7 @@ import java.util.List;
 @Slf4j
 public class ServiceOrderService {
 
-    private final IServiceOrderRepository repository;
+    private final ServiceOrderRepository repository;
 
     private final LaborSelectionService laborSelectionService;
 
@@ -35,7 +35,7 @@ public class ServiceOrderService {
 
     private final StockService stockService;
 
-    public ServiceOrderService(IServiceOrderRepository repository,
+    public ServiceOrderService(ServiceOrderRepository repository,
                                LaborSelectionService laborSelectionService,
                                SupplySelectionService supplySelectionService,
                                CustomerAndMecnichalService customerAndMecnichalService,
@@ -53,13 +53,13 @@ public class ServiceOrderService {
         this.stockService = stockService;
     }
 
-    private ServiceOrderEntity findEntityById(String id){
+    private ServiceOrder findEntityById(String id){
         return repository.findById(id)
                 .orElseThrow(() -> NotFoundException.of("Service Order", id));
     }
 
     public List<ServiceOrderResponse> findAll() {
-        List<ServiceOrderEntity> ordersServiceEntity =  repository.findAll();
+        List<ServiceOrder> ordersServiceEntity =  repository.findAll();
 
         return sortOrdersServiceByStatusAndDate(ordersServiceEntity)
                 .stream()
@@ -67,8 +67,8 @@ public class ServiceOrderService {
                 .toList();
     }
 
-    private List<ServiceOrderEntity> sortOrdersServiceByStatusAndDate(
-            List<ServiceOrderEntity> ordersServiceEntity) {
+    private List<ServiceOrder> sortOrdersServiceByStatusAndDate(
+            List<ServiceOrder> ordersServiceEntity) {
 
         return ordersServiceEntity.stream()
                 .filter(order ->
@@ -79,9 +79,9 @@ public class ServiceOrderService {
                                 || order.getStatus() == ServiceOrderStatus.RECEBIDA)
                 .sorted(
                         Comparator
-                                .comparingInt((ServiceOrderEntity order) ->
+                                .comparingInt((ServiceOrder order) ->
                                         order.getStatus().getPriority())
-                                .thenComparing(ServiceOrderEntity::getCreatedAt)
+                                .thenComparing(ServiceOrder::getCreatedAt)
                 )
                 .toList();
     }
@@ -91,7 +91,7 @@ public class ServiceOrderService {
     }
 
     public ServiceOrderResponse findByServiceOrderNumber(Long serviceOrderNumber) {
-        ServiceOrderEntity entity = repository.findByServiceOrderNumber(serviceOrderNumber)
+        ServiceOrder entity = repository.findByServiceOrderNumber(serviceOrderNumber)
                 .orElseThrow(
                         () -> NotFoundException.of("Service Order ", serviceOrderNumber)
                 );
@@ -103,19 +103,19 @@ public class ServiceOrderService {
         LaborsDTO labors = laborSelectionService.addLabors(request.getLaborIds(), List.of());
         CustomerDTO customer = customerAndMecnichalService.getCustomer(request.getCustomerId());
         VehicleDTO vehicle = vehicleSelectionService.getVehicle(request.getVehicleId());
-        ServiceOrderEntity entity = mapper.toCreateEntity(request, vehicle, customer, labors);
+        ServiceOrder entity = mapper.toCreateEntity(request, vehicle, customer, labors);
         entity.setStatus(ServiceOrderStatus.RECEBIDA);
-        ServiceOrderEntity saved = this.save(entity);
+        ServiceOrder saved = this.save(entity);
         log.info("Ordem de Serviço criada com sucesso. ID: {}, Número: {}", saved.getId(), saved.getServiceOrderNumber());
         return mapper.toResponse(saved);
     }
 
     public ServiceOrderResponse updateServiceOrder(String id, ExistServiceOrderRequest request){
         log.info("Atualizando Ordem de Serviço ID: {}", id);
-        ServiceOrderEntity entity = this.findEntityById(id);
+        ServiceOrder entity = this.findEntityById(id);
         MechanicDTO mechanic = (request.getMechanicId() == null || request.getMechanicId().isEmpty()) ? null :customerAndMecnichalService.getMechanic(request.getMechanicId());
         
-        ServiceOrderEntity updated = this.save(mapper.toUpdateEntity(request, entity, mechanic));
+        ServiceOrder updated = this.save(mapper.toUpdateEntity(request, entity, mechanic));
         log.info("Ordem de Serviço ID: {} atualizada com sucesso.", id);
         return mapper.toResponse(updated);
     }
@@ -128,7 +128,7 @@ public class ServiceOrderService {
 
     public ServiceOrderResponse addLaborsInServiceOrder(String id, List<LaborsRequest> laborsIdList){
         log.info("Adicionando {} serviço(s) à O.S. ID: {}", laborsIdList.size(), id);
-        ServiceOrderEntity entity = this.findEntityById(id);
+        ServiceOrder entity = this.findEntityById(id);
         LaborsDTO labors = laborSelectionService.addLabors(laborsIdList, entity.getLabors().getLaborsDetails());
         entity.setLabors(labors);
         return mapper.toResponse(this.save(entity));
@@ -136,7 +136,7 @@ public class ServiceOrderService {
 
     public ServiceOrderResponse removeLaborFromServiceOrder(String id, String laborId) {
         log.info("Removendo serviço ID: {} da O.S. ID: {}", laborId, id);
-        ServiceOrderEntity entity = this.findEntityById(id);
+        ServiceOrder entity = this.findEntityById(id);
         List<LaborDetailDTO> laborsDetails = entity.getLabors().getLaborsDetails();
         laborsDetails.removeIf(labor -> labor.getLaborId().equals(laborId));
         LaborsDTO labors = new LaborsDTO();
@@ -147,7 +147,7 @@ public class ServiceOrderService {
 
     public ServiceOrderResponse addSupplyFromServiceOrder(String id, List<SupplysRequest> supplyIdList) {
         log.info("Adicionando {} suprimento(s) à O.S. ID: {}", supplyIdList.size(), id);
-        ServiceOrderEntity entity = repository.findById(id)
+        ServiceOrder entity = repository.findById(id)
                 .orElseThrow(() -> NotFoundException.of("Service Order", id));
         SupplyDTO supply = supplySelectionService.addSupplys(
                 supplyIdList,
@@ -159,24 +159,24 @@ public class ServiceOrderService {
 
     public ServiceOrderResponse removeSupplyFromServiceOrder(String id, String supplyId) {
         log.info("Removendo suprimento ID: {} da O.S. ID: {}", supplyId, id);
-        ServiceOrderEntity entity = this.findEntityById(id);
+        ServiceOrder entity = this.findEntityById(id);
         supplySelectionService.removeSupply(entity.getSupplys(), supplyId);
         return mapper.toResponse(this.save(entity));
     }
 
     public ServiceOrderResponse updateStatus(String id, ServiceOrderStatus status){
         log.info("Alterando status da O.S. ID: {} para {}", id, status);
-        ServiceOrderEntity entity = this.findEntityById(id);
+        ServiceOrder entity = this.findEntityById(id);
         entity.setStatus(status);
         if(status.equals(ServiceOrderStatus.FINALIZADA) && stockService != null) stockService.releaseSupplies(entity.getSupplys().getSupplysDetails());
-        ServiceOrderEntity saved = this.save(entity);
+        ServiceOrder saved = this.save(entity);
         log.info("Status da O.S. ID: {} alterado para {} com sucesso.", id, status);
         return mapper.toResponse(saved);
     }
 
     public ServiceOrderResponse startLabor(String id, String laborId){
         log.info("Iniciando execução do serviço ID: {} na O.S. ID: {}", laborId, id);
-        ServiceOrderEntity entity = this.findEntityById(id);
+        ServiceOrder entity = this.findEntityById(id);
         this.validateStatusForStartExecution(entity);
         
         boolean found = false;
@@ -206,7 +206,7 @@ public class ServiceOrderService {
 
     public ServiceOrderResponse finishLabor(String id, String laborId){
         log.info("Finalizando execução do serviço ID: {} na O.S. ID: {}", laborId, id);
-        ServiceOrderEntity entity = this.findEntityById(id);
+        ServiceOrder entity = this.findEntityById(id);
         this.validateStatusForStartExecution(entity);
         
         boolean found = false;
@@ -236,20 +236,20 @@ public class ServiceOrderService {
         return mapper.toResponse(this.save(entity));
     }
 
-    public ServiceOrderEntity save(ServiceOrderEntity entity){
+    public ServiceOrder save(ServiceOrder entity){
         entity.calculateBudget();
         return repository.save(entity);
     }
 
     public SendToCustomerResponse sendToCustomer(String id) {
-        ServiceOrderEntity serviceOrder = this.findEntityById(id);
+        ServiceOrder serviceOrder = this.findEntityById(id);
         serviceOrder.setStatus(ServiceOrderStatus.AGUARDANDO_APROVACAO);
         if (stockService != null) stockService.reserveSupplies(serviceOrder.getSupplys().getSupplysDetails());
         repository.save(serviceOrder);
         return new SendToCustomerResponse("Ordem de serviço enviada para o cliente");
     }
 
-    private void validateStatusForStartExecution(ServiceOrderEntity entity) {
+    private void validateStatusForStartExecution(ServiceOrder entity) {
         if (!(ServiceOrderStatus.APROVADA.equals(entity.getStatus()) || ServiceOrderStatus.EM_EXECUCAO.equals(entity.getStatus()))) {
             log.warn("Falha na validação: Tentativa de operar serviços em O.S. com status inválido. Status atual: {}, O.S. ID: {}", entity.getStatus(), entity.getId());
             throw new DomainException("Um serviço só pode ser iniciado ou finalizado se o status da ordem de serviço for APROVADA ou EM EXECUÇÃO.");

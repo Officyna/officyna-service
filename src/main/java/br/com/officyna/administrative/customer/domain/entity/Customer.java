@@ -1,4 +1,4 @@
-package br.com.officyna.administrative.customer.domain;
+package br.com.officyna.administrative.customer.domain.entity;
 
 import lombok.*;
 
@@ -8,7 +8,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class CustomerEntity {
+public class Customer {
 
     private String id;
 
@@ -26,7 +26,7 @@ public class CustomerEntity {
 
     private String countryCode;
 
-    private AddressEntity address;
+    private Address address;
 
     private Boolean active;
 

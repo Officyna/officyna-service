@@ -1,7 +1,7 @@
 package br.com.officyna.infrastructure.persistence.mongodb.gateway;
 
-import br.com.officyna.administrative.vehicle.domain.VehicleEntity;
-import br.com.officyna.administrative.vehicle.domain.repository.IVehicleRepository;
+import br.com.officyna.administrative.vehicle.domain.entity.Vehicle;
+import br.com.officyna.administrative.vehicle.domain.repository.VehicleRepository;
 import br.com.officyna.infrastructure.persistence.mapper.VehicleEntityDocumentMapper;
 import br.com.officyna.infrastructure.persistence.mongodb.repository.VehicleMongoRepository;
 import lombok.RequiredArgsConstructor;
@@ -17,25 +17,25 @@ import java.util.Optional;
  */
 @Component
 @RequiredArgsConstructor
-public class VehicleRepositoryGateway implements IVehicleRepository {
+public class VehicleRepositoryGateway implements VehicleRepository {
 
     private final VehicleMongoRepository mongoRepository;
     private final VehicleEntityDocumentMapper mapper;
 
     @Override
-    public VehicleEntity save(VehicleEntity entity) {
+    public Vehicle save(Vehicle entity) {
         var document = mapper.toDocument(entity);
         var saved = mongoRepository.save(document);
         return mapper.toEntity(saved);
     }
 
     @Override
-    public Optional<VehicleEntity> findById(String id) {
+    public Optional<Vehicle> findById(String id) {
         return mongoRepository.findById(id).map(mapper::toEntity);
     }
 
     @Override
-    public List<VehicleEntity> findAll() {
+    public List<Vehicle> findAll() {
         return mongoRepository.findAll()
                 .stream()
                 .map(mapper::toEntity)
@@ -53,7 +53,7 @@ public class VehicleRepositoryGateway implements IVehicleRepository {
     }
 
     @Override
-    public Optional<VehicleEntity> findByPlate(String plate) {
+    public Optional<Vehicle> findByPlate(String plate) {
         return mongoRepository.findByPlate(plate).map(mapper::toEntity);
     }
 
@@ -63,7 +63,7 @@ public class VehicleRepositoryGateway implements IVehicleRepository {
     }
 
     @Override
-    public List<VehicleEntity> findByCustomerId(String customerId) {
+    public List<Vehicle> findByCustomerId(String customerId) {
         return mongoRepository.findByCustomerId(customerId)
                 .stream()
                 .map(mapper::toEntity)
@@ -71,7 +71,7 @@ public class VehicleRepositoryGateway implements IVehicleRepository {
     }
 
     @Override
-    public List<VehicleEntity> findByActiveTrue() {
+    public List<Vehicle> findByActiveTrue() {
         return mongoRepository.findByActiveTrue()
                 .stream()
                 .map(mapper::toEntity)

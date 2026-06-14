@@ -1,7 +1,7 @@
 package br.com.officyna.administrative.customer.domain.validation;
 
 import br.com.officyna.administrative.customer.api.resources.CustomerRequest;
-import br.com.officyna.administrative.customer.domain.CustomerType;
+import br.com.officyna.administrative.customer.domain.entity.CustomerType;
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
 

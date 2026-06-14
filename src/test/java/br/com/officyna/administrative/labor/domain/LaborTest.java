@@ -1,5 +1,6 @@
 package br.com.officyna.administrative.labor.domain;
 
+import br.com.officyna.administrative.labor.domain.entity.Labor;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -7,7 +8,7 @@ import java.math.BigDecimal;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class LaborEntityTest {
+class LaborTest {
 
     @Test
     @DisplayName("Deve validar a criação da entidade via Builder e Getters")
@@ -18,7 +19,7 @@ class LaborEntityTest {
         BigDecimal price = new BigDecimal("150.00");
         Integer executionTime = 1;
 
-        LaborEntity entity = LaborEntity.builder()
+        Labor entity = Labor.builder()
                 .id(id)
                 .name(name)
                 .description(description)

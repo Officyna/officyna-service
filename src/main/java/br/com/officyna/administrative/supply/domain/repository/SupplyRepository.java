@@ -1,7 +1,7 @@
 package br.com.officyna.administrative.supply.domain.repository;
 
-import br.com.officyna.administrative.supply.domain.SupplyEntity;
-import br.com.officyna.administrative.supply.domain.SupplyType;
+import br.com.officyna.administrative.supply.domain.entity.Supply;
+import br.com.officyna.administrative.supply.domain.entity.SupplyType;
 import br.com.officyna.infrastructure.persistence.repository.IRepository;
 
 import java.util.List;
@@ -10,9 +10,9 @@ import java.util.List;
  * Interface de repositório pura para SupplyEntity.
  * Sem qualquer dependência de Spring Data ou MongoDB.
  */
-public interface ISupplyRepository extends IRepository<SupplyEntity, String> {
+public interface SupplyRepository extends IRepository<Supply, String> {
     boolean existsByName(String name);
-    List<SupplyEntity> findByActiveTrue();
-    List<SupplyEntity> findByActiveTrueAndType(SupplyType type);
+    List<Supply> findByActiveTrue();
+    List<Supply> findByActiveTrueAndType(SupplyType type);
 }
 

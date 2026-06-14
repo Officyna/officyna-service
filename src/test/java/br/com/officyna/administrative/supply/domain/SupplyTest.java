@@ -1,5 +1,7 @@
 package br.com.officyna.administrative.supply.domain;
 
+import br.com.officyna.administrative.supply.domain.entity.Supply;
+import br.com.officyna.administrative.supply.domain.entity.SupplyType;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -8,7 +10,7 @@ import java.time.LocalDateTime;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class SupplyEntityTest {
+class SupplyTest {
 
     @Test
     @DisplayName("Deve validar a criação da entidade via Builder e Getters")
@@ -20,7 +22,7 @@ class SupplyEntityTest {
         BigDecimal salePrice = new BigDecimal("59.67");
         LocalDateTime now = LocalDateTime.now();
 
-        SupplyEntity entity = SupplyEntity.builder()
+        Supply entity = Supply.builder()
                 .id(id)
                 .name(name)
                 .description(description)

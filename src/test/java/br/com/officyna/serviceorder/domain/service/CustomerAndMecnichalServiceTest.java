@@ -2,7 +2,7 @@ package br.com.officyna.serviceorder.domain.service;
 
 import br.com.officyna.administrative.customer.api.resources.AddressDTO;
 import br.com.officyna.administrative.customer.api.resources.CustomerResponse;
-import br.com.officyna.administrative.customer.domain.CustomerType;
+import br.com.officyna.administrative.customer.domain.entity.CustomerType;
 import br.com.officyna.administrative.customer.domain.service.CustomerService;
 import br.com.officyna.administrative.user.api.resources.UserResponse;
 import br.com.officyna.administrative.user.domain.service.UserService;

@@ -2,8 +2,8 @@ package br.com.officyna.infrastructure.persistence.mongodb.gateway;
 
 import br.com.officyna.infrastructure.persistence.mapper.LaborMonitoringEntityDocumentMapper;
 import br.com.officyna.infrastructure.persistence.mongodb.repository.LaborMonitoringMongoRepository;
-import br.com.officyna.monitoring.domain.entity.LaborMonitoringEntity;
-import br.com.officyna.monitoring.domain.repository.ILaborMonitoringRepository;
+import br.com.officyna.monitoring.domain.entity.LaborMonitoring;
+import br.com.officyna.monitoring.domain.repository.LaborMonitoringRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -17,25 +17,25 @@ import java.util.Optional;
  */
 @Component
 @RequiredArgsConstructor
-public class LaborMonitoringRepositoryGateway implements ILaborMonitoringRepository {
+public class LaborMonitoringRepositoryGateway implements LaborMonitoringRepository {
 
     private final LaborMonitoringMongoRepository mongoRepository;
     private final LaborMonitoringEntityDocumentMapper mapper;
 
     @Override
-    public LaborMonitoringEntity save(LaborMonitoringEntity entity) {
+    public LaborMonitoring save(LaborMonitoring entity) {
         var document = mapper.toDocument(entity);
         var saved = mongoRepository.save(document);
         return mapper.toEntity(saved);
     }
 
     @Override
-    public Optional<LaborMonitoringEntity> findById(String id) {
+    public Optional<LaborMonitoring> findById(String id) {
         return mongoRepository.findById(id).map(mapper::toEntity);
     }
 
     @Override
-    public List<LaborMonitoringEntity> findAll() {
+    public List<LaborMonitoring> findAll() {
         return mongoRepository.findAll()
                 .stream()
                 .map(mapper::toEntity)
@@ -53,7 +53,7 @@ public class LaborMonitoringRepositoryGateway implements ILaborMonitoringReposit
     }
 
     @Override
-    public Optional<LaborMonitoringEntity> findByLaborId(String laborId) {
+    public Optional<LaborMonitoring> findByLaborId(String laborId) {
         return mongoRepository.findByLaborId(laborId).map(mapper::toEntity);
     }
 }

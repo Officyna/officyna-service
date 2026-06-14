@@ -1,7 +1,7 @@
 package br.com.officyna.infrastructure.persistence.mapper;
 
-import br.com.officyna.administrative.supply.domain.SupplyEntity;
-import br.com.officyna.administrative.supply.domain.SupplyType;
+import br.com.officyna.administrative.supply.domain.entity.Supply;
+import br.com.officyna.administrative.supply.domain.entity.SupplyType;
 import br.com.officyna.infrastructure.persistence.mongodb.model.SupplyDocument;
 import org.springframework.stereotype.Component;
 
@@ -11,7 +11,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class SupplyEntityDocumentMapper {
 
-    public SupplyDocument toDocument(SupplyEntity entity) {
+    public SupplyDocument toDocument(Supply entity) {
         if (entity == null) {
             return null;
         }
@@ -31,11 +31,11 @@ public class SupplyEntityDocumentMapper {
                 .build();
     }
 
-    public SupplyEntity toEntity(SupplyDocument document) {
+    public Supply toEntity(SupplyDocument document) {
         if (document == null) {
             return null;
         }
-        return SupplyEntity.builder()
+        return Supply.builder()
                 .id(document.getId())
                 .name(document.getName())
                 .description(document.getDescription())

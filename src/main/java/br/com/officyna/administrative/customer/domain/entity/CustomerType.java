@@ -1,4 +1,4 @@
-package br.com.officyna.administrative.customer.domain;
+package br.com.officyna.administrative.customer.domain.entity;
 
 public enum CustomerType {
 
