@@ -1,6 +1,7 @@
-package br.com.officyna.serviceorder.domain.service;
+package br.com.officyna.infrastructure.persistence.component;
 
-import br.com.officyna.serviceorder.domain.entity.ServiceOrderSequenceEntity;
+import br.com.officyna.infrastructure.persistence.mongodb.model.ServiceOrderSequenceDocument;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.mongodb.core.MongoOperations;
 import org.springframework.data.mongodb.core.query.Update;
@@ -14,14 +15,16 @@ import static org.springframework.data.mongodb.core.query.Query.query;
 
 @Service
 @RequiredArgsConstructor
-public class SequenceGeneratorService {
+public class SequenceGenerator implements SequenceGeneratorService {
 
     private final MongoOperations mongoOperations;
 
+    @Override
     public long generateSequence(String seqName) {
-        ServiceOrderSequenceEntity counter = mongoOperations.findAndModify(query(where("_id").is(seqName)),
+        ServiceOrderSequenceDocument counter = mongoOperations.findAndModify(query(where("_id").is(seqName)),
                 new Update().inc("seq", 1), options().returnNew(true).upsert(true),
-                ServiceOrderSequenceEntity.class);
+                ServiceOrderSequenceDocument.class);
         return !Objects.isNull(counter) ? counter.getSeq() : 1;
     }
 }
+

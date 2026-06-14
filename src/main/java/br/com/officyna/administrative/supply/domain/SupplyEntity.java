@@ -2,17 +2,12 @@ package br.com.officyna.administrative.supply.domain;
 
 import br.com.officyna.infrastructure.exception.DomainException;
 import lombok.*;
-import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.annotation.Id;
-import org.springframework.data.annotation.LastModifiedDate;
-import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 import static lombok.AccessLevel.NONE;
 
-@Document(collection = "supplies")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -20,7 +15,6 @@ import static lombok.AccessLevel.NONE;
 @Builder
 public class SupplyEntity {
 
-    @Id
     private String id;
 
     private String name;
@@ -42,11 +36,9 @@ public class SupplyEntity {
     private Boolean active;
 
     @Setter(NONE)
-    @CreatedDate
     private LocalDateTime createdAt;
 
     @Setter(NONE)
-    @LastModifiedDate
     private LocalDateTime updatedAt;
 
     public void setStockQuantity(Integer stockQuantity){

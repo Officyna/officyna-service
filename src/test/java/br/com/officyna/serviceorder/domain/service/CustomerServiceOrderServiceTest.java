@@ -11,7 +11,7 @@ import br.com.officyna.serviceorder.domain.entity.ServiceOrderEntity;
 import br.com.officyna.serviceorder.domain.enums.LaborSituation;
 import br.com.officyna.serviceorder.domain.enums.ServiceOrderStatus;
 import br.com.officyna.serviceorder.domain.mapper.ServiceOrderMapper;
-import br.com.officyna.serviceorder.repository.ServiceOrderRepository;
+import br.com.officyna.serviceorder.domain.repository.IServiceOrderRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -32,7 +32,7 @@ import static org.mockito.Mockito.*;
 class CustomerServiceOrderServiceTest {
 
     @Mock
-    private ServiceOrderRepository serviceOrderRepository;
+    private IServiceOrderRepository serviceOrderRepository;
 
     @Mock
     private CustomerAndMecnichalService customerService;

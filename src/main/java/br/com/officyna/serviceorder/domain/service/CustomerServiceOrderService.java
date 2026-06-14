@@ -9,10 +9,8 @@ import br.com.officyna.serviceorder.domain.entity.ServiceOrderEntity;
 import br.com.officyna.serviceorder.domain.enums.LaborSituation;
 import br.com.officyna.serviceorder.domain.enums.ServiceOrderStatus;
 import br.com.officyna.serviceorder.domain.mapper.ServiceOrderMapper;
-import br.com.officyna.serviceorder.repository.ServiceOrderRepository;
-import lombok.RequiredArgsConstructor;
+import br.com.officyna.serviceorder.domain.repository.IServiceOrderRepository;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -21,17 +19,25 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 @Slf4j
-@Service
-@RequiredArgsConstructor
 public class CustomerServiceOrderService {
 
-    private final ServiceOrderRepository serviceOrderRepository;
+    private final IServiceOrderRepository serviceOrderRepository;
 
     private final CustomerAndMecnichalService customerService;
 
     private final ServiceOrderMapper mapper;
 
     private final ServiceOrderService serviceOrderService;
+
+    public CustomerServiceOrderService(IServiceOrderRepository serviceOrderRepository,
+                                       CustomerAndMecnichalService customerService,
+                                       ServiceOrderMapper mapper,
+                                       ServiceOrderService serviceOrderService) {
+        this.serviceOrderRepository = serviceOrderRepository;
+        this.customerService = customerService;
+        this.mapper = mapper;
+        this.serviceOrderService = serviceOrderService;
+    }
 
     public List<ServiceOrderResponse> findByCustomerDocument(String document, ServiceOrderStatus status) {
         log.info("Iniciando consulta de ordens de serviço para o documento: {} com status: {}", document, status != null ? status : "TODOS");

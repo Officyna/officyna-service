@@ -1,16 +1,14 @@
 package br.com.officyna.monitoring.domain.service;
 
 import br.com.officyna.administrative.labor.domain.LaborEntity;
-import br.com.officyna.administrative.labor.repository.LaborRepository;
+import br.com.officyna.administrative.labor.domain.repository.ILaborRepository;
 import br.com.officyna.monitoring.api.resources.ForceRecalcResponse;
 import br.com.officyna.monitoring.api.resources.LaborMonitoringResponse;
 import br.com.officyna.monitoring.domain.entity.LaborMonitoringEntity;
-import br.com.officyna.monitoring.repository.LaborMonitoringRepository;
-import br.com.officyna.serviceorder.repository.ServiceOrderRepository;
-import lombok.RequiredArgsConstructor;
+import br.com.officyna.monitoring.domain.repository.ILaborMonitoringRepository;
+import br.com.officyna.serviceorder.domain.repository.IServiceOrderRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
-import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
@@ -18,17 +16,23 @@ import java.util.List;
 import java.util.Optional;
 
 @Slf4j
-@Service
-@RequiredArgsConstructor
 public class LaborMonitoringService {
+
+    private final ILaborMonitoringRepository monitoringRepository;
+    private final ILaborRepository laborRepository;
+    private final IServiceOrderRepository serviceOrderRepository;
+
+    public LaborMonitoringService(ILaborMonitoringRepository monitoringRepository, ILaborRepository laborRepository, IServiceOrderRepository serviceOrderRepository) {
+        this.monitoringRepository = monitoringRepository;
+        this.laborRepository = laborRepository;
+        this.serviceOrderRepository = serviceOrderRepository;
+    }
 
     // 1 dia útil = 8 horas = 28800 segundos
     private static final double WORK_DAY_SECONDS_DOUBLE = 28800.0;
     private static final int WORK_DAY_SECONDS_INT = 28800;
 
-    private final LaborMonitoringRepository monitoringRepository;
-    private final LaborRepository laborRepository;
-    private final ServiceOrderRepository serviceOrderRepository;
+
 
     public List<LaborMonitoringResponse> findAll() {
         return monitoringRepository.findAll()

@@ -6,21 +6,22 @@ import br.com.officyna.administrative.vehicle.api.resources.VehicleRequest;
 import br.com.officyna.administrative.vehicle.api.resources.VehicleResponse;
 import br.com.officyna.administrative.vehicle.domain.VehicleEntity;
 import br.com.officyna.administrative.vehicle.domain.mapper.VehicleMapper;
-import br.com.officyna.administrative.vehicle.repository.VehicleRepository;
+import br.com.officyna.administrative.vehicle.domain.repository.IVehicleRepository;
 import br.com.officyna.infrastructure.exception.DomainException;
 import br.com.officyna.infrastructure.exception.NotFoundException;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-
 import java.util.List;
 
-@Service
-@RequiredArgsConstructor
 public class VehicleService {
 
-    private final VehicleRepository vehicleRepository;
+    private final IVehicleRepository vehicleRepository;
     private final VehicleMapper vehicleMapper;
     private final CustomerService customerService;
+
+    public VehicleService(IVehicleRepository vehicleRepository, VehicleMapper vehicleMapper, CustomerService customerService) {
+        this.vehicleRepository = vehicleRepository;
+        this.vehicleMapper = vehicleMapper;
+        this.customerService = customerService;
+    }
 
     public List<VehicleResponse> findAll() {
         return vehicleRepository.findAll()

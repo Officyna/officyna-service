@@ -9,21 +9,17 @@ import br.com.officyna.serviceorder.domain.dto.*;
 import br.com.officyna.serviceorder.domain.entity.ServiceOrderEntity;
 import br.com.officyna.serviceorder.domain.enums.ServiceOrderStatus;
 import br.com.officyna.serviceorder.domain.mapper.ServiceOrderMapper;
-import br.com.officyna.serviceorder.repository.ServiceOrderRepository;
-import lombok.RequiredArgsConstructor;
+import br.com.officyna.serviceorder.domain.repository.IServiceOrderRepository;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.List;
 
 @Slf4j
-@Service
-@RequiredArgsConstructor
 public class ServiceOrderService {
 
-    private final ServiceOrderRepository repository;
+    private final IServiceOrderRepository repository;
 
     private final LaborSelectionService laborSelectionService;
 
@@ -38,6 +34,24 @@ public class ServiceOrderService {
     private final LaborMonitoringService laborMonitoringService;
 
     private final StockService stockService;
+
+    public ServiceOrderService(IServiceOrderRepository repository,
+                               LaborSelectionService laborSelectionService,
+                               SupplySelectionService supplySelectionService,
+                               CustomerAndMecnichalService customerAndMecnichalService,
+                               VehicleSelectionService vehicleSelectionService,
+                               ServiceOrderMapper mapper,
+                               LaborMonitoringService laborMonitoringService,
+                               StockService stockService) {
+        this.repository = repository;
+        this.laborSelectionService = laborSelectionService;
+        this.supplySelectionService = supplySelectionService;
+        this.customerAndMecnichalService = customerAndMecnichalService;
+        this.vehicleSelectionService = vehicleSelectionService;
+        this.mapper = mapper;
+        this.laborMonitoringService = laborMonitoringService;
+        this.stockService = stockService;
+    }
 
     private ServiceOrderEntity findEntityById(String id){
         return repository.findById(id)

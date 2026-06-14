@@ -1,7 +1,6 @@
-package br.com.officyna.serviceorder.domain.component;
+package br.com.officyna.infrastructure.persistence.component;
 
-import br.com.officyna.serviceorder.domain.entity.ServiceOrderEntity;
-import br.com.officyna.serviceorder.domain.service.SequenceGeneratorService;
+import br.com.officyna.infrastructure.persistence.mongodb.model.ServiceOrderDocument;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.mongodb.core.mapping.event.AbstractMongoEventListener;
 import org.springframework.data.mongodb.core.mapping.event.BeforeConvertEvent;
@@ -9,13 +8,14 @@ import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
-public class ServiceOrderModelListener extends AbstractMongoEventListener<ServiceOrderEntity> {
+public class ServiceOrderModelListener extends AbstractMongoEventListener<ServiceOrderDocument> {
+
     private final SequenceGeneratorService sequenceGenerator;
 
     @Override
-    public void onBeforeConvert(BeforeConvertEvent<ServiceOrderEntity> event) {
+    public void onBeforeConvert(BeforeConvertEvent<ServiceOrderDocument> event) {
         if (event.getSource().getServiceOrderNumber() == null || event.getSource().getServiceOrderNumber() < 1) {
-            event.getSource().setServiceOrderNumber(sequenceGenerator.generateSequence(ServiceOrderEntity.SEQUENCE_NAME));
+            event.getSource().setServiceOrderNumber(sequenceGenerator.generateSequence(ServiceOrderDocument.SEQUENCE_NAME));
         }
     }
 }

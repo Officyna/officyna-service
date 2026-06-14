@@ -1,20 +1,19 @@
 package br.com.officyna.monitoring.domain.service;
 
 import br.com.officyna.administrative.labor.domain.LaborEntity;
-import br.com.officyna.administrative.labor.repository.LaborRepository;
+import br.com.officyna.administrative.labor.domain.repository.ILaborRepository;
 import br.com.officyna.monitoring.api.resources.ForceRecalcResponse;
 import br.com.officyna.monitoring.api.resources.LaborMonitoringResponse;
 import br.com.officyna.monitoring.domain.entity.LaborMonitoringEntity;
-import br.com.officyna.monitoring.repository.LaborMonitoringRepository;
+import br.com.officyna.monitoring.domain.repository.ILaborMonitoringRepository;
 import br.com.officyna.serviceorder.domain.dto.LaborDetailDTO;
 import br.com.officyna.serviceorder.domain.dto.LaborsDTO;
 import br.com.officyna.serviceorder.domain.entity.ServiceOrderEntity;
-import br.com.officyna.serviceorder.repository.ServiceOrderRepository;
+import br.com.officyna.serviceorder.domain.repository.IServiceOrderRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -23,7 +22,8 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -31,16 +31,20 @@ import static org.mockito.Mockito.*;
 class LaborMonitoringServiceTest {
 
     @Mock
-    private LaborMonitoringRepository monitoringRepository;
+    private ILaborMonitoringRepository monitoringRepository;
 
     @Mock
-    private LaborRepository laborRepository;
+    private ILaborRepository laborRepository;
 
     @Mock
-    private ServiceOrderRepository serviceOrderRepository;
+    private IServiceOrderRepository serviceOrderRepository;
 
-    @InjectMocks
     private LaborMonitoringService service;
+
+    @org.junit.jupiter.api.BeforeEach
+    void setUp() {
+        service = new LaborMonitoringService(monitoringRepository, laborRepository, serviceOrderRepository);
+    }
 
     private LaborMonitoringEntity buildMonitoringEntity(String laborId, double average, int total) {
         return LaborMonitoringEntity.builder()

@@ -4,22 +4,23 @@ import br.com.officyna.administrative.labor.api.resources.LaborRequest;
 import br.com.officyna.administrative.labor.api.resources.LaborResponse;
 import br.com.officyna.administrative.labor.domain.LaborEntity;
 import br.com.officyna.administrative.labor.domain.mapper.LaborMapper;
-import br.com.officyna.administrative.labor.repository.LaborRepository;
+import br.com.officyna.administrative.labor.domain.repository.ILaborRepository;
 import br.com.officyna.infrastructure.exception.DomainException;
 import br.com.officyna.infrastructure.exception.NotFoundException;
 import br.com.officyna.monitoring.domain.service.LaborMonitoringService;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-
 import java.util.List;
 
-@Service
-@RequiredArgsConstructor
 public class LaborService {
 
-    private final LaborRepository laborRepository;
+    private final ILaborRepository laborRepository;
     private final LaborMapper laborMapper;
     private final LaborMonitoringService laborMonitoringService;
+
+    public LaborService(ILaborRepository laborRepository, LaborMapper laborMapper, LaborMonitoringService laborMonitoringService) {
+        this.laborRepository = laborRepository;
+        this.laborMapper = laborMapper;
+        this.laborMonitoringService = laborMonitoringService;
+    }
 
     public List<LaborResponse> findAll() {
         return laborRepository.findByActiveTrue()

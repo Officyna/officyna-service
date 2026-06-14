@@ -5,20 +5,20 @@ import br.com.officyna.administrative.supply.api.resources.SupplyResponse;
 import br.com.officyna.administrative.supply.domain.SupplyEntity;
 import br.com.officyna.administrative.supply.domain.SupplyType;
 import br.com.officyna.administrative.supply.domain.mapper.SupplyMapper;
-import br.com.officyna.administrative.supply.repository.SupplyRepository;
+import br.com.officyna.administrative.supply.domain.repository.ISupplyRepository;
 import br.com.officyna.infrastructure.exception.DomainException;
 import br.com.officyna.infrastructure.exception.NotFoundException;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-
 import java.util.List;
 
-@Service
-@RequiredArgsConstructor
 public class SupplyService {
 
-    private final SupplyRepository supplyRepository;
+    private final ISupplyRepository supplyRepository;
     private final SupplyMapper supplyMapper;
+
+    public SupplyService(ISupplyRepository supplyRepository, SupplyMapper supplyMapper) {
+        this.supplyRepository = supplyRepository;
+        this.supplyMapper = supplyMapper;
+    }
 
     public List<SupplyResponse> findAll() {
         return supplyRepository.findByActiveTrue()

@@ -5,20 +5,20 @@ import br.com.officyna.administrative.customer.api.resources.CustomerResponse;
 import br.com.officyna.administrative.customer.domain.CustomerEntity;
 import br.com.officyna.administrative.customer.domain.mapper.CustomerMapper;
 import br.com.officyna.administrative.customer.domain.validation.DocumentUtils;
-import br.com.officyna.administrative.customer.repository.CustomerRepository;
+import br.com.officyna.administrative.customer.domain.repository.ICustomerRepository;
 import br.com.officyna.infrastructure.exception.DomainException;
 import br.com.officyna.infrastructure.exception.NotFoundException;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-
 import java.util.List;
 
-@Service
-@RequiredArgsConstructor
 public class CustomerService {
 
-    private final CustomerRepository customerRepository;
+    private final ICustomerRepository customerRepository;
     private final CustomerMapper customerMapper;
+
+    public CustomerService(ICustomerRepository customerRepository, CustomerMapper customerMapper) {
+        this.customerRepository = customerRepository;
+        this.customerMapper = customerMapper;
+    }
 
     public List<CustomerResponse> findAll() {
         return customerRepository.findByActiveTrue()

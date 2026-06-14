@@ -1,22 +1,21 @@
 package br.com.officyna.administrative.supply.domain.service;
 
 import br.com.officyna.administrative.supply.domain.SupplyEntity;
-import br.com.officyna.administrative.supply.repository.SupplyRepository;
-import br.com.officyna.infrastructure.exception.DomainException;
+import br.com.officyna.administrative.supply.domain.repository.ISupplyRepository;
 import br.com.officyna.infrastructure.exception.NotFoundException;
 import br.com.officyna.serviceorder.domain.dto.SupplyDetailDTO;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
 
 import java.util.List;
 
 @Slf4j
-@Service
-@RequiredArgsConstructor
 public class StockService {
 
-    private final SupplyRepository supplyRepository;
+    private final ISupplyRepository supplyRepository;
+
+    public StockService(ISupplyRepository supplyRepository) {
+        this.supplyRepository = supplyRepository;
+    }
 
     public void reserveSupplies(List<SupplyDetailDTO> supplies) {
         if (supplies == null || supplies.isEmpty()) return;

@@ -4,28 +4,30 @@ import br.com.officyna.administrative.user.api.resources.UserRequest;
 import br.com.officyna.administrative.user.api.resources.UserResponse;
 import br.com.officyna.administrative.user.domain.UserEntity;
 import br.com.officyna.administrative.user.domain.mapper.UserMapper;
-import br.com.officyna.administrative.user.repository.UserRepository;
+import br.com.officyna.administrative.user.domain.repository.IUserRepository;
 import br.com.officyna.infrastructure.exception.DomainException;
 import br.com.officyna.infrastructure.exception.NotFoundException;
-import lombok.RequiredArgsConstructor;
 import org.jspecify.annotations.NonNull;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
 
-@Service
-@RequiredArgsConstructor
 public class UserService {
 
-    private final UserRepository userRepository;
+    private final IUserRepository userRepository;
     private final UserMapper userMapper;
     private final PasswordEncoder passwordEncoder;
+
+    public UserService(IUserRepository userRepository, UserMapper userMapper, PasswordEncoder passwordEncoder) {
+        this.userRepository = userRepository;
+        this.userMapper = userMapper;
+        this.passwordEncoder = passwordEncoder;
+    }
 
     public List<UserResponse> findAll() {
         return userRepository.findByActiveTrue()

@@ -5,10 +5,6 @@ import br.com.officyna.serviceorder.domain.dto.*;
 import br.com.officyna.serviceorder.domain.enums.LaborSituation;
 import br.com.officyna.serviceorder.domain.enums.ServiceOrderStatus;
 import lombok.*;
-import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.annotation.Id;
-import org.springframework.data.annotation.LastModifiedDate;
-import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -16,7 +12,6 @@ import java.util.List;
 
 import static lombok.AccessLevel.NONE;
 
-@Document(collection = "service_orders")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -24,9 +19,6 @@ import static lombok.AccessLevel.NONE;
 @Builder
 public class ServiceOrderEntity {
 
-    public static final String SEQUENCE_NAME = "service_orders_sequence";
-
-    @Id
     private String id;
 
     private Long serviceOrderNumber;
@@ -64,11 +56,9 @@ public class ServiceOrderEntity {
     private BigDecimal totalBudgetAmount;
 
     @Setter(NONE)
-    @CreatedDate
     private LocalDateTime createdAt;
 
     @Setter(NONE)
-    @LastModifiedDate
     private LocalDateTime updatedAt;
 
     public void setStatus(ServiceOrderStatus status){
