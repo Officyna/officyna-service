@@ -39,21 +39,21 @@ spec:
               memory: "1Gi"
           startupProbe:
             httpGet:
-              path: /actuator/health/liveness
+              path: /actuator/health
               port: http
             periodSeconds: 10
             timeoutSeconds: 5
             failureThreshold: 30
           readinessProbe:
             httpGet:
-              path: /actuator/health/readiness
+              path: /actuator/health
               port: http
             periodSeconds: 10
             timeoutSeconds: 5
             failureThreshold: 6
           livenessProbe:
             httpGet:
-              path: /actuator/health/liveness
+              path: /actuator/health
               port: http
             periodSeconds: 15
             timeoutSeconds: 5
