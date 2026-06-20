@@ -23,6 +23,8 @@ jobs:
   build-test:
     name: Build e Testes
     runs-on: ubuntu-latest
+    env:
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
     steps:
       - name: Checkout do código
         uses: actions/checkout@v4
@@ -41,14 +43,11 @@ jobs:
 
       - name: Análise de qualidade (SonarCloud)
         if: ${{ env.SONAR_TOKEN != '' }}
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         run: |
           mvn --batch-mode sonar:sonar \
             -Dsonar.host.url=https://sonarcloud.io \
             -Dsonar.organization=${{ vars.SONAR_ORGANIZATION }} \
-            -Dsonar.projectKey=${{ vars.SONAR_PROJECT_KEY }} \
-            -Dsonar.token=${{ secrets.SONAR_TOKEN }}
+            -Dsonar.projectKey=${{ vars.SONAR_PROJECT_KEY }}
 
       - name: Publicar relatório de testes
         if: always()
