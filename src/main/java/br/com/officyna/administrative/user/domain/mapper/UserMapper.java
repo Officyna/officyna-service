@@ -2,14 +2,14 @@ package br.com.officyna.administrative.user.domain.mapper;
 
 import br.com.officyna.administrative.user.api.resources.UserRequest;
 import br.com.officyna.administrative.user.api.resources.UserResponse;
-import br.com.officyna.administrative.user.domain.UserEntity;
+import br.com.officyna.administrative.user.domain.entity.User;
 import org.springframework.stereotype.Component;
 
 @Component
 public class UserMapper {
 
-    public UserEntity toEntity(UserRequest request) {
-        return UserEntity.builder()
+    public User toEntity(UserRequest request) {
+        return User.builder()
                 .name(request.name())
                 .email(request.email())
                 .password(request.password())
@@ -18,7 +18,7 @@ public class UserMapper {
                 .build();
     }
 
-    public UserResponse toResponse(UserEntity entity) {
+    public UserResponse toResponse(User entity) {
         return UserResponse.builder()
                 .id(entity.getId())
                 .name(entity.getName())
@@ -30,7 +30,7 @@ public class UserMapper {
                 .build();
     }
 
-    public void updateEntity(UserEntity entity, UserRequest request) {
+    public void updateEntity(User entity, UserRequest request) {
         entity.setName(request.name());
         entity.setEmail(request.email());
         entity.setUserRole(request.userRole());

@@ -2,8 +2,8 @@ package br.com.officyna.administrative.user.domain.mapper;
 
 import br.com.officyna.administrative.user.api.resources.UserRequest;
 import br.com.officyna.administrative.user.api.resources.UserResponse;
-import br.com.officyna.administrative.user.domain.UserEntity;
-import br.com.officyna.administrative.user.domain.UserRole;
+import br.com.officyna.administrative.user.domain.entity.User;
+import br.com.officyna.administrative.user.domain.entity.UserRole;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,8 +17,8 @@ class UserMapperTest {
         return new UserRequest("João Silva", "joao@email.com", "senha123", UserRole.ATTENDANT);
     }
 
-    private UserEntity buildEntity() {
-        return UserEntity.builder()
+    private User buildEntity() {
+        return User.builder()
                 .id("1").name("João Silva").email("joao@email.com")
                 .password("encoded").userRole(UserRole.ATTENDANT).active(true)
                 .build();
@@ -27,7 +27,7 @@ class UserMapperTest {
     @Test
     @DisplayName("toEntity deve mapear todos os campos do request")
     void toEntity_ShouldMapAllFields() {
-        UserEntity entity = mapper.toEntity(buildRequest());
+        User entity = mapper.toEntity(buildRequest());
 
         assertEquals("João Silva", entity.getName());
         assertEquals("joao@email.com", entity.getEmail());
@@ -57,7 +57,7 @@ class UserMapperTest {
     @Test
     @DisplayName("updateEntity deve atualizar name, email e role sem alterar password")
     void updateEntity_ShouldUpdateNameEmailAndRole() {
-        UserEntity entity = buildEntity();
+        User entity = buildEntity();
         UserRequest request = new UserRequest("Novo Nome", "novo@email.com", "outrasenha", UserRole.MANAGER);
 
         mapper.updateEntity(entity, request);

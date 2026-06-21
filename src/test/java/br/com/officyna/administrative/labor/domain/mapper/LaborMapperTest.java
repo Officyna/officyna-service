@@ -2,7 +2,7 @@ package br.com.officyna.administrative.labor.domain.mapper;
 
 import br.com.officyna.administrative.labor.api.resources.LaborRequest;
 import br.com.officyna.administrative.labor.api.resources.LaborResponse;
-import br.com.officyna.administrative.labor.domain.LaborEntity;
+import br.com.officyna.administrative.labor.domain.entity.Labor;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -19,8 +19,8 @@ class LaborMapperTest {
         return new LaborRequest(name, "Descrição do serviço", new BigDecimal("120.00"), 2, active);
     }
 
-    private LaborEntity buildEntity() {
-        return LaborEntity.builder()
+    private Labor buildEntity() {
+        return Labor.builder()
                 .id("lab-1")
                 .name("Troca de óleo")
                 .description("Troca de óleo com filtro")
@@ -37,7 +37,7 @@ class LaborMapperTest {
     void toEntity_DeveMappearTodosOsCampos() {
         LaborRequest request = buildRequest("Troca de óleo", true);
 
-        LaborEntity entity = mapper.toEntity(request);
+        Labor entity = mapper.toEntity(request);
 
         assertEquals("Troca de óleo", entity.getName());
         assertEquals("Descrição do serviço", entity.getDescription());
@@ -51,7 +51,7 @@ class LaborMapperTest {
     void toEntity_DeveRespeitarCampoActive() {
         LaborRequest request = buildRequest("Troca de filtro", false);
 
-        LaborEntity entity = mapper.toEntity(request);
+        Labor entity = mapper.toEntity(request);
 
         assertFalse(entity.getActive());
     }
@@ -62,7 +62,7 @@ class LaborMapperTest {
     @DisplayName("toResponse deve mapear todos os campos corretamente")
     void toResponse_DeveMappearTodosOsCampos() {
         LocalDateTime now = LocalDateTime.now();
-        LaborEntity entity = LaborEntity.builder()
+        Labor entity = Labor.builder()
                 .id("lab-1")
                 .name("Troca de óleo")
                 .description("Troca de óleo com filtro")
@@ -86,7 +86,7 @@ class LaborMapperTest {
     @Test
     @DisplayName("updateEntity deve atualizar todos os campos do entity")
     void updateEntity_DeveAtualizarTodosOsCampos() {
-        LaborEntity entity = buildEntity();
+        Labor entity = buildEntity();
         LaborRequest request = new LaborRequest("Balanceamento", "Balanceamento de rodas", new BigDecimal("80.00"), 1, true);
 
         mapper.updateEntity(entity, request);
@@ -101,7 +101,7 @@ class LaborMapperTest {
     @Test
     @DisplayName("updateEntity deve desativar serviço quando active for false")
     void updateEntity_DeveDesativarServico() {
-        LaborEntity entity = buildEntity();
+        Labor entity = buildEntity();
         LaborRequest request = new LaborRequest("Troca de óleo", "Descrição", new BigDecimal("120.00"), 1, false);
 
         mapper.updateEntity(entity, request);

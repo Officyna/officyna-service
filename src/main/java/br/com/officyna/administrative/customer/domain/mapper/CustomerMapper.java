@@ -4,16 +4,16 @@ package br.com.officyna.administrative.customer.domain.mapper;
 import br.com.officyna.administrative.customer.api.resources.AddressDTO;
 import br.com.officyna.administrative.customer.api.resources.CustomerRequest;
 import br.com.officyna.administrative.customer.api.resources.CustomerResponse;
-import br.com.officyna.administrative.customer.domain.AddressEntity;
-import br.com.officyna.administrative.customer.domain.CustomerEntity;
+import br.com.officyna.administrative.customer.domain.entity.Address;
+import br.com.officyna.administrative.customer.domain.entity.Customer;
 import br.com.officyna.administrative.customer.domain.validation.DocumentUtils;
 import org.springframework.stereotype.Component;
 
 @Component
 public class CustomerMapper {
 
-    public CustomerEntity toEntity(CustomerRequest request) {
-        return CustomerEntity.builder()
+    public Customer toEntity(CustomerRequest request) {
+        return Customer.builder()
                 .name(request.name())
                 .document(DocumentUtils.normalize(request.document()))
                 .type(request.type())
@@ -26,7 +26,7 @@ public class CustomerMapper {
                 .build();
     }
 
-    public CustomerResponse toResponse(CustomerEntity entity) {
+    public CustomerResponse toResponse(Customer entity) {
         return new CustomerResponse(
                 entity.getId(),
                 entity.getName(),
@@ -42,7 +42,7 @@ public class CustomerMapper {
         );
     }
 
-    public void updateEntity(CustomerEntity entity, CustomerRequest request) {
+    public void updateEntity(Customer entity, CustomerRequest request) {
         entity.setName(request.name());
         entity.setDocument(DocumentUtils.normalize(request.document()));
         entity.setType(request.type());
@@ -55,9 +55,9 @@ public class CustomerMapper {
 
     // --- helpers privados ---
 
-    private AddressEntity toAddressEntity(AddressDTO address) {
+    private Address toAddressEntity(AddressDTO address) {
         if (address == null) return null;
-        return AddressEntity.builder()
+        return Address.builder()
                 .street(address.street())
                 .number(address.number())
                 .complement(address.complement())
@@ -69,7 +69,7 @@ public class CustomerMapper {
                 .build();
     }
 
-    private AddressDTO toAddressRecord(AddressEntity entity) {
+    private AddressDTO toAddressRecord(Address entity) {
         if (entity == null) return null;
         return new AddressDTO(
                 entity.getStreet(),

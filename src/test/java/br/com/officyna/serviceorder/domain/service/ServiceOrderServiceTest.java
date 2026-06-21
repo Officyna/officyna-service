@@ -5,11 +5,11 @@ import br.com.officyna.infrastructure.exception.NotFoundException;
 import br.com.officyna.monitoring.domain.service.LaborMonitoringService;
 import br.com.officyna.serviceorder.api.resources.*;
 import br.com.officyna.serviceorder.domain.dto.*;
-import br.com.officyna.serviceorder.domain.entity.ServiceOrderEntity;
+import br.com.officyna.serviceorder.domain.entity.ServiceOrder;
 import br.com.officyna.serviceorder.domain.enums.LaborSituation;
 import br.com.officyna.serviceorder.domain.enums.ServiceOrderStatus;
 import br.com.officyna.serviceorder.domain.mapper.ServiceOrderMapper;
-import br.com.officyna.serviceorder.repository.ServiceOrderRepository;
+import br.com.officyna.serviceorder.domain.repository.ServiceOrderRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -57,8 +57,8 @@ class ServiceOrderServiceTest {
 
     // ─────────────── helpers ───────────────
 
-    private ServiceOrderEntity buildEntity(String id, ServiceOrderStatus status) {
-        ServiceOrderEntity entity = new ServiceOrderEntity();
+    private ServiceOrder buildEntity(String id, ServiceOrderStatus status) {
+        ServiceOrder entity = new ServiceOrder();
         entity.setId(id);
         entity.setServiceOrderNumber(1L);
         entity.setStatus(status);
@@ -74,7 +74,7 @@ class ServiceOrderServiceTest {
     @Test
     @DisplayName("findAll deve retornar lista de respostas mapeadas")
     void findAll_ShouldReturnMappedList() {
-        ServiceOrderEntity entity = buildEntity("id-1", ServiceOrderStatus.RECEBIDA);
+        ServiceOrder entity = buildEntity("id-1", ServiceOrderStatus.RECEBIDA);
         ServiceOrderResponse response = buildResponse();
 
         when(repository.findAll()).thenReturn(List.of(entity));
@@ -102,31 +102,31 @@ class ServiceOrderServiceTest {
     @DisplayName("findAll deve filtrar e ordenar por prioridade do status e data de criação")
     void findAll_ShouldFilterAndSortByStatusAndCreatedAt() {
 
-        ServiceOrderEntity recebidaMaisNova = ServiceOrderEntity.builder()
+        ServiceOrder recebidaMaisNova = ServiceOrder.builder()
                 .id("1")
                 .status(ServiceOrderStatus.RECEBIDA)
                 .createdAt(LocalDateTime.of(2025, 1, 20, 10, 0))
                 .build();
 
-        ServiceOrderEntity recebidaMaisAntiga = ServiceOrderEntity.builder()
+        ServiceOrder recebidaMaisAntiga = ServiceOrder.builder()
                 .id("2")
                 .status(ServiceOrderStatus.RECEBIDA)
                 .createdAt(LocalDateTime.of(2025, 1, 10, 10, 0))
                 .build();
 
-        ServiceOrderEntity emDiagnostico = ServiceOrderEntity.builder()
+        ServiceOrder emDiagnostico = ServiceOrder.builder()
                 .id("3")
                 .status(ServiceOrderStatus.EM_DIAGNOSTICO)
                 .createdAt(LocalDateTime.of(2025, 1, 15, 10, 0))
                 .build();
 
-        ServiceOrderEntity aguardandoAprovacao = ServiceOrderEntity.builder()
+        ServiceOrder aguardandoAprovacao = ServiceOrder.builder()
                 .id("4")
                 .status(ServiceOrderStatus.AGUARDANDO_APROVACAO)
                 .createdAt(LocalDateTime.of(2025, 1, 15, 10, 0))
                 .build();
 
-        ServiceOrderEntity emExecucao = ServiceOrderEntity.builder()
+        ServiceOrder emExecucao = ServiceOrder.builder()
                 .id("5")
                 .status(ServiceOrderStatus.EM_EXECUCAO)
                 .createdAt(LocalDateTime.of(2025, 1, 15, 10, 0))
@@ -169,12 +169,12 @@ class ServiceOrderServiceTest {
     @DisplayName("findAll deve ignorar ordens com status não permitidos")
     void findAll_ShouldFilterUnsupportedStatuses() {
 
-        ServiceOrderEntity recebida = buildEntity(
+        ServiceOrder recebida = buildEntity(
                 "1",
                 ServiceOrderStatus.RECEBIDA
         );
 
-        ServiceOrderEntity finalizada = buildEntity(
+        ServiceOrder finalizada = buildEntity(
                 "2",
                 ServiceOrderStatus.FINALIZADA
         );
@@ -200,7 +200,7 @@ class ServiceOrderServiceTest {
     @Test
     @DisplayName("findById deve retornar response quando encontrado")
     void findById_ShouldReturnResponse_WhenFound() {
-        ServiceOrderEntity entity = buildEntity("id-1", ServiceOrderStatus.RECEBIDA);
+        ServiceOrder entity = buildEntity("id-1", ServiceOrderStatus.RECEBIDA);
         ServiceOrderResponse response = buildResponse();
 
         when(repository.findById("id-1")).thenReturn(Optional.of(entity));
@@ -225,7 +225,7 @@ class ServiceOrderServiceTest {
     @Test
     @DisplayName("findByServiceOrderNumber deve retornar response quando encontrado")
     void findByServiceOrderNumber_ShouldReturnResponse_WhenFound() {
-        ServiceOrderEntity entity = buildEntity("id-1", ServiceOrderStatus.RECEBIDA);
+        ServiceOrder entity = buildEntity("id-1", ServiceOrderStatus.RECEBIDA);
         ServiceOrderResponse response = buildResponse();
 
         when(repository.findByServiceOrderNumber(100L)).thenReturn(Optional.of(entity));
@@ -260,7 +260,7 @@ class ServiceOrderServiceTest {
         LaborsDTO labors = new LaborsDTO(new ArrayList<>(), BigDecimal.ZERO);
         CustomerDTO customer = new CustomerDTO();
         VehicleDTO vehicle = new VehicleDTO();
-        ServiceOrderEntity entity = buildEntity(null, null);
+        ServiceOrder entity = buildEntity(null, null);
         ServiceOrderResponse response = buildResponse();
 
         when(laborSelectionService.addLabors(any(), any())).thenReturn(labors);
@@ -281,7 +281,7 @@ class ServiceOrderServiceTest {
     @Test
     @DisplayName("updateServiceOrder deve atualizar com mecânico quando mechanicId fornecido")
     void updateServiceOrder_ShouldUpdateWithMechanic_WhenMechanicIdProvided() {
-        ServiceOrderEntity entity = buildEntity("id-1", ServiceOrderStatus.RECEBIDA);
+        ServiceOrder entity = buildEntity("id-1", ServiceOrderStatus.RECEBIDA);
         ExistServiceOrderRequest request = new ExistServiceOrderRequest("Observação", "mech-1");
         MechanicDTO mechanic = new MechanicDTO("mech-1", "Carlos");
         ServiceOrderResponse response = buildResponse();
@@ -301,7 +301,7 @@ class ServiceOrderServiceTest {
     @Test
     @DisplayName("updateServiceOrder deve atualizar sem mecânico quando mechanicId for nulo")
     void updateServiceOrder_ShouldUpdateWithoutMechanic_WhenMechanicIdIsNull() {
-        ServiceOrderEntity entity = buildEntity("id-1", ServiceOrderStatus.RECEBIDA);
+        ServiceOrder entity = buildEntity("id-1", ServiceOrderStatus.RECEBIDA);
         ExistServiceOrderRequest request = new ExistServiceOrderRequest("Observação", null);
         ServiceOrderResponse response = buildResponse();
 
@@ -333,7 +333,7 @@ class ServiceOrderServiceTest {
     @DisplayName("addLaborsInServiceOrder deve adicionar serviços e salvar")
     void addLaborsInServiceOrder_ShouldAddLaborsAndSave() {
         LaborsDTO existingLabors = new LaborsDTO(new ArrayList<>(), BigDecimal.ZERO);
-        ServiceOrderEntity entity = buildEntity("id-1", ServiceOrderStatus.RECEBIDA);
+        ServiceOrder entity = buildEntity("id-1", ServiceOrderStatus.RECEBIDA);
         entity.setLabors(existingLabors);
 
         LaborDetailDTO labor = new LaborDetailDTO("lab-1", "Serviço", "Desc", BigDecimal.TEN, null, null, LaborSituation.PENDENTE, LocalDateTime.now());
@@ -360,7 +360,7 @@ class ServiceOrderServiceTest {
         List<LaborDetailDTO> details = new ArrayList<>(List.of(labor));
         LaborsDTO labors = new LaborsDTO(details, BigDecimal.TEN);
 
-        ServiceOrderEntity entity = buildEntity("id-1", ServiceOrderStatus.RECEBIDA);
+        ServiceOrder entity = buildEntity("id-1", ServiceOrderStatus.RECEBIDA);
         entity.setLabors(labors);
         ServiceOrderResponse response = buildResponse();
 
@@ -379,7 +379,7 @@ class ServiceOrderServiceTest {
     @Test
     @DisplayName("addSupplyFromServiceOrder deve adicionar suprimentos e salvar")
     void addSupplyFromServiceOrder_ShouldAddSuppliesAndSave() {
-        ServiceOrderEntity entity = buildEntity("id-1", ServiceOrderStatus.RECEBIDA);
+        ServiceOrder entity = buildEntity("id-1", ServiceOrderStatus.RECEBIDA);
         entity.setSupplys(null);
 
         SupplyDTO supply = new SupplyDTO(List.of(), BigDecimal.ZERO);
@@ -400,7 +400,7 @@ class ServiceOrderServiceTest {
     @Test
     @DisplayName("removeSupplyFromServiceOrder deve remover suprimento e salvar")
     void removeSupplyFromServiceOrder_ShouldRemoveSupplyAndSave() {
-        ServiceOrderEntity entity = buildEntity("id-1", ServiceOrderStatus.RECEBIDA);
+        ServiceOrder entity = buildEntity("id-1", ServiceOrderStatus.RECEBIDA);
         ServiceOrderResponse response = buildResponse();
 
         when(repository.findById("id-1")).thenReturn(Optional.of(entity));
@@ -419,7 +419,7 @@ class ServiceOrderServiceTest {
     @Test
     @DisplayName("Deve atualizar status com sucesso quando a precedência for respeitada")
     void updateStatus_ShouldSuccess_WhenTransitionIsValid() {
-        ServiceOrderEntity entity = buildEntity("123", ServiceOrderStatus.RECEBIDA);
+        ServiceOrder entity = buildEntity("123", ServiceOrderStatus.RECEBIDA);
 
         when(repository.findById("123")).thenReturn(Optional.of(entity));
         when(repository.save(any())).thenReturn(entity);
@@ -434,7 +434,7 @@ class ServiceOrderServiceTest {
     @Test
     @DisplayName("Deve lançar exceção ao tentar pular um status na precedência")
     void updateStatus_ShouldThrowException_WhenTransitionIsInvalid() {
-        ServiceOrderEntity entity = buildEntity("123", ServiceOrderStatus.RECEBIDA);
+        ServiceOrder entity = buildEntity("123", ServiceOrderStatus.RECEBIDA);
 
         when(repository.findById("123")).thenReturn(Optional.of(entity));
 
@@ -446,7 +446,7 @@ class ServiceOrderServiceTest {
     @Test
     @DisplayName("Deve lançar exceção ao tentar retornar para o status RECEBIDA")
     void updateStatus_ShouldThrowException_WhenReturningToReceived() {
-        ServiceOrderEntity entity = buildEntity("123", ServiceOrderStatus.EM_DIAGNOSTICO);
+        ServiceOrder entity = buildEntity("123", ServiceOrderStatus.EM_DIAGNOSTICO);
 
         when(repository.findById("123")).thenReturn(Optional.of(entity));
 
@@ -458,7 +458,7 @@ class ServiceOrderServiceTest {
     @Test
     @DisplayName("Deve lançar exceção se o novo status for igual ao atual")
     void updateStatus_ShouldThrowException_WhenStatusIsSame() {
-        ServiceOrderEntity entity = buildEntity("123", ServiceOrderStatus.EM_DIAGNOSTICO);
+        ServiceOrder entity = buildEntity("123", ServiceOrderStatus.EM_DIAGNOSTICO);
 
         when(repository.findById("123")).thenReturn(Optional.of(entity));
 
@@ -470,7 +470,7 @@ class ServiceOrderServiceTest {
     @Test
     @DisplayName("Deve validar transição para ENTREGUE apenas após FINALIZADA")
     void updateStatus_ShouldValidateDelivery_OnlyAfterFinalized() {
-        ServiceOrderEntity entity = buildEntity("123", ServiceOrderStatus.EM_EXECUCAO);
+        ServiceOrder entity = buildEntity("123", ServiceOrderStatus.EM_EXECUCAO);
 
         when(repository.findById("123")).thenReturn(Optional.of(entity));
 
@@ -490,7 +490,7 @@ class ServiceOrderServiceTest {
         List<LaborDetailDTO> details = new ArrayList<>(List.of(labor));
         LaborsDTO labors = new LaborsDTO(details, BigDecimal.TEN);
 
-        ServiceOrderEntity entity = buildEntity("id-1", ServiceOrderStatus.APROVADA);
+        ServiceOrder entity = buildEntity("id-1", ServiceOrderStatus.APROVADA);
         entity.setLabors(labors);
         ServiceOrderResponse response = buildResponse();
 
@@ -513,7 +513,7 @@ class ServiceOrderServiceTest {
         List<LaborDetailDTO> details = new ArrayList<>(List.of(labor));
         LaborsDTO labors = new LaborsDTO(details, BigDecimal.TEN);
 
-        ServiceOrderEntity entity = buildEntity("id-1", ServiceOrderStatus.EM_EXECUCAO);
+        ServiceOrder entity = buildEntity("id-1", ServiceOrderStatus.EM_EXECUCAO);
         entity.setLabors(labors);
 
         when(repository.findById("id-1")).thenReturn(Optional.of(entity));
@@ -532,7 +532,7 @@ class ServiceOrderServiceTest {
         List<LaborDetailDTO> details = new ArrayList<>(List.of(labor));
         LaborsDTO labors = new LaborsDTO(details, BigDecimal.TEN);
 
-        ServiceOrderEntity entity = buildEntity("id-1", ServiceOrderStatus.APROVADA);
+        ServiceOrder entity = buildEntity("id-1", ServiceOrderStatus.APROVADA);
         entity.setLabors(labors);
 
         when(repository.findById("id-1")).thenReturn(Optional.of(entity));
@@ -545,7 +545,7 @@ class ServiceOrderServiceTest {
     @Test
     @DisplayName("startLabor deve lançar DomainException quando status da OS não permite execução")
     void startLabor_ShouldThrow_WhenStatusNotAllowed() {
-        ServiceOrderEntity entity = buildEntity("id-1", ServiceOrderStatus.RECEBIDA);
+        ServiceOrder entity = buildEntity("id-1", ServiceOrderStatus.RECEBIDA);
         LaborDetailDTO labor = new LaborDetailDTO("lab-1", "Serviço", "Desc", BigDecimal.TEN, null, null, LaborSituation.PENDENTE, LocalDateTime.now());
         entity.setLabors(new LaborsDTO(new ArrayList<>(List.of(labor)), BigDecimal.ZERO));
 
@@ -568,7 +568,7 @@ class ServiceOrderServiceTest {
         List<LaborDetailDTO> details = new ArrayList<>(List.of(labor));
         LaborsDTO labors = new LaborsDTO(details, BigDecimal.TEN);
 
-        ServiceOrderEntity entity = buildEntity("id-1", ServiceOrderStatus.EM_EXECUCAO);
+        ServiceOrder entity = buildEntity("id-1", ServiceOrderStatus.EM_EXECUCAO);
         entity.setLabors(labors);
         ServiceOrderResponse response = buildResponse();
 
@@ -593,7 +593,7 @@ class ServiceOrderServiceTest {
         List<LaborDetailDTO> details = new ArrayList<>(List.of(labor));
         LaborsDTO labors = new LaborsDTO(details, BigDecimal.TEN);
 
-        ServiceOrderEntity entity = buildEntity("id-1", ServiceOrderStatus.EM_EXECUCAO);
+        ServiceOrder entity = buildEntity("id-1", ServiceOrderStatus.EM_EXECUCAO);
         entity.setLabors(labors);
 
         when(repository.findById("id-1")).thenReturn(Optional.of(entity));
@@ -613,7 +613,7 @@ class ServiceOrderServiceTest {
         List<LaborDetailDTO> details = new ArrayList<>(List.of(labor));
         LaborsDTO labors = new LaborsDTO(details, BigDecimal.TEN);
 
-        ServiceOrderEntity entity = buildEntity("id-1", ServiceOrderStatus.EM_EXECUCAO);
+        ServiceOrder entity = buildEntity("id-1", ServiceOrderStatus.EM_EXECUCAO);
         entity.setLabors(labors);
 
         when(repository.findById("id-1")).thenReturn(Optional.of(entity));
@@ -628,7 +628,7 @@ class ServiceOrderServiceTest {
     @Test
     @DisplayName("sendToCustomer deve mudar status para AGUARDANDO_APROVACAO e salvar")
     void sendToCustomer_ShouldTransitionToAguardandoAprovacao() {
-        ServiceOrderEntity entity = buildEntity("id-1", ServiceOrderStatus.EM_DIAGNOSTICO);
+        ServiceOrder entity = buildEntity("id-1", ServiceOrderStatus.EM_DIAGNOSTICO);
 
         when(repository.findById("id-1")).thenReturn(Optional.of(entity));
         when(repository.save(any())).thenReturn(entity);
@@ -645,11 +645,11 @@ class ServiceOrderServiceTest {
     @Test
     @DisplayName("save deve calcular orçamento e persistir entidade")
     void save_ShouldCalculateBudgetAndPersist() {
-        ServiceOrderEntity entity = buildEntity("id-1", ServiceOrderStatus.RECEBIDA);
+        ServiceOrder entity = buildEntity("id-1", ServiceOrderStatus.RECEBIDA);
 
         when(repository.save(entity)).thenReturn(entity);
 
-        ServiceOrderEntity result = service.save(entity);
+        ServiceOrder result = service.save(entity);
 
         assertThat(result).isEqualTo(entity);
         verify(repository).save(entity);

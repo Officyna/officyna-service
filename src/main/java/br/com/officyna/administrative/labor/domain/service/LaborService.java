@@ -2,27 +2,28 @@ package br.com.officyna.administrative.labor.domain.service;
 
 import br.com.officyna.administrative.labor.api.resources.LaborRequest;
 import br.com.officyna.administrative.labor.api.resources.LaborResponse;
-import br.com.officyna.administrative.labor.domain.LaborEntity;
+import br.com.officyna.administrative.labor.domain.entity.Labor;
 import br.com.officyna.administrative.labor.domain.mapper.LaborMapper;
-import br.com.officyna.administrative.labor.repository.LaborRepository;
+import br.com.officyna.administrative.labor.domain.repository.LaborRepository;
 import br.com.officyna.infrastructure.exception.DomainException;
 import br.com.officyna.infrastructure.exception.NotFoundException;
 import br.com.officyna.monitoring.domain.service.LaborMonitoringService;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-
 import java.util.List;
 
-@Service
-@RequiredArgsConstructor
 public class LaborService {
 
-    private final LaborRepository laborRepository;
+    private final LaborRepository repository;
     private final LaborMapper laborMapper;
     private final LaborMonitoringService laborMonitoringService;
 
+    public LaborService(LaborRepository repository, LaborMapper laborMapper, LaborMonitoringService laborMonitoringService) {
+        this.repository = repository;
+        this.laborMapper = laborMapper;
+        this.laborMonitoringService = laborMonitoringService;
+    }
+
     public List<LaborResponse> findAll() {
-        return laborRepository.findByActiveTrue()
+        return repository.findByActiveTrue()
                 .stream()
                 .map(laborMapper::toResponse)
                 .toList();
@@ -33,35 +34,35 @@ public class LaborService {
     }
 
     public LaborResponse create(LaborRequest request) {
-        if (laborRepository.existsByName(request.name())) {
+        if (repository.existsByName(request.name())) {
             throw new DomainException("Labor already registered with name: " + request.name());
         }
-        LaborEntity entity = laborMapper.toEntity(request);
-        LaborEntity saved = laborRepository.save(entity);
+        Labor entity = laborMapper.toEntity(request);
+        Labor saved = repository.save(entity);
         laborMonitoringService.initializeFromEstimate(saved.getId(), saved.getName(), saved.getDescription(), saved.getExecutionTimeInDays());
         return laborMapper.toResponse(saved);
     }
 
     public LaborResponse update(String id, LaborRequest request) {
-        LaborEntity entity = findEntityById(id);
+        Labor entity = findEntityById(id);
 
         boolean nameChanged = !entity.getName().equalsIgnoreCase(request.name());
-        if (nameChanged && laborRepository.existsByName(request.name())) {
+        if (nameChanged && repository.existsByName(request.name())) {
             throw new DomainException("Labor already registered with name: " + request.name());
         }
 
         laborMapper.updateEntity(entity, request);
-        return laborMapper.toResponse(laborRepository.save(entity));
+        return laborMapper.toResponse(repository.save(entity));
     }
 
     public void delete(String id) {
-        LaborEntity entity = findEntityById(id);
+        Labor entity = findEntityById(id);
         entity.setActive(false);
-        laborRepository.save(entity);
+        repository.save(entity);
     }
 
-    public LaborEntity findEntityById(String id) {
-        return laborRepository.findById(id)
+    public Labor findEntityById(String id) {
+        return repository.findById(id)
                 .orElseThrow(() -> NotFoundException.of("Labor", id));
     }
 }

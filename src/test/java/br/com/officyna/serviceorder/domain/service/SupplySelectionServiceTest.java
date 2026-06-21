@@ -1,7 +1,7 @@
 package br.com.officyna.serviceorder.domain.service;
 
 import br.com.officyna.administrative.supply.api.resources.SupplyResponse;
-import br.com.officyna.administrative.supply.domain.SupplyType;
+import br.com.officyna.administrative.supply.domain.entity.SupplyType;
 import br.com.officyna.administrative.supply.domain.service.SupplyService;
 import br.com.officyna.infrastructure.exception.DomainException;
 import br.com.officyna.serviceorder.api.resources.SupplysRequest;

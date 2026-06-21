@@ -1,8 +1,8 @@
 package br.com.officyna.infrastructure.auth;
 
-import br.com.officyna.administrative.user.domain.UserEntity;
-import br.com.officyna.administrative.user.domain.UserRole;
-import br.com.officyna.administrative.user.repository.UserRepository;
+import br.com.officyna.administrative.user.domain.entity.User;
+import br.com.officyna.administrative.user.domain.entity.UserRole;
+import br.com.officyna.administrative.user.domain.repository.UserRepository;
 import br.com.officyna.infrastructure.exception.NotFoundException;
 import br.com.officyna.infrastructure.security.JwtService;
 import org.junit.jupiter.api.BeforeEach;
@@ -16,7 +16,6 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -44,15 +43,15 @@ class AuthServiceTest {
         ReflectionTestUtils.setField(authService, "expiration", 86_400_000L);
     }
 
-    private UserEntity buildEntity(String email, UserRole role) {
-        return UserEntity.builder()
+    private User buildEntity(String email, UserRole role) {
+        return User.builder()
                 .id("user-1").name("João Silva").email(email)
                 .password("encoded").userRole(role).active(true)
                 .build();
     }
 
     private UserDetails buildUserDetails(String email) {
-        return new User(email, "encoded", List.of(new SimpleGrantedAuthority("ROLE_ADMIN")));
+        return new org.springframework.security.core.userdetails.User(email, "encoded", List.of(new SimpleGrantedAuthority("ROLE_ADMIN")));
     }
 
     // ─── login ────────────────────────────────────────────────────────────────
@@ -63,7 +62,7 @@ class AuthServiceTest {
         LoginRequest request = new LoginRequest("JOAO@EMAIL.COM", "senha123");
         String normalizedEmail = "joao@email.com";
         UserDetails userDetails = buildUserDetails(normalizedEmail);
-        UserEntity entity = buildEntity(normalizedEmail, UserRole.ADMIN);
+        User entity = buildEntity(normalizedEmail, UserRole.ADMIN);
 
         when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
                 .thenReturn(null);

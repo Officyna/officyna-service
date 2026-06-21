@@ -1,8 +1,7 @@
 package br.com.officyna.infrastructure.auth;
 
-import br.com.officyna.administrative.user.domain.UserEntity;
-import br.com.officyna.administrative.user.domain.service.UserService;
-import br.com.officyna.administrative.user.repository.UserRepository;
+import br.com.officyna.administrative.user.domain.entity.User;
+import br.com.officyna.administrative.user.domain.repository.UserRepository;
 import br.com.officyna.infrastructure.exception.NotFoundException;
 import br.com.officyna.infrastructure.security.JwtService;
 import lombok.RequiredArgsConstructor;
@@ -36,7 +35,7 @@ public class AuthService {
         );
 
         UserDetails userDetails = userDetailsService.loadUserByUsername(nomalizedEmail);
-        UserEntity entity = userRepository.findByEmail(nomalizedEmail)
+        User entity = userRepository.findByEmail(nomalizedEmail)
                 .orElseThrow(() -> new NotFoundException("Usuário não encontrado: " + nomalizedEmail));
 
         String token = jwtService.generateToken(userDetails);

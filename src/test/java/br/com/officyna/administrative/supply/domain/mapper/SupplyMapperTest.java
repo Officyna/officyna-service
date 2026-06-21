@@ -2,8 +2,8 @@ package br.com.officyna.administrative.supply.domain.mapper;
 
 import br.com.officyna.administrative.supply.api.resources.SupplyRequest;
 import br.com.officyna.administrative.supply.api.resources.SupplyResponse;
-import br.com.officyna.administrative.supply.domain.SupplyEntity;
-import br.com.officyna.administrative.supply.domain.SupplyType;
+import br.com.officyna.administrative.supply.domain.entity.Supply;
+import br.com.officyna.administrative.supply.domain.entity.SupplyType;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -28,8 +28,8 @@ class SupplyMapperTest {
         );
     }
 
-    private SupplyEntity buildEntity(BigDecimal purchasePrice, BigDecimal salePrice, int stock, int min, int reserved) {
-        return SupplyEntity.builder()
+    private Supply buildEntity(BigDecimal purchasePrice, BigDecimal salePrice, int stock, int min, int reserved) {
+        return Supply.builder()
                 .id("sup-1")
                 .name("Óleo Motor 5W30")
                 .description("Óleo sintético")
@@ -50,7 +50,7 @@ class SupplyMapperTest {
     void toEntity_DeveMappearTodosOsCampos() {
         SupplyRequest request = buildRequest(new BigDecimal("100.00"), new BigDecimal("30.00"), 50, 10, 0);
 
-        SupplyEntity entity = mapper.toEntity(request);
+        Supply entity = mapper.toEntity(request);
 
         assertEquals("Óleo Motor 5W30", entity.getName());
         assertEquals("Óleo sintético", entity.getDescription());
@@ -66,7 +66,7 @@ class SupplyMapperTest {
     void toEntity_DeveDefinirActiveTrue() {
         SupplyRequest request = buildRequest(new BigDecimal("50.00"), new BigDecimal("20.00"), 10, 2, 0);
 
-        SupplyEntity entity = mapper.toEntity(request);
+        Supply entity = mapper.toEntity(request);
 
         assertTrue(entity.getActive());
     }
@@ -77,7 +77,7 @@ class SupplyMapperTest {
         // 100 * (1 + 30/100) = 130.00
         SupplyRequest request = buildRequest(new BigDecimal("100.00"), new BigDecimal("30.00"), 10, 2, 0);
 
-        SupplyEntity entity = mapper.toEntity(request);
+        Supply entity = mapper.toEntity(request);
 
         assertEquals(new BigDecimal("130.00"), entity.getSalePrice());
     }
@@ -88,7 +88,7 @@ class SupplyMapperTest {
         // 100 * (1 + 0) = 100.00
         SupplyRequest request = buildRequest(new BigDecimal("100.00"), new BigDecimal("0.00"), 10, 2, 0);
 
-        SupplyEntity entity = mapper.toEntity(request);
+        Supply entity = mapper.toEntity(request);
 
         assertEquals(new BigDecimal("100.00"), entity.getSalePrice());
     }
@@ -99,7 +99,7 @@ class SupplyMapperTest {
         // 45.90 * 1.5 = 68.85
         SupplyRequest request = buildRequest(new BigDecimal("45.90"), new BigDecimal("50.00"), 30, 5, 0);
 
-        SupplyEntity entity = mapper.toEntity(request);
+        Supply entity = mapper.toEntity(request);
 
         assertEquals(new BigDecimal("68.85"), entity.getSalePrice());
     }
@@ -109,7 +109,7 @@ class SupplyMapperTest {
     @Test
     @DisplayName("toResponse deve mapear todos os campos corretamente")
     void toResponse_DeveMappearTodosOsCampos() {
-        SupplyEntity entity = buildEntity(new BigDecimal("100.00"), new BigDecimal("130.00"), 50, 10, 5);
+        Supply entity = buildEntity(new BigDecimal("100.00"), new BigDecimal("130.00"), 50, 10, 5);
 
         SupplyResponse response = mapper.toResponse(entity);
 
@@ -127,7 +127,7 @@ class SupplyMapperTest {
     @Test
     @DisplayName("toResponse deve calcular availableQuantity como stock menos reserved")
     void toResponse_DeveCalcularAvailableQuantity() {
-        SupplyEntity entity = buildEntity(new BigDecimal("100.00"), new BigDecimal("130.00"), 50, 10, 8);
+        Supply entity = buildEntity(new BigDecimal("100.00"), new BigDecimal("130.00"), 50, 10, 8);
 
         SupplyResponse response = mapper.toResponse(entity);
 
@@ -137,7 +137,7 @@ class SupplyMapperTest {
     @Test
     @DisplayName("toResponse deve retornar availableQuantity zero quando reserved supera stock")
     void toResponse_DeveRetornarZeroQuandoReservedSuperaStock() {
-        SupplyEntity entity = buildEntity(new BigDecimal("100.00"), new BigDecimal("130.00"), 5, 10, 10);
+        Supply entity = buildEntity(new BigDecimal("100.00"), new BigDecimal("130.00"), 5, 10, 10);
 
         SupplyResponse response = mapper.toResponse(entity);
 
@@ -147,7 +147,7 @@ class SupplyMapperTest {
     @Test
     @DisplayName("toResponse deve sinalizar belowMinimumStock quando stock abaixo do mínimo")
     void toResponse_DeveDetectarEstoqueAbaixoDoMinimo() {
-        SupplyEntity entity = buildEntity(new BigDecimal("100.00"), new BigDecimal("130.00"), 3, 10, 0);
+        Supply entity = buildEntity(new BigDecimal("100.00"), new BigDecimal("130.00"), 3, 10, 0);
 
         SupplyResponse response = mapper.toResponse(entity);
 
@@ -157,7 +157,7 @@ class SupplyMapperTest {
     @Test
     @DisplayName("toResponse não deve sinalizar belowMinimumStock quando stock suficiente")
     void toResponse_NaoDeveDetectarEstoqueAbaixoDoMinimo_QuandoSuficiente() {
-        SupplyEntity entity = buildEntity(new BigDecimal("100.00"), new BigDecimal("130.00"), 15, 10, 0);
+        Supply entity = buildEntity(new BigDecimal("100.00"), new BigDecimal("130.00"), 15, 10, 0);
 
         SupplyResponse response = mapper.toResponse(entity);
 
@@ -168,7 +168,7 @@ class SupplyMapperTest {
     @DisplayName("toResponse deve calcular markup corretamente a partir de purchasePrice e salePrice")
     void toResponse_DeveCalcularMarkupPercentage() {
         // (130 - 100) / 100 * 100 = 30%
-        SupplyEntity entity = buildEntity(new BigDecimal("100.00"), new BigDecimal("130.00"), 50, 10, 0);
+        Supply entity = buildEntity(new BigDecimal("100.00"), new BigDecimal("130.00"), 50, 10, 0);
 
         SupplyResponse response = mapper.toResponse(entity);
 
@@ -178,7 +178,7 @@ class SupplyMapperTest {
     @Test
     @DisplayName("toResponse deve retornar markup zero quando purchasePrice é zero")
     void toResponse_DeveRetornarMarkupZero_QuandoPurchasePriceEhZero() {
-        SupplyEntity entity = buildEntity(BigDecimal.ZERO, new BigDecimal("50.00"), 10, 2, 0);
+        Supply entity = buildEntity(BigDecimal.ZERO, new BigDecimal("50.00"), 10, 2, 0);
 
         SupplyResponse response = mapper.toResponse(entity);
 
@@ -190,7 +190,7 @@ class SupplyMapperTest {
     @Test
     @DisplayName("updateEntity deve atualizar todos os campos do entity")
     void updateEntity_DeveAtualizarTodosOsCampos() {
-        SupplyEntity entity = buildEntity(new BigDecimal("100.00"), new BigDecimal("130.00"), 50, 10, 2);
+        Supply entity = buildEntity(new BigDecimal("100.00"), new BigDecimal("130.00"), 50, 10, 2);
         SupplyRequest request = buildRequest(new BigDecimal("200.00"), new BigDecimal("25.00"), 80, 20, 3);
 
         mapper.updateEntity(entity, request);
@@ -206,7 +206,7 @@ class SupplyMapperTest {
     @DisplayName("updateEntity deve recalcular salePrice com o novo markup")
     void updateEntity_DeveRecalcularSalePrice() {
         // novo: 200 * (1 + 25/100) = 250.00
-        SupplyEntity entity = buildEntity(new BigDecimal("100.00"), new BigDecimal("130.00"), 50, 10, 0);
+        Supply entity = buildEntity(new BigDecimal("100.00"), new BigDecimal("130.00"), 50, 10, 0);
         SupplyRequest request = buildRequest(new BigDecimal("200.00"), new BigDecimal("25.00"), 50, 10, 0);
 
         mapper.updateEntity(entity, request);

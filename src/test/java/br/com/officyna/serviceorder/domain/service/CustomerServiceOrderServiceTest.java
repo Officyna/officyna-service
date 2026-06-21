@@ -7,11 +7,11 @@ import br.com.officyna.serviceorder.api.resources.ModifySituationRequest;
 import br.com.officyna.serviceorder.api.resources.ServiceOrderResponse;
 import br.com.officyna.serviceorder.domain.dto.LaborDetailDTO;
 import br.com.officyna.serviceorder.domain.dto.LaborsDTO;
-import br.com.officyna.serviceorder.domain.entity.ServiceOrderEntity;
+import br.com.officyna.serviceorder.domain.entity.ServiceOrder;
 import br.com.officyna.serviceorder.domain.enums.LaborSituation;
 import br.com.officyna.serviceorder.domain.enums.ServiceOrderStatus;
 import br.com.officyna.serviceorder.domain.mapper.ServiceOrderMapper;
-import br.com.officyna.serviceorder.repository.ServiceOrderRepository;
+import br.com.officyna.serviceorder.domain.repository.ServiceOrderRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -56,12 +56,12 @@ class CustomerServiceOrderServiceTest {
         when(customerResponse.id()).thenReturn(customerId);
         when(customerService.getCustomerByDocument(document)).thenReturn(customerResponse);
 
-        ServiceOrderEntity entity1 = ServiceOrderEntity.builder().status(ServiceOrderStatus.RECEBIDA).build();
-        ServiceOrderEntity entity2 = ServiceOrderEntity.builder().status(ServiceOrderStatus.EM_EXECUCAO).build();
+        ServiceOrder entity1 = ServiceOrder.builder().status(ServiceOrderStatus.RECEBIDA).build();
+        ServiceOrder entity2 = ServiceOrder.builder().status(ServiceOrderStatus.EM_EXECUCAO).build();
         when(serviceOrderRepository.findByCustomerId(customerId)).thenReturn(List.of(entity1, entity2));
 
         ServiceOrderResponse response = mock(ServiceOrderResponse.class);
-        when(mapper.toResponse(any(ServiceOrderEntity.class))).thenReturn(response);
+        when(mapper.toResponse(any(ServiceOrder.class))).thenReturn(response);
 
         // Act
         List<ServiceOrderResponse> result = service.findByCustomerDocument(document, null);
@@ -82,12 +82,12 @@ class CustomerServiceOrderServiceTest {
         when(customerResponse.id()).thenReturn(customerId);
         when(customerService.getCustomerByDocument(document)).thenReturn(customerResponse);
 
-        ServiceOrderEntity entity1 = ServiceOrderEntity.builder().status(ServiceOrderStatus.RECEBIDA).build();
-        ServiceOrderEntity entity2 = ServiceOrderEntity.builder().status(ServiceOrderStatus.EM_EXECUCAO).build();
+        ServiceOrder entity1 = ServiceOrder.builder().status(ServiceOrderStatus.RECEBIDA).build();
+        ServiceOrder entity2 = ServiceOrder.builder().status(ServiceOrderStatus.EM_EXECUCAO).build();
         when(serviceOrderRepository.findByCustomerId(customerId)).thenReturn(List.of(entity1, entity2));
 
         ServiceOrderResponse response = mock(ServiceOrderResponse.class);
-        when(mapper.toResponse(any(ServiceOrderEntity.class))).thenReturn(response);
+        when(mapper.toResponse(any(ServiceOrder.class))).thenReturn(response);
 
         // Act
         List<ServiceOrderResponse> result = service.findByCustomerDocument(document, ServiceOrderStatus.EM_EXECUCAO);
@@ -125,7 +125,7 @@ class CustomerServiceOrderServiceTest {
         LaborDetailDTO labor1 = LaborDetailDTO.builder().laborId("l1").situation(LaborSituation.PENDENTE).build();
         LaborDetailDTO labor2 = LaborDetailDTO.builder().laborId("l2").situation(LaborSituation.PENDENTE).build();
         
-        ServiceOrderEntity entity = ServiceOrderEntity.builder()
+        ServiceOrder entity = ServiceOrder.builder()
                 .id(orderId)
                 .status(ServiceOrderStatus.AGUARDANDO_APROVACAO)
                 .labors(LaborsDTO.builder().laborsDetails(new ArrayList<>(List.of(labor1, labor2))).build())
@@ -157,7 +157,7 @@ class CustomerServiceOrderServiceTest {
     void updateLaborSituation_InvalidStatus_ShouldThrowException() {
         // Arrange
         String orderId = "order-1";
-        ServiceOrderEntity entity = ServiceOrderEntity.builder()
+        ServiceOrder entity = ServiceOrder.builder()
                 .status(ServiceOrderStatus.RECEBIDA)
                 .build();
 

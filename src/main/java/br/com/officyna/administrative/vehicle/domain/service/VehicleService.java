@@ -1,29 +1,30 @@
 package br.com.officyna.administrative.vehicle.domain.service;
 
-import br.com.officyna.administrative.customer.domain.CustomerEntity;
+import br.com.officyna.administrative.customer.domain.entity.Customer;
 import br.com.officyna.administrative.customer.domain.service.CustomerService;
 import br.com.officyna.administrative.vehicle.api.resources.VehicleRequest;
 import br.com.officyna.administrative.vehicle.api.resources.VehicleResponse;
-import br.com.officyna.administrative.vehicle.domain.VehicleEntity;
+import br.com.officyna.administrative.vehicle.domain.entity.Vehicle;
 import br.com.officyna.administrative.vehicle.domain.mapper.VehicleMapper;
-import br.com.officyna.administrative.vehicle.repository.VehicleRepository;
+import br.com.officyna.administrative.vehicle.domain.repository.VehicleRepository;
 import br.com.officyna.infrastructure.exception.DomainException;
 import br.com.officyna.infrastructure.exception.NotFoundException;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-
 import java.util.List;
 
-@Service
-@RequiredArgsConstructor
 public class VehicleService {
 
-    private final VehicleRepository vehicleRepository;
+    private final VehicleRepository repository;
     private final VehicleMapper vehicleMapper;
     private final CustomerService customerService;
 
+    public VehicleService(VehicleRepository repository, VehicleMapper vehicleMapper, CustomerService customerService) {
+        this.repository = repository;
+        this.vehicleMapper = vehicleMapper;
+        this.customerService = customerService;
+    }
+
     public List<VehicleResponse> findAll() {
-        return vehicleRepository.findAll()
+        return repository.findAll()
                 .stream()
                 .map(vehicleMapper::toResponse)
                 .toList();
@@ -34,43 +35,43 @@ public class VehicleService {
     }
 
     public List<VehicleResponse> findByCustomer(String customerId) {
-        return vehicleRepository.findByCustomerId(customerId)
+        return repository.findByCustomerId(customerId)
                 .stream()
                 .map(vehicleMapper::toResponse)
                 .toList();
     }
 
     public VehicleResponse create(VehicleRequest request) {
-        if (vehicleRepository.existsByPlate(request.plate().toUpperCase())) {
+        if (repository.existsByPlate(request.plate().toUpperCase())) {
             throw new DomainException("Plate already registered: " + request.plate());
         }
-        CustomerEntity customer = customerService.findEntityById(request.customerId());
-        VehicleEntity entity = vehicleMapper.toEntity(request, customer);
-        return vehicleMapper.toResponse(vehicleRepository.save(entity));
+        Customer customer = customerService.findEntityById(request.customerId());
+        Vehicle entity = vehicleMapper.toEntity(request, customer);
+        return vehicleMapper.toResponse(repository.save(entity));
     }
 
     public VehicleResponse update(String id, VehicleRequest request) {
-        VehicleEntity entity = findEntityById(id);
+        Vehicle entity = findEntityById(id);
 
         boolean plateChanged = !entity.getPlate().equals(request.plate().toUpperCase());
-        if (plateChanged && vehicleRepository.existsByPlate(request.plate().toUpperCase())) {
+        if (plateChanged && repository.existsByPlate(request.plate().toUpperCase())) {
             throw new DomainException("Plate already registered: " + request.plate());
         }
 
-        CustomerEntity customer = customerService.findEntityById(request.customerId());
+        Customer customer = customerService.findEntityById(request.customerId());
         vehicleMapper.updateEntity(entity, request, customer);
-        return vehicleMapper.toResponse(vehicleRepository.save(entity));
+        return vehicleMapper.toResponse(repository.save(entity));
     }
 
     public void delete(String id) {
-        VehicleEntity entity = findEntityById(id);
+        Vehicle entity = findEntityById(id);
         entity.setActive(false);
-        vehicleRepository.save(entity);
+        repository.save(entity);
     }
 
     // Utility method for internal use (e.g. WorkOrderService)
-    public VehicleEntity findEntityById(String id) {
-        return vehicleRepository.findById(id)
+    public Vehicle findEntityById(String id) {
+        return repository.findById(id)
                 .orElseThrow(() -> NotFoundException.of("Vehicle", id));
     }
 }

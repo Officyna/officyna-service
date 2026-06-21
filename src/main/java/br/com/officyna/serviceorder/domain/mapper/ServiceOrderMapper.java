@@ -7,8 +7,7 @@ import br.com.officyna.serviceorder.domain.dto.CustomerDTO;
 import br.com.officyna.serviceorder.domain.dto.LaborsDTO;
 import br.com.officyna.serviceorder.domain.dto.MechanicDTO;
 import br.com.officyna.serviceorder.domain.dto.VehicleDTO;
-import br.com.officyna.serviceorder.domain.entity.ServiceOrderEntity;
-import br.com.officyna.serviceorder.domain.enums.ServiceOrderStatus;
+import br.com.officyna.serviceorder.domain.entity.ServiceOrder;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
@@ -19,8 +18,8 @@ import java.util.Locale;
 @Component
 public class ServiceOrderMapper {
 
-    public ServiceOrderEntity toCreateEntity(NewServiceOrderRequest request, VehicleDTO vehicle, CustomerDTO customer, LaborsDTO labors){
-        ServiceOrderEntity entity = ServiceOrderEntity.builder()
+    public ServiceOrder toCreateEntity(NewServiceOrderRequest request, VehicleDTO vehicle, CustomerDTO customer, LaborsDTO labors){
+        ServiceOrder entity = ServiceOrder.builder()
                 .vehicle(vehicle)
                 .customer(customer)
                 .informationText(request.getInformationText())
@@ -29,13 +28,13 @@ public class ServiceOrderMapper {
         return entity;
     }
 
-    public ServiceOrderEntity toUpdateEntity(ExistServiceOrderRequest request, ServiceOrderEntity entity, MechanicDTO mechanic){
+    public ServiceOrder toUpdateEntity(ExistServiceOrderRequest request, ServiceOrder entity, MechanicDTO mechanic){
         entity.setInformationText(request.getInformationText());
         entity.setMechanic(mechanic);
         return entity;
     }
 
-    public ServiceOrderResponse toResponse(ServiceOrderEntity entity){
+    public ServiceOrderResponse toResponse(ServiceOrder entity){
         return new ServiceOrderResponse(
                 entity.getId(),
                 entity.getServiceOrderNumber().toString(),
@@ -52,7 +51,7 @@ public class ServiceOrderMapper {
         );
     }
 
-    private String getStatusDateByLastStatus(ServiceOrderEntity entity){
+    private String getStatusDateByLastStatus(ServiceOrder entity){
         LocalDateTime statusDate = null;
         switch (entity.getStatus()) {
             case RECEBIDA -> statusDate = entity.getRegistrationDate();

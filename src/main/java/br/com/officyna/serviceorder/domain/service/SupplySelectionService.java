@@ -3,22 +3,21 @@ package br.com.officyna.serviceorder.domain.service;
 import br.com.officyna.administrative.supply.api.resources.SupplyResponse;
 import br.com.officyna.administrative.supply.domain.service.SupplyService;
 import br.com.officyna.infrastructure.exception.DomainException;
-import br.com.officyna.serviceorder.api.resources.LaborsRequest;
 import br.com.officyna.serviceorder.api.resources.SupplysRequest;
 import br.com.officyna.serviceorder.domain.dto.SupplyDTO;
 import br.com.officyna.serviceorder.domain.dto.SupplyDetailDTO;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
-@Service
-@RequiredArgsConstructor
 public class SupplySelectionService {
 
     private final SupplyService service;
+
+    public SupplySelectionService(SupplyService service) {
+        this.service = service;
+    }
 
     SupplyDTO addSupplys(List<SupplysRequest> supplysIdList, List<SupplyDetailDTO> supplysDetails){
         List<SupplyDetailDTO> allSupplys = new ArrayList<>(supplysDetails != null ? supplysDetails : List.of());

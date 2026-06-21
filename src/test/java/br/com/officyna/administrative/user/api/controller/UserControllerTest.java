@@ -2,7 +2,7 @@ package br.com.officyna.administrative.user.api.controller;
 
 import br.com.officyna.administrative.user.api.resources.UserRequest;
 import br.com.officyna.administrative.user.api.resources.UserResponse;
-import br.com.officyna.administrative.user.domain.UserRole;
+import br.com.officyna.administrative.user.domain.entity.UserRole;
 import br.com.officyna.administrative.user.domain.service.UserService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;

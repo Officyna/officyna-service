@@ -3,7 +3,7 @@ package br.com.officyna.administrative.supply.api.controller;
 import br.com.officyna.administrative.supply.api.SupplyApi;
 import br.com.officyna.administrative.supply.api.resources.SupplyRequest;
 import br.com.officyna.administrative.supply.api.resources.SupplyResponse;
-import br.com.officyna.administrative.supply.domain.SupplyType;
+import br.com.officyna.administrative.supply.domain.entity.SupplyType;
 import br.com.officyna.administrative.supply.domain.service.SupplyService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;

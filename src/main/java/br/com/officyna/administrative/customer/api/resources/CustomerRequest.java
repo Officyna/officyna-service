@@ -1,6 +1,6 @@
 package br.com.officyna.administrative.customer.api.resources;
 
-import br.com.officyna.administrative.customer.domain.CustomerType;
+import br.com.officyna.administrative.customer.domain.entity.CustomerType;
 import br.com.officyna.administrative.customer.domain.validation.ValidDocument;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;

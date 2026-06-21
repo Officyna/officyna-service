@@ -3,9 +3,9 @@ package br.com.officyna.administrative.customer.domain.mapper;
 import br.com.officyna.administrative.customer.api.resources.AddressDTO;
 import br.com.officyna.administrative.customer.api.resources.CustomerRequest;
 import br.com.officyna.administrative.customer.api.resources.CustomerResponse;
-import br.com.officyna.administrative.customer.domain.AddressEntity;
-import br.com.officyna.administrative.customer.domain.CustomerEntity;
-import br.com.officyna.administrative.customer.domain.CustomerType;
+import br.com.officyna.administrative.customer.domain.entity.Address;
+import br.com.officyna.administrative.customer.domain.entity.Customer;
+import br.com.officyna.administrative.customer.domain.entity.CustomerType;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -26,8 +26,8 @@ class CustomerMapperTest {
         return new CustomerRequest("João Silva", document, type, "joao@email.com", "99999-9999", "11", "+55", null);
     }
 
-    private AddressEntity buildAddressEntity() {
-        return AddressEntity.builder()
+    private Address buildAddressEntity() {
+        return Address.builder()
                 .street("Av. Paulista")
                 .number("1000")
                 .complement("Apto 42")
@@ -46,7 +46,7 @@ class CustomerMapperTest {
     void toEntity_ShouldNormalizeCpf() {
         CustomerRequest request = buildRequest("123.456.789-09", CustomerType.INDIVIDUAL);
 
-        CustomerEntity entity = mapper.toEntity(request);
+        Customer entity = mapper.toEntity(request);
 
         assertEquals("12345678909", entity.getDocument());
     }
@@ -56,7 +56,7 @@ class CustomerMapperTest {
     void toEntity_ShouldNormalizeNumericCnpj() {
         CustomerRequest request = buildRequest("11.222.333/0001-81", CustomerType.COMPANY);
 
-        CustomerEntity entity = mapper.toEntity(request);
+        Customer entity = mapper.toEntity(request);
 
         assertEquals("11222333000181", entity.getDocument());
     }
@@ -66,7 +66,7 @@ class CustomerMapperTest {
     void toEntity_ShouldNormalizeAlphanumericCnpj() {
         CustomerRequest request = buildRequest("AB.123.456/0001-10", CustomerType.COMPANY);
 
-        CustomerEntity entity = mapper.toEntity(request);
+        Customer entity = mapper.toEntity(request);
 
         assertEquals("AB123456000110", entity.getDocument());
     }
@@ -76,7 +76,7 @@ class CustomerMapperTest {
     void toEntity_ShouldKeepAlreadyNormalizedDocument() {
         CustomerRequest request = buildRequest("12345678909", CustomerType.INDIVIDUAL);
 
-        CustomerEntity entity = mapper.toEntity(request);
+        Customer entity = mapper.toEntity(request);
 
         assertEquals("12345678909", entity.getDocument());
     }
@@ -86,7 +86,7 @@ class CustomerMapperTest {
     void toEntity_ShouldSetActiveTrue() {
         CustomerRequest request = buildRequest("12345678909", CustomerType.INDIVIDUAL);
 
-        CustomerEntity entity = mapper.toEntity(request);
+        Customer entity = mapper.toEntity(request);
 
         assertTrue(entity.getActive());
     }
@@ -97,7 +97,7 @@ class CustomerMapperTest {
     @DisplayName("toResponse deve mapear todos os campos corretamente com endereço")
     void toResponse_ShouldMapAllFields_WithAddress() {
         LocalDateTime createdAt = LocalDateTime.of(2024, 3, 10, 9, 0);
-        CustomerEntity entity = CustomerEntity.builder()
+        Customer entity = Customer.builder()
                 .id("cust-1")
                 .name("João Silva")
                 .document("12345678909")
@@ -126,7 +126,7 @@ class CustomerMapperTest {
     @Test
     @DisplayName("toResponse deve mapear endereço corretamente")
     void toResponse_ShouldMapAddress() {
-        CustomerEntity entity = CustomerEntity.builder()
+        Customer entity = Customer.builder()
                 .id("cust-1")
                 .name("João Silva")
                 .document("12345678909")
@@ -151,7 +151,7 @@ class CustomerMapperTest {
     @Test
     @DisplayName("toResponse deve retornar address null quando entidade não tem endereço")
     void toResponse_ShouldReturnNullAddress_WhenEntityHasNoAddress() {
-        CustomerEntity entity = CustomerEntity.builder()
+        Customer entity = Customer.builder()
                 .id("cust-1")
                 .name("Maria")
                 .document("12345678909")
@@ -170,7 +170,7 @@ class CustomerMapperTest {
     @Test
     @DisplayName("updateEntity deve normalizar CPF formatado ao atualizar")
     void updateEntity_ShouldNormalizeCpf() {
-        CustomerEntity entity = CustomerEntity.builder().document("52998224725").build();
+        Customer entity = Customer.builder().document("52998224725").build();
         CustomerRequest request = buildRequest("123.456.789-09", CustomerType.INDIVIDUAL);
 
         mapper.updateEntity(entity, request);
@@ -181,7 +181,7 @@ class CustomerMapperTest {
     @Test
     @DisplayName("updateEntity deve normalizar CNPJ alfanumérico formatado ao atualizar")
     void updateEntity_ShouldNormalizeAlphanumericCnpj() {
-        CustomerEntity entity = CustomerEntity.builder().document("11222333000181").build();
+        Customer entity = Customer.builder().document("11222333000181").build();
         CustomerRequest request = buildRequest("AB.123.456/0001-10", CustomerType.COMPANY);
 
         mapper.updateEntity(entity, request);
@@ -192,8 +192,8 @@ class CustomerMapperTest {
     @Test
     @DisplayName("updateEntity deve definir address como null quando request não tem endereço")
     void updateEntity_ShouldSetNullAddress_WhenRequestHasNullAddress() {
-        AddressEntity existingAddress = buildAddressEntity();
-        CustomerEntity entity = CustomerEntity.builder()
+        Address existingAddress = buildAddressEntity();
+        Customer entity = Customer.builder()
                 .document("12345678909")
                 .address(existingAddress)
                 .build();
@@ -207,7 +207,7 @@ class CustomerMapperTest {
     @Test
     @DisplayName("updateEntity deve atualizar todos os campos de contato")
     void updateEntity_ShouldUpdateContactFields() {
-        CustomerEntity entity = CustomerEntity.builder()
+        Customer entity = Customer.builder()
                 .name("Antigo Nome")
                 .email("antigo@email.com")
                 .phone("88888-8888")
