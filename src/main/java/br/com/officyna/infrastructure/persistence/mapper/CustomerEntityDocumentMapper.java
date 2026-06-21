@@ -53,7 +53,7 @@ public class CustomerEntityDocumentMapper {
                 .build();
     }
 
-    private AddressDocument toAddressDocument(Address address) {
+    AddressDocument toAddressDocument(Address address) {
         if (address == null) {
             return null;
         }
@@ -69,7 +69,7 @@ public class CustomerEntityDocumentMapper {
                 .build();
     }
 
-    private Address toAddressEntity(AddressDocument address) {
+    Address toAddressEntity(AddressDocument address) {
         if (address == null) {
             return null;
         }
