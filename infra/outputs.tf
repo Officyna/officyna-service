@@ -1,19 +1,9 @@
-output "cluster_name" {
-  description = "Nome do cluster kind criado"
-  value       = kind_cluster.officyna.name
+output "docdb_endpoint" {
+  description = "Endpoint de conexao do cluster DocumentDB"
+  value       = aws_docdb_cluster.docdb.endpoint
 }
 
-output "kubeconfig_path" {
-  description = "Caminho do kubeconfig gerado pelo kind"
-  value       = kind_cluster.officyna.kubeconfig_path
-}
-
-output "endpoint" {
-  description = "Endpoint da API do Kubernetes"
-  value       = kind_cluster.officyna.endpoint
-}
-
-output "namespace" {
-  description = "Namespace da aplicação"
-  value       = kubernetes_namespace.officyna.metadata[0].name
+output "docdb_port" {
+  description = "Porta do banco de dados"
+  value       = aws_docdb_cluster.docdb.port
 }
