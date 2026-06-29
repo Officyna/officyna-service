@@ -8,7 +8,7 @@ resource "aws_docdb_subnet_group" "default" {
   }
 }
 
-# 2. Cria um Grupo de Segurança (Firewall)
+# 2. Cria um Grupo de Segurança
 resource "aws_security_group" "docdb_sg" {
   name        = "officyna-docdb-sg"
   description = "Permite trafego interno na porta 27017 (MongoDB)"
@@ -29,18 +29,18 @@ resource "aws_security_group" "docdb_sg" {
   }
 }
 
-# 3. Cria o Cluster do DocumentDB (O "Cérebro" do Banco)
+# 3. Cria o Cluster do DocumentDB
 resource "aws_docdb_cluster" "docdb" {
   cluster_identifier      = "officyna-mongodb-cluster"
   engine                  = "docdb"
   master_username         = var.db_username
   master_password         = var.db_password
-  skip_final_snapshot     = true # Para ambiente de desenvolvimento. Em prod, use false.
+  skip_final_snapshot     = true
   db_subnet_group_name    = aws_docdb_subnet_group.default.name
   vpc_security_group_ids  = [aws_security_group.docdb_sg.id]
 }
 
-# 4. Cria a Instância do DocumentDB (A "Máquina" que processa os dados)
+# 4. Cria a Instância do DocumentDB
 resource "aws_docdb_cluster_instance" "cluster_instances" {
   count              = 1
   identifier         = "officyna-mongodb-instance-${count.index}"

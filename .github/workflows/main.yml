@@ -100,16 +100,16 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
 
   # ==========================================
-  # NOVO JOB: Deploy da Infraestrutura (Banco)
+  # JOB: Deploy da Infraestrutura (Banco)
   # ==========================================
   deploy-db:
     name: Provisionar Banco de Dados (Terraform)
     runs-on: ubuntu-latest
-    needs: build-test # Espera os testes passarem antes de mexer na AWS
+    needs: build-test
     if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/feat/125/provisionamento-banco-dados')
     defaults:
       run:
-        working-directory: infra/
+        working-directory: infra
     steps:
       - name: Checkout do código
         uses: actions/checkout@v4
@@ -131,13 +131,13 @@ jobs:
         run: terraform apply -auto-approve -var="db_password=${{ secrets.DB_PASSWORD }}"
 
   # ==========================================
-  # JOB DEPLOY APLICATIVO
+  # JOB: Deploy Aplicativo (Kubernetes)
   # ==========================================
   deploy:
     name: Deploy no Kubernetes
     runs-on: ubuntu-latest
-    needs: [docker, deploy-db] # AGORA DEPENDE DO DOCKER E DO BANCO DE DADOS
-    if: github.event_name == 'push'
+    needs: [docker, deploy-db]
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/feat/125/provisionamento-banco-dados')
     permissions:
       contents: read
       packages: read
@@ -192,11 +192,32 @@ jobs:
         run: |
           echo "===== PODS ====="
           kubectl get pods -n officyna -o wide
-          echo "===== DESCRIBE ====="
-          kubectl describe pods -n officyna
-          echo "===== LOGS (por pod) ====="
-          for p in $(kubectl get pods -n officyna -o name); do
-            echo "----- $p -----"
-            kubectl logs -n officyna "$p" --tail=150 || true
-            kubectl logs -n officyna "$p" --previous --tail=60 2>/dev/null || true
-          done
+
+  # ==========================================
+  # JOB: Limpeza Automática (Destruição)
+  # ==========================================
+  destroy-db:
+    name: Limpeza Automática (Destruir Banco)
+    runs-on: ubuntu-latest
+    # MUDANÇA CRÍTICA: Ele espera o deploy terminar (sucesso ou falha) para começar a destruir
+    needs: [deploy-db, deploy]
+    # MUDANÇA CRÍTICA: Só roda se o deploy-db NÃO tiver sido pulado (evita rodar em branches não autorizadas)
+    if: always() && needs.deploy-db.result != 'skipped'
+    defaults:
+      run:
+        working-directory: infra
+    steps:
+      - name: Checkout do código
+        uses: actions/checkout@v4
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+      - name: Configurar Credenciais da AWS
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: sa-east-1
+      - name: Terraform Init
+        run: terraform init
+      - name: Terraform Destroy
+        run: terraform destroy -auto-approve -var="db_password=${{ secrets.DB_PASSWORD }}"
