@@ -4,17 +4,19 @@ Este projeto representa o MVP (Produto Mínimo Viável) desenvolvido para o Tech
 ## 📋 Sumário
 
 * [Objetivo do Projeto](#objetivo-do-projeto)
-
 * [Funcionalidades Implementadas](#funcionalidades-implementadas)
-
 * [Arquitetura Técnica](#arquitetura-técnica)
-
 * [Segurança e Qualidade](#segurança-e-qualidade)
-
 * [Instruções de Execução](#instruções-de-execução)
 
 # 🎯 Objetivo do Projeto
-Resolver problemas de desorganização, erros de priorização e falhas no controle de estoque através de um Sistema Integrado de Atendimento e Execução de Serviços. O foco principal é a gestão de ordens de serviço, clientes e peças, utilizando os princípios de Domain-Driven Design (DDD).
+O projeto `Officyna` é um sistema integrado de gestão para oficinas mecânicas de automóveis que visa:
+* Digitalizar o atendimento;
+* Substitur processos manuais por fluxos automatizados e seguros;
+
+Nesta segunda fase, os objetivos principais são modernizar a infraestrutura e a arquitetura do software, garantindo que o sistema seja escalável, resiliente e siga as melhores práticas de mercado
+Para isso, o foco está na implementação da Clean Architecture para organizar a lógica de negócio, na Dockerização para empacotamento em containers, e no uso de Kubernetes para orquestração em nuvem
+Além disso, a fase foca na automação total via Infraestrutura como Código (IaC) com Terraform e pipelines de CI/CD para garantir agilidade e confiabilidade na entrega do software
 
 ## ✨ Funcionalidades Implementadas
 ### 1. Gestão de Ordens de Serviço (OS)
@@ -40,12 +42,35 @@ Resolver problemas de desorganização, erros de priorização e falhas no contr
 ### 3. Monitoramento
    Tempo Médio de Execução: Serviço especializado que calcula e monitora a performance da oficina por tipo de serviço.
 
-## 🏗️ Arquitetura Técnica
-- Padrão: Back-end monolítico organizado em camadas (API, Domain, Infrastructure).
+# 🏗️ Arquitetura Técnica
+## Componentes da Aplicação
+A aplicação é construída como um back-end monolítico organizado seguindo os princípios da Clean Architecture, dividindo-se em camadas de API, Domínio (DDD) e Infraestrutura .
 
-- Banco de Dados: MongoDB (NoSQL), escolhido pela flexibilidade no armazenamento de documentos de OS e históricos de manutenção.
+### Camada de Domínio: 
+Contém as entidades puras (como Customer e ServiceOrder) e as interfaces de repositório, isolando as regras de negócio de detalhes técnicos.
 
-- Documentação: APIs documentadas com Swagger/OpenAPI para facilitar a integração e testes.
+### Camada de Aplicação/Casos de Uso: 
+Implementa as funcionalidades do software, como a abertura e o cálculo de orçamentos de ordens de serviço.
+
+### Camada de Adaptadores (Interface Adapters): 
+Inclui os controllers REST, DTOs e Gateways que traduzem dados entre o mundo exterior e o núcleo da aplicação.
+
+### Camada de Infraestrutura: 
+Lida com frameworks e drivers, como as configurações do Spring Boot e a persistência real no MongoDB.
+
+### Infraestrutura Provisionada
+A infraestrutura é provisionada na AWS de forma automatizada, consistindo em:
+* **Rede (VPC):** Uma Virtual Private Cloud isolada com subnets públicas para acesso externo e subnets privadas para segurança do banco de dados.
+* **Orquestração (Amazon EKS):** Um cluster Kubernetes gerenciado que executa os nós de trabalho (worker nodes) onde a aplicação é implantada.
+* **Banco de Dados (Amazon DocumentDB/MongoDB):** Um cluster NoSQL compatível com MongoDB, configurado para alta disponibilidade e persistência.
+* **Persistência:** Uso de volumes EBS (Elastic Block Store) via Persistent Volume Claims (PVC) para garantir que os dados das ordens de serviço sobrevivam a reinicializações de containers.
+
+## Fluxo de Deploy
+O fluxo de implantação é totalmente automatizado via GitHub Actions:
+* **Integração Contínua (CI):** Ao realizar um push, o pipeline executa o checkout do código, build com Maven e testes automatizados para garantir a qualidade.
+* **Dockerização:** Após os testes, uma nova imagem Docker é gerada e enviada para o GitHub Container Registry (GHCR).
+* **Provisionamento de Infraestrutura:** O pipeline utiliza o Terraform para aplicar as mudanças na infraestrutura da AWS (VPC, EKS, DB).
+* **Entrega Contínua (CD):** Por fim, os manifestos Kubernetes são aplicados no cluster EKS para atualizar a aplicação sem interrupção (Rolling Update).
 
 ## 🛡️ Segurança e Qualidade
 - Autenticação JWT: Implementada para proteger todos os endpoints administrativos.
@@ -54,16 +79,30 @@ Resolver problemas de desorganização, erros de priorização e falhas no contr
 
 - Testes Automatizados: O projeto exige cobertura mínima de 80% nos domínios críticos (OS, Orçamentos, Estoque e Segurança).
 
-## 🚀 Instruções de Execução
+# 🚀 Instruções de Execução
+## local
 O projeto está configurado para uma execução local simples via Docker.
-
 - Build da Aplicação: O Dockerfile deve ser utilizado para gerar a imagem da aplicação.
-
 - Orquestração: O arquivo docker-compose.yml sobe a aplicação e a instância do MongoDB.
-
 - Comando de inicialização:
 
 ````bash
 docker-compose up -d --build
 ````
 - Acesso à Documentação: Após subir o ambiente, acesse o Swagger em: http://localhost:8080/swagger-ui.html
+
+## Deploy em Kubernetes
+A implantação no cluster utiliza manifestos YAML localizados na pasta /k8s:
+* **Namespace:** Crie o isolamento da aplicação com kubectl apply -f namespace.yaml.
+* **Aplicação:** Implante os pods e a estratégia de replicação com kubectl apply -f deployment.yaml.
+* **Configurações:** Aplique as variáveis de ambiente e segredos com kubectl apply -f configmap.yaml.
+* **Exposição:** Exponha a API internamente ou via Load Balancer com kubectl apply -f service.yaml.
+* **Escalabilidade:** Ative o escalonamento automático baseado em uso de CPU/Memória com kubectl apply -f hpa.yaml.
+
+## Provisionamento da Infraestrutura com Terraform
+Para provisionar os recursos na AWS, utilize os arquivos na pasta `infra/terraform/`:
+- **Inicialização:** Execute terraform init para baixar os providers da AWS e configurar o backend remoto (S3).
+- **Validação:** Verifique a sintaxe com terraform validate.
+- **Planejamento:** Visualize os recursos que serão criados com terraform plan.
+- **Aplicação:** Provisione a rede, o banco e o cluster EKS com terraform apply -auto-approve.
+- **Configuração de Acesso:** Após o provisionamento, utilize o comando aws eks update-kubeconfig (usando os dados do outputs.tf) para conectar seu kubectl ao cluster na nuvem.
