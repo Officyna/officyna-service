@@ -46,6 +46,64 @@ Além disso, a fase foca na automação total via Infraestrutura como Código (I
 ## Componentes da Aplicação
 A aplicação é construída como um back-end monolítico organizado seguindo os princípios da Clean Architecture, dividindo-se em camadas de API, Domínio (DDD) e Infraestrutura .
 
+```bash
+officyna-service/
+├── .github/
+│   └── workflows/
+│       └── main.yml                  # Pipeline de CI/CD
+├── db-seed/
+│   └── 01-seed.js                    # Scripts de inicialização do banco
+├── infra/                            # Provisionamento IaC
+│   ├── main.tf                       # AWS DocumentDB
+│   ├── outputs.tf
+│   ├── providers.tf
+│   ├── README.md
+│   ├── variables.tf
+│   └── versions.tf
+├── k8s/                              # Manifestos Kubernetes
+│   ├── configmap.yaml
+│   ├── deployment.yaml
+│   ├── hpa.yaml
+│   ├── namespace.yaml
+│   └── service.yaml
+├── src/
+│   ├── main/
+│   │   ├── java/
+│   │   │   └── br/com/officyna/
+│   │   │       ├── administrative/   # Gestão de Clientes, Veículos, Usuários, etc.
+│   │   │       │   ├── customer/
+│   │   │       │   │   ├── api/      # Controllers e DTOs
+│   │   │       │   │   └── domain/   # Entidades, Services e Interfaces
+│   │   │       │   ├── labor/
+│   │   │       │   ├── supply/
+│   │   │       │   ├── user/
+│   │   │       │   └── vehicle/
+│   │   │       ├── infrastructure/   # Camada Técnica / Cross-cutting
+│   │   │       │   ├── auth/         # Login e Autenticação
+│   │   │       │   ├── config/       # Spring, Mongo, Security, Swagger
+│   │   │       │   ├── exception/    # Tratamento Global de Erros
+│   │   │       │   ├── persistence/  # Implementação de Repositórios
+│   │   │       │   │   ├── mapper/   # Conversão Entity <-> Document
+│   │   │       │   │   └── mongodb/  # Gateways e Repositórios Spring Data
+│   │   │       │   └── security/     # JWT e UserDetails
+│   │   │       ├── monitoring/       # Acompanhamento de Performance
+│   │   │       │   ├── api/
+│   │   │       │   └── domain/
+│   │   │       ├── serviceorder/     # Coração do Sistema - Ordens de Serviço
+│   │   │       │   ├── api/
+│   │   │       │   └── domain/       # DTOs, Entidades e Regras de Negócio
+│   │   │       └── ApplicationService.java # Classe Principal
+│   │   └── resources/
+│   │       └── application.yml
+│   └── test/                         # Estrutura de testes espelhada da aplicação
+├── docker-compose.yml
+├── Dockerfile
+├── mvnw
+├── mvnw.cmd
+├── pom.xml                           # Gerenciador de Dependências Maven
+└── README.md
+````
+
 ### Camada de Domínio: 
 Contém as entidades puras (como Customer e ServiceOrder) e as interfaces de repositório, isolando as regras de negócio de detalhes técnicos.
 
