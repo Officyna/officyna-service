@@ -1,0 +1,23 @@
+variable "project_name" {
+  description = "Nome do projeto"
+  type        = string
+  default = "officyna-service"
+}
+
+variable "cidr_vpc" {
+  description = "CIDR da VPC"
+  type        = string
+  default = "10.0.0.0/16"
+}
+
+variable "tags" {
+  default = {
+    Name = "officyna-service"
+  }
+}
+
+variable "instance_type" {
+  description = "Tamanho e família padrão da instância EC2 do node"
+  type        = string
+  default = "t3.medium"
+}

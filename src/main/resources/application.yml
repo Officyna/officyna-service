@@ -2,13 +2,13 @@ spring:
   jackson:
     read-unknown-enum-values-as-null: true
   mongodb:
-    uri: ${MONGODB_URI:mongodb://localhost:27017/officyna}
+    uri: ${MONGODB_URI}
 
 server:
-  port: 8080
+  port: ${SERVER_PORT:8080}
 
 jwt:
-  secret: ${JWT_SECRET:officyna-secret-key-change-in-production-min-256bits}
+  secret: ${JWT_SECRET}
   #3600000=1hr, 28800000=8hrs, 86400000=24hrs
 
   expiration: ${JWT_EXPIRATION:86400000}
@@ -31,6 +31,6 @@ management:
 
 logging:
   level:
-    br.com.officyna: INFO
-    org.springframework.security: INFO
+    br.com.officyna: ${LOG_LEVEL_APP:INFO}
+    org.springframework.security: ${LOG_LEVEL_SECURITY:INFO}
 
