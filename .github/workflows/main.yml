@@ -105,8 +105,8 @@ jobs:
     name: Provisionar Banco de Dados (Terraform)
     runs-on: ubuntu-latest
     needs: build-test
-    if: github.event_name == 'push'
-#    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/feat/125/provisionamento-banco-dados')
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/feature/subida-aplicacao-eks')
+#    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/feature/subida-aplicacao-eks')
     defaults:
       run:
         working-directory: infra/db
@@ -140,7 +140,7 @@ jobs:
     name: Provisionar EKS (Terraform)
     runs-on: ubuntu-latest
     needs: build-test
-    if: github.event_name == 'push'
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/feature/subida-aplicacao-eks')
     #    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/feat/125/provisionamento-banco-dados')
     defaults:
       run:
@@ -175,7 +175,7 @@ jobs:
     name: Deploy no Kubernetes
     runs-on: ubuntu-latest
     needs: [docker, deploy-db, deploy-eks]
-    if: github.event_name == 'push'
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/feature/subida-aplicacao-eks')
 #    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/feat/125/provisionamento-banco-dados')
     permissions:
       contents: read
