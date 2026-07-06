@@ -12,7 +12,7 @@ terraform {
 
   backend "s3" {
     bucket = "officyna-terraform-state"
-    key    = "tfstate/terraform.tfstate"
+    key    = "officyna-terraform-state-995093551820-us-east-1-an"
     region = "us-east-1"
   }
 }
