@@ -236,68 +236,68 @@ jobs:
   # ==========================================
   # JOB: Limpeza Automática (Destruição)
   # ==========================================
-  destroy-db:
-    name: Limpeza Automática (Destruir Banco)
-    runs-on: ubuntu-latest
-    # MUDANÇA CRÍTICA: Ele espera o deploy terminar (sucesso ou falha) para começar a destruir
-    needs: [deploy-db, deploy-app]
-    # MUDANÇA CRÍTICA: Só roda se o deploy-db NÃO tiver sido pulado (evita rodar em branches não autorizadas)
-    if: always() && needs.deploy-db.result != 'skipped' && github.event_name == 'push'
-    defaults:
-      run:
-        working-directory: infra/db
-    steps:
-      - name: Checkout do código
-        uses: actions/checkout@v4
-
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v2
-
-      - name: Configurar Credenciais da AWS
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: sa-east-1
-
-      - name: Terraform Init
-        run: terraform init
-
-      - name: Terraform Destroy
-        run: terraform destroy -auto-approve -var="db_password=${{ secrets.DB_PASSWORD }}"
-
-  # ==========================================
-  # JOB: Limpeza Automática (Destruição EKS)
-  # ==========================================
-  destroy-eks:
-    name: Limpeza Automática (Destruir EKS)
-    runs-on: ubuntu-latest
-
-    # Aguarda o deploy do cluster e da aplicação terminarem
-    needs: [ deploy-eks, deploy-app, destroy-db ]
-
-    if: always() && needs.deploy-eks.result != 'skipped' && github.event_name == 'push'
-
-    defaults:
-      run:
-        working-directory: infra/eks
-
-    steps:
-      - name: Checkout do código
-        uses: actions/checkout@v4
-
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v2
-
-      - name: Configurar Credenciais AWS
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: sa-east-1
-
-      - name: Terraform Init
-        run: terraform init
-
-      - name: Terraform Destroy
-        run: terraform destroy -auto-approve
+#  destroy-db:
+#    name: Limpeza Automática (Destruir Banco)
+#    runs-on: ubuntu-latest
+#    # MUDANÇA CRÍTICA: Ele espera o deploy terminar (sucesso ou falha) para começar a destruir
+#    needs: [deploy-db, deploy-app]
+#    # MUDANÇA CRÍTICA: Só roda se o deploy-db NÃO tiver sido pulado (evita rodar em branches não autorizadas)
+#    if: always() && needs.deploy-db.result != 'skipped' && github.event_name == 'push'
+#    defaults:
+#      run:
+#        working-directory: infra/db
+#    steps:
+#      - name: Checkout do código
+#        uses: actions/checkout@v4
+#
+#      - name: Setup Terraform
+#        uses: hashicorp/setup-terraform@v2
+#
+#      - name: Configurar Credenciais da AWS
+#        uses: aws-actions/configure-aws-credentials@v4
+#        with:
+#          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+#          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+#          aws-region: sa-east-1
+#
+#      - name: Terraform Init
+#        run: terraform init
+#
+#      - name: Terraform Destroy
+#        run: terraform destroy -auto-approve -var="db_password=${{ secrets.DB_PASSWORD }}"
+#
+#  # ==========================================
+#  # JOB: Limpeza Automática (Destruição EKS)
+#  # ==========================================
+#  destroy-eks:
+#    name: Limpeza Automática (Destruir EKS)
+#    runs-on: ubuntu-latest
+#
+#    # Aguarda o deploy do cluster e da aplicação terminarem
+#    needs: [ deploy-eks, deploy-app, destroy-db ]
+#
+#    if: always() && needs.deploy-eks.result != 'skipped' && github.event_name == 'push'
+#
+#    defaults:
+#      run:
+#        working-directory: infra/eks
+#
+#    steps:
+#      - name: Checkout do código
+#        uses: actions/checkout@v4
+#
+#      - name: Setup Terraform
+#        uses: hashicorp/setup-terraform@v2
+#
+#      - name: Configurar Credenciais AWS
+#        uses: aws-actions/configure-aws-credentials@v4
+#        with:
+#          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+#          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+#          aws-region: sa-east-1
+#
+#      - name: Terraform Init
+#        run: terraform init
+#
+#      - name: Terraform Destroy
+#        run: terraform destroy -auto-approve
