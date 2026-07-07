@@ -19,11 +19,11 @@ variable "db_password" {
 variable "vpc_id" {
   description = "ID da VPC existente"
   type        = string
-  default     = "vpc-067121acce6d97a88"
+  default     = "vpc-01198adba51551838"
 }
 
 variable "subnet_ids" {
   description = "Lista de IDs das Subnets"
   type        = list(string)
-  default     = ["subnet-022497a11c68c031c", "subnet-0ecc05f3a98453f09"]
+  default     = ["subnet-094a4756371abb5f2", "subnet-0a04000aa0846c777"]
 }
