@@ -218,6 +218,25 @@ jobs:
         run: |
           kubectl apply -f k8s/configmap.yaml
 
+      - name: Verificar URI gerada
+        env:
+          DOCDB_ENDPOINT: ${{ needs.deploy-db.outputs.documentdb_endpoint }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+        run: |
+          export MONGODB_URI="mongodb://officynasoatdbuser:${DB_PASSWORD}@${DOCDB_ENDPOINT}:27017/?tls=true&retryWrites=false"
+          
+          echo "$MONGODB_URI"
+
+      - name: Mostrar secret gerado
+        env:
+          DOCDB_ENDPOINT: ${{ needs.deploy-db.outputs.documentdb_endpoint }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+        run: |
+          export MONGODB_URI="mongodb://officynasoatdbuser:${DB_PASSWORD}@${DOCDB_ENDPOINT}:27017/?tls=true&retryWrites=false"
+      
+          envsubst < k8s/secret.yaml
+
       - name: Aplicar Secret
         env:
           DOCDB_ENDPOINT: ${{ needs.deploy-db.outputs.documentdb_endpoint }}
@@ -262,7 +281,19 @@ jobs:
       - name: Logs do Pod
         if: failure()
         run: |
-          kubectl logs -l app.kubernetes.io/name=officyna --all-containers=true --tail=200
+          POD=$(kubectl get pods -l app.kubernetes.io/name=officyna -o jsonpath='{.items[0].metadata.name}')
+          
+          echo "===== POD ====="
+          echo "$POD"
+          
+          echo "===== LOGS ATUAIS ====="
+          kubectl logs $POD || true
+          
+          echo "===== LOGS ANTERIORES ====="
+          kubectl logs $POD --previous || true
+          
+          echo "===== VARIÁVEIS ====="
+          kubectl describe pod $POD
 
   # ==========================================
   # JOB: Limpeza Automática (Destruição EKS)
