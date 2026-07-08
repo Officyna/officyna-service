@@ -247,6 +247,11 @@ jobs:
           echo "===== EVENTS ====="
           kubectl get events --sort-by=.metadata.creationTimestamp
 
+      - name: Logs do Pod
+        if: failure()
+        run: |
+          kubectl logs -l app.kubernetes.io/name=officyna --all-containers=true --tail=200
+
   # ==========================================
   # JOB: Limpeza Automática (Destruição EKS)
   # ==========================================
