@@ -32,6 +32,7 @@ variable "vpc_id" {
   default     = "vpc-01198adba51551838"
 }
 
+
 variable "subnet_ids" {
   description = "Lista de IDs das Subnets"
   type        = list(string)
