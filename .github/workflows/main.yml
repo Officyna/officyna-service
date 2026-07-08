@@ -104,6 +104,8 @@ jobs:
   # ==========================================
   deploy-db:
     name: Provisionar Banco de Dados (Terraform)
+    outputs:
+      documentdb_endpoint: ${{ steps.docdb.outputs.endpoint }}
     runs-on: ubuntu-latest
     needs: build-test
     if: github.event_name == 'push'
@@ -133,6 +135,12 @@ jobs:
 
       - name: Terraform Apply
         run: terraform apply -auto-approve -var="db_password=${{ secrets.DB_PASSWORD }}"
+
+      - name: Capturar endpoint do DocumentDB
+        id: docdb
+        run: |
+          ENDPOINT=$(terraform output -raw docdb_endpoint)
+          echo "endpoint=$ENDPOINT" >> $GITHUB_OUTPUT
 
   # ==========================================
   # JOB: Deploy da Infraestrutura (EKS)
@@ -210,9 +218,11 @@ jobs:
 
       - name: Aplicar Secret
         env:
-          MONGODB_URI: ${{ secrets.AWS_DOCUMENT_URI }}
+          DOCDB_ENDPOINT: ${{ needs.deploy-db.outputs.documentdb_endpoint }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
           JWT_SECRET: ${{ secrets.JWT_SECRET }}
         run: |
+          export MONGODB_URI="mongodb://officynasoatdbuser:${DB_PASSWORD}@${DOCDB_ENDPOINT}:27017"
           envsubst < k8s/secret.yaml | kubectl apply -f -
 
       - name: Criar imagePullSecret
