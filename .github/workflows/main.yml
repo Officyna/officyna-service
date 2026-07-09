@@ -263,8 +263,12 @@ jobs:
 
       - name: Aguardar rollout da aplicação
         run: |
-          kubectl rollout status deployment/officyna-service --timeout=180s
+          kubectl rollout status deployment/officyna-service --timeout=300s
           kubectl get pods,svc,hpa 
+
+      - name: Logs da aplicação
+        run: |
+          kubectl logs deployment/officyna-service
 
       - name: Diagnóstico em caso de falha
         if: failure()
