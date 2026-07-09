@@ -333,11 +333,11 @@ jobs:
 
       - name: Remover recursos do Kubernetes
         run: |
-          kubectl delete -f k8s/hpa.yaml --ignore-not-found=true
-          kubectl delete -f k8s/service.yaml --ignore-not-found=true
-          kubectl delete -f k8s/deployment.yaml --ignore-not-found=true
-          kubectl delete -f k8s/secret.yaml --ignore-not-found=true
-          kubectl delete -f k8s/configmap.yaml --ignore-not-found=true
+          kubectl delete -f ../../k8s/hpa.yaml --ignore-not-found=true
+          kubectl delete -f ../../k8s/service.yaml --ignore-not-found=true
+          kubectl delete -f ../../k8s/deployment.yaml --ignore-not-found=true
+          kubectl delete -f ../../k8s/secret.yaml --ignore-not-found=true
+          kubectl delete -f ../../k8s/configmap.yaml --ignore-not-found=true
 
       - name: Aguardar remoção do LoadBalancer
         run: |
