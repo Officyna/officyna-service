@@ -43,6 +43,8 @@ Além disso, a fase foca na automação total via Infraestrutura como Código (I
    Tempo Médio de Execução: Serviço especializado que calcula e monitora a performance da oficina por tipo de serviço.
 
 # 🏗️ Arquitetura Técnica
+![img_3.png](img_3.png)
+
 ## Componentes da Aplicação
 A aplicação é construída como um back-end monolítico organizado seguindo os princípios da Clean Architecture, dividindo-se em camadas de API, Domínio (DDD) e Infraestrutura .
 
@@ -150,6 +152,7 @@ docker-compose up -d --build
 - Acesso à Documentação: Após subir o ambiente, acesse o Swagger em: http://localhost:8080/swagger-ui.html
 
 ## Deploy em Kubernetes
+![img_1.png](img_1.png)
 A implantação no cluster utiliza manifestos YAML localizados na pasta /k8s:
 * **Namespace:** Crie o isolamento da aplicação com kubectl apply -f namespace.yaml.
 * **Aplicação:** Implante os pods e a estratégia de replicação com kubectl apply -f deployment.yaml.
