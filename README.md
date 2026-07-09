@@ -43,7 +43,7 @@ Além disso, a fase foca na automação total via Infraestrutura como Código (I
    Tempo Médio de Execução: Serviço especializado que calcula e monitora a performance da oficina por tipo de serviço.
 
 # 🏗️ Arquitetura Técnica
-![img_3.png](img_3.png)
+![img_2.png](img_2.png)
 
 ## Componentes da Aplicação
 A aplicação é construída como um back-end monolítico organizado seguindo os princípios da Clean Architecture, dividindo-se em camadas de API, Domínio (DDD) e Infraestrutura .
@@ -66,7 +66,6 @@ officyna-service/
 │   ├── configmap.yaml
 │   ├── deployment.yaml
 │   ├── hpa.yaml
-│   ├── namespace.yaml
 │   └── service.yaml
 ├── src/
 │   ├── main/
@@ -149,21 +148,50 @@ O projeto está configurado para uma execução local simples via Docker.
 ````bash
 docker-compose up -d --build
 ````
-- Acesso à Documentação: Após subir o ambiente, acesse o Swagger em: http://localhost:8080/swagger-ui.html
+
+## Acesso à Documentação
+* Após subir o ambiente local, acesse o Swagger em: http://localhost:8080/swagger-ui.html
+* Após realziar o deploy no kubernets: <https://{dns-elb}.us-east-1.elb.amazonaws.com/swagger-ui/index.html>
 
 ## Deploy em Kubernetes
 ![img_1.png](img_1.png)
-A implantação no cluster utiliza manifestos YAML localizados na pasta /k8s:
-* **Namespace:** Crie o isolamento da aplicação com kubectl apply -f namespace.yaml.
-* **Aplicação:** Implante os pods e a estratégia de replicação com kubectl apply -f deployment.yaml.
-* **Configurações:** Aplique as variáveis de ambiente e segredos com kubectl apply -f configmap.yaml.
-* **Exposição:** Exponha a API internamente ou via Load Balancer com kubectl apply -f service.yaml.
-* **Escalabilidade:** Ative o escalonamento automático baseado em uso de CPU/Memória com kubectl apply -f hpa.yaml.
+A implantação no cluster utiliza manifestos YAML localizados na pasta `/k8s`:
+* **Aplicação:** Implante os pods e a estratégia de replicação com kubectl 
+````bash 
+kubectl apply -f deployment.yaml
+````
+* **Configurações:** Aplique as variáveis de ambiente e segredos com 
+````bash 
+kubectl apply -f configmap.yaml
+````
+* **Exposição:** Exponha a API internamente ou via Load Balancer com 
+````bash 
+kubectl apply -f service.yaml
+````
+* **Escalabilidade:** Ative o escalonamento automático baseado em uso de CPU/Memória com
+````bash 
+kubectl apply -f hpa.yaml
+````
 
 ## Provisionamento da Infraestrutura com Terraform
 Para provisionar os recursos na AWS, utilize os arquivos na pasta `infra/terraform/`:
-- **Inicialização:** Execute terraform init para baixar os providers da AWS e configurar o backend remoto (S3).
-- **Validação:** Verifique a sintaxe com terraform validate.
-- **Planejamento:** Visualize os recursos que serão criados com terraform plan.
-- **Aplicação:** Provisione a rede, o banco e o cluster EKS com terraform apply -auto-approve.
-- **Configuração de Acesso:** Após o provisionamento, utilize o comando aws eks update-kubeconfig (usando os dados do outputs.tf) para conectar seu kubectl ao cluster na nuvem.
+- **Inicialização:** Execute para baixar os providers da AWS e configurar o backend remoto (S3).
+````bash 
+terraform init
+````
+- **Validação:** Verifique a sintaxe com 
+````bash 
+terraform validate
+````
+- **Planejamento:** Visualize os recursos que serão criados com
+````bash 
+terraform plan
+````
+- **Aplicação:** Provisione a rede, o banco e o cluster EKS com
+````bash 
+terraform apply -auto-approve
+````
+- **Configuração de Acesso:** Após o provisionamento, utilize o comando (usando os dados do outputs.tf) para conectar seu kubectl ao cluster na nuvem.
+````bash
+aws eks update-kubeconfig
+````
