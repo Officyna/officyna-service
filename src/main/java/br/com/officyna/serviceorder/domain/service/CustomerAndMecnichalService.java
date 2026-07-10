@@ -1,6 +1,6 @@
 package br.com.officyna.serviceorder.domain.service;
 
-import br.com.officyna.administrative.customer.api.resources.CustomerResponse;
+import br.com.officyna.administrative.customer.domain.entity.Customer;
 import br.com.officyna.administrative.customer.domain.service.CustomerService;
 import br.com.officyna.administrative.user.api.resources.UserResponse;
 import br.com.officyna.administrative.user.domain.service.UserService;
@@ -19,20 +19,20 @@ public class CustomerAndMecnichalService {
     }
 
     CustomerDTO getCustomer(String id) {
-        CustomerResponse response = customerService.findById(id);
-        return new CustomerDTO(response.id(),
-                response.name(),
-                response.phone(),
-                response.address().street(),
-                response.address().number(),
-                response.address().neighborhood(),
-                response.address().city(),
-                response.address().state(),
-                response.address().zipCode(),
-                response.address().complement());
+        Customer customer = customerService.findById(id);
+        return new CustomerDTO(customer.getId(),
+                customer.getName(),
+                customer.getPhone(),
+                customer.getAddress().getStreet(),
+                customer.getAddress().getNumber(),
+                customer.getAddress().getNeighborhood(),
+                customer.getAddress().getCity(),
+                customer.getAddress().getState(),
+                customer.getAddress().getZipCode(),
+                customer.getAddress().getComplement());
     }
 
-    CustomerResponse getCustomerByDocument(String document) {
+    Customer getCustomerByDocument(String document) {
         return customerService.findByDocument(document);
     }
 

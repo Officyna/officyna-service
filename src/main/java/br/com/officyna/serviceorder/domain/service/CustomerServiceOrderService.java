@@ -1,6 +1,6 @@
 package br.com.officyna.serviceorder.domain.service;
 
-import br.com.officyna.administrative.customer.api.resources.CustomerResponse;
+import br.com.officyna.administrative.customer.domain.entity.Customer;
 import br.com.officyna.infrastructure.exception.DomainException;
 import br.com.officyna.infrastructure.exception.NotFoundException;
 import br.com.officyna.serviceorder.api.resources.ModifySituationRequest;
@@ -42,11 +42,11 @@ public class CustomerServiceOrderService {
     public List<ServiceOrderResponse> findByCustomerDocument(String document, ServiceOrderStatus status) {
         log.info("Iniciando consulta de ordens de serviço para o documento: {} com status: {}", document, status != null ? status : "TODOS");
         
-        CustomerResponse customerResponse = customerService.getCustomerByDocument(document);
-        log.debug("Cliente identificado para o documento {}: ID {}", document, customerResponse.id());
+        Customer customer = customerService.getCustomerByDocument(document);
+        log.debug("Cliente identificado para o documento {}: ID {}", document, customer.getId());
 
-        List<ServiceOrder> entityList = repository.findByCustomerId(customerResponse.id());
-        log.debug("Total de ordens encontradas no banco para o cliente {}: {}", customerResponse.id(), entityList.size());
+        List<ServiceOrder> entityList = repository.findByCustomerId(customer.getId());
+        log.debug("Total de ordens encontradas no banco para o cliente {}: {}", customer.getId(), entityList.size());
 
         List<ServiceOrderResponse> response = new ArrayList<>();
         if(status == null){

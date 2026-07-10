@@ -1,6 +1,8 @@
 package br.com.officyna.infrastructure.persistence.config;
 
+import br.com.officyna.administrative.customer.domain.controller.CustomerControllerAdapter;
 import br.com.officyna.administrative.customer.domain.mapper.CustomerMapper;
+import br.com.officyna.administrative.customer.domain.presenter.CustomerPresenter;
 import br.com.officyna.administrative.customer.domain.repository.CustomerRepository;
 import br.com.officyna.administrative.customer.domain.service.CustomerService;
 import br.com.officyna.administrative.labor.domain.mapper.LaborMapper;
@@ -29,8 +31,15 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 public class PersistenceBeanConfig {
 
     @Bean
-    public CustomerService customerService(CustomerRepository customerRepository, CustomerMapper customerMapper) {
-        return new CustomerService(customerRepository, customerMapper);
+    public CustomerService customerService(CustomerRepository customerRepository) {
+        return new CustomerService(customerRepository);
+    }
+
+    @Bean
+    public CustomerControllerAdapter customerControllerAdapter(CustomerService customerService,
+                                                              CustomerMapper customerMapper,
+                                                              CustomerPresenter customerPresenter) {
+        return new CustomerControllerAdapter(customerService, customerMapper, customerPresenter);
     }
 
     @Bean

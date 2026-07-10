@@ -1,6 +1,6 @@
 package br.com.officyna.serviceorder.domain.service;
 
-import br.com.officyna.administrative.customer.api.resources.CustomerResponse;
+import br.com.officyna.administrative.customer.domain.entity.Customer;
 import br.com.officyna.infrastructure.exception.DomainException;
 import br.com.officyna.infrastructure.exception.NotFoundException;
 import br.com.officyna.serviceorder.api.resources.ModifySituationRequest;
@@ -52,9 +52,9 @@ class CustomerServiceOrderServiceTest {
         // Arrange
         String document = "12345678900";
         String customerId = "cust-1";
-        CustomerResponse customerResponse = mock(CustomerResponse.class);
-        when(customerResponse.id()).thenReturn(customerId);
-        when(customerService.getCustomerByDocument(document)).thenReturn(customerResponse);
+        Customer customer = mock(Customer.class);
+        when(customer.getId()).thenReturn(customerId);
+        when(customerService.getCustomerByDocument(document)).thenReturn(customer);
 
         ServiceOrder entity1 = ServiceOrder.builder().status(ServiceOrderStatus.RECEBIDA).build();
         ServiceOrder entity2 = ServiceOrder.builder().status(ServiceOrderStatus.EM_EXECUCAO).build();
@@ -78,9 +78,9 @@ class CustomerServiceOrderServiceTest {
         // Arrange
         String document = "12345678900";
         String customerId = "cust-1";
-        CustomerResponse customerResponse = mock(CustomerResponse.class);
-        when(customerResponse.id()).thenReturn(customerId);
-        when(customerService.getCustomerByDocument(document)).thenReturn(customerResponse);
+        Customer customer = mock(Customer.class);
+        when(customer.getId()).thenReturn(customerId);
+        when(customerService.getCustomerByDocument(document)).thenReturn(customer);
 
         ServiceOrder entity1 = ServiceOrder.builder().status(ServiceOrderStatus.RECEBIDA).build();
         ServiceOrder entity2 = ServiceOrder.builder().status(ServiceOrderStatus.EM_EXECUCAO).build();
@@ -104,9 +104,9 @@ class CustomerServiceOrderServiceTest {
         // Arrange
         String document = "12345678900";
         String customerId = "cust-1";
-        CustomerResponse customerResponse = mock(CustomerResponse.class);
-        when(customerResponse.id()).thenReturn(customerId);
-        when(customerService.getCustomerByDocument(document)).thenReturn(customerResponse);
+        Customer customer = mock(Customer.class);
+        when(customer.getId()).thenReturn(customerId);
+        when(customerService.getCustomerByDocument(document)).thenReturn(customer);
 
         when(serviceOrderRepository.findByCustomerId(customerId)).thenReturn(List.of());
 
