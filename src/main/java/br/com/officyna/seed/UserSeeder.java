@@ -33,26 +33,6 @@ public class UserSeeder {
                 .build();
 
         repository.save(admin);
-//
-//        UserDocument mechanic = UserDocument.builder()
-//                .name("Carlos Mecânico")
-//                .email("mecanico@officyna.com")
-//                .password(passwordEncoder.encode("123456"))
-//                .userRole(UserRole.MECHANIC.name())
-//                .active(true)
-//                .build();
-//
-//        repository.save(mechanic);
-//
-//        UserDocument attendant = UserDocument.builder()
-//                .name("Maria Atendente")
-//                .email("atendente@officyna.com")
-//                .password(passwordEncoder.encode("123456"))
-//                .userRole(UserRole.ATTENDANT.name())
-//                .active(true)
-//                .build();
-//
-//        repository.save(attendant);
 
         log.info("Usuário administrador criado com sucesso.{}", repository.count());
     }
