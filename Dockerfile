@@ -67,11 +67,4 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
     CMD curl -f http://localhost:8080/actuator/health || exit 1
 
 
-ENTRYPOINT [
-    "java",
-    "-Djavax.net.ssl.trustStore=$JAVA_HOME/lib/security/cacerts",
-    "-Djavax.net.ssl.trustStorePassword=changeit",
-    "-Djava.security.egd=file:/dev/./urandom",
-    "-jar",
-    "app.jar"
-]
+ENTRYPOINT ["java", "-Djavax.net.ssl.trustStore=/opt/java/openjdk/lib/security/cacerts", "-Djavax.net.ssl.trustStorePassword=changeit", "-Djava.security.egd=file:/dev/./urandom", "-jar", "app.jar"]

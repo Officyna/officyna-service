@@ -107,7 +107,7 @@ jobs:
     outputs:
       documentdb_endpoint: ${{ steps.docdb.outputs.endpoint }}
     runs-on: ubuntu-latest
-    needs: build-test
+    needs: [docker, build-test]
     if: github.event_name == 'push'
 #    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/feature/subida-aplicacao-eks')
     defaults:
@@ -150,7 +150,7 @@ jobs:
   deploy-eks:
     name: Provisionar EKS (Terraform)
     runs-on: ubuntu-latest
-    needs: [build-test, deploy-db]
+    needs: [docker, build-test, deploy-db]
     if: github.event_name == 'push'
     #    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/feat/125/provisionamento-banco-dados')
     defaults:
