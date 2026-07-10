@@ -15,9 +15,29 @@ FROM eclipse-temurin:21-jre-jammy
 WORKDIR /app
 
 # Install curl for healthcheck, then create non-root user
-RUN apt-get update && apt-get install -y --no-install-recommends curl \
-    && rm -rf /var/lib/apt/lists/* \
-    && groupadd -r officyna && useradd -r -g officyna officyna
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+        curl \
+        ca-certificates && \
+    rm -rf /var/lib/apt/lists/*
+
+# Baixa o certificado da AWS
+RUN curl -fsSL \
+    https://truststore.pki.rds.amazonaws.com/global/global-bundle.pem \
+    -o /tmp/global-bundle.pem
+
+# Importa no truststore da JVM
+RUN keytool \
+    -importcert \
+    -trustcacerts \
+    -alias aws-documentdb \
+    -file /tmp/global-bundle.pem \
+    -cacerts \
+    -storepass changeit \
+    -noprompt
+
+RUN groupadd -r officyna && useradd -r -g officyna officyna
+
 USER officyna
 
 COPY --from=builder /app/target/officyna-service-*.jar app.jar
