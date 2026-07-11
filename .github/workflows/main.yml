@@ -15,7 +15,7 @@ on:
       destroy:
         description: "Executar a destruição da infraestrutura?"
         required: true
-        default: "false"
+        default: "true"
         type: choice
         options:
           - "false"
