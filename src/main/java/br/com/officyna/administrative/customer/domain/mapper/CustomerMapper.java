@@ -3,10 +3,8 @@ package br.com.officyna.administrative.customer.domain.mapper;
 
 import br.com.officyna.administrative.customer.api.resources.AddressDTO;
 import br.com.officyna.administrative.customer.api.resources.CustomerRequest;
-import br.com.officyna.administrative.customer.api.resources.CustomerResponse;
 import br.com.officyna.administrative.customer.domain.entity.Address;
 import br.com.officyna.administrative.customer.domain.entity.Customer;
-import br.com.officyna.administrative.customer.domain.validation.DocumentUtils;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -15,45 +13,15 @@ public class CustomerMapper {
     public Customer toEntity(CustomerRequest request) {
         return Customer.builder()
                 .name(request.name())
-                .document(DocumentUtils.normalize(request.document()))
+                .document(request.document())
                 .type(request.type())
                 .email(request.email())
                 .phone(request.phone())
                 .areaCode(request.areaCode())
                 .countryCode(request.countryCode())
                 .address(toAddressEntity(request.address()))
-                .active(true)
                 .build();
     }
-
-    public CustomerResponse toResponse(Customer entity) {
-        return new CustomerResponse(
-                entity.getId(),
-                entity.getName(),
-                entity.getDocument(),
-                entity.getType(),
-                entity.getEmail(),
-                entity.getPhone(),
-                entity.getAreaCode(),
-                entity.getCountryCode(),
-                toAddressRecord(entity.getAddress()),
-                entity.getActive(),
-                entity.getCreatedAt()
-        );
-    }
-
-    public void updateEntity(Customer entity, CustomerRequest request) {
-        entity.setName(request.name());
-        entity.setDocument(DocumentUtils.normalize(request.document()));
-        entity.setType(request.type());
-        entity.setEmail(request.email());
-        entity.setPhone(request.phone());
-        entity.setAreaCode(request.areaCode());
-        entity.setCountryCode(request.countryCode());
-        entity.setAddress(toAddressEntity(request.address()));
-    }
-
-    // --- helpers privados ---
 
     private Address toAddressEntity(AddressDTO address) {
         if (address == null) return null;
@@ -67,19 +35,5 @@ public class CustomerMapper {
                 .zipCode(address.zipCode())
                 .country(address.country())
                 .build();
-    }
-
-    private AddressDTO toAddressRecord(Address entity) {
-        if (entity == null) return null;
-        return new AddressDTO(
-                entity.getStreet(),
-                entity.getNumber(),
-                entity.getComplement(),
-                entity.getNeighborhood(),
-                entity.getCity(),
-                entity.getState(),
-                entity.getZipCode(),
-                entity.getCountry()
-        );
     }
 }

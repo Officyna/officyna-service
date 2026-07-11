@@ -1,6 +1,6 @@
 package br.com.officyna.serviceorder.domain.service;
 
-import br.com.officyna.administrative.labor.api.resources.LaborResponse;
+import br.com.officyna.administrative.labor.domain.entity.Labor;
 import br.com.officyna.administrative.labor.domain.service.LaborService;
 import br.com.officyna.serviceorder.api.resources.LaborsRequest;
 import br.com.officyna.serviceorder.domain.dto.LaborDetailDTO;
@@ -25,12 +25,12 @@ public class LaborSelectionService {
         if (laborsIdList != null && !laborsIdList.isEmpty()) {
             List<LaborDetailDTO> newLabors = laborsIdList.stream()
                     .map(id -> {
-                        LaborResponse response = laborService.findById(id.getId());
+                        Labor labor = laborService.findById(id.getId());
                         return new LaborDetailDTO(
-                                response.id(),
-                                response.name(),
-                                response.description(),
-                                response.price(),
+                                labor.getId(),
+                                labor.getName(),
+                                labor.getDescription(),
+                                labor.getPrice(),
                                 null,
                                 null,
                                 LaborSituation.PENDENTE,

@@ -2,7 +2,7 @@ package br.com.officyna.monitoring.api.controller;
 
 import br.com.officyna.monitoring.api.resources.ForceRecalcResponse;
 import br.com.officyna.monitoring.api.resources.LaborMonitoringResponse;
-import br.com.officyna.monitoring.domain.service.LaborMonitoringService;
+import br.com.officyna.monitoring.domain.controller.MonitoringControllerAdapter;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -27,7 +27,7 @@ class MonitoringControllerTest {
     private MockMvc mockMvc;
 
     @Mock
-    private LaborMonitoringService laborMonitoringService;
+    private MonitoringControllerAdapter monitoringControllerAdapter;
 
     @InjectMocks
     private MonitoringController monitoringController;
@@ -43,26 +43,26 @@ class MonitoringControllerTest {
     @DisplayName("Deve retornar lista de monitoramentos com status 200")
     void findAll_ShouldReturnOk() throws Exception {
         LaborMonitoringResponse response = buildResponse("lab-1", "Troca de óleo", 3.5, "3 dias 04:00:00", 10);
-        when(laborMonitoringService.findAll()).thenReturn(List.of(response));
+        when(monitoringControllerAdapter.findAll()).thenReturn(List.of(response));
 
         mockMvc.perform(get("/api/monitoring/labors"))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON));
 
-        verify(laborMonitoringService, times(1)).findAll();
+        verify(monitoringControllerAdapter, times(1)).findAll();
     }
 
     @Test
     @DisplayName("Deve retornar lista vazia quando não há monitoramentos")
     void findAll_ShouldReturnEmptyList_WhenNoMonitorings() throws Exception {
-        when(laborMonitoringService.findAll()).thenReturn(List.of());
+        when(monitoringControllerAdapter.findAll()).thenReturn(List.of());
 
         mockMvc.perform(get("/api/monitoring/labors"))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(content().json("[]"));
 
-        verify(laborMonitoringService, times(1)).findAll();
+        verify(monitoringControllerAdapter, times(1)).findAll();
     }
 
     @Test
@@ -72,13 +72,13 @@ class MonitoringControllerTest {
                 buildResponse("lab-1", "Troca de óleo", 1.0, "1 dia 00:00:00", 5),
                 buildResponse("lab-2", "Alinhamento", 0.5, "04:00:00", 3)
         );
-        when(laborMonitoringService.findAll()).thenReturn(responses);
+        when(monitoringControllerAdapter.findAll()).thenReturn(responses);
 
         mockMvc.perform(get("/api/monitoring/labors"))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON));
 
-        verify(laborMonitoringService, times(1)).findAll();
+        verify(monitoringControllerAdapter, times(1)).findAll();
     }
 
     // ─────────────── PUT /api/monitoring/force-recalc ───────────────
@@ -87,26 +87,26 @@ class MonitoringControllerTest {
     @DisplayName("Deve recalcular médias e retornar quantidade de serviços processados")
     void forceRecalc_ShouldReturnOk() throws Exception {
         ForceRecalcResponse response = new ForceRecalcResponse(7);
-        when(laborMonitoringService.forceRecalc()).thenReturn(response);
+        when(monitoringControllerAdapter.forceRecalc()).thenReturn(response);
 
         mockMvc.perform(put("/api/monitoring/force-recalc"))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON));
 
-        verify(laborMonitoringService, times(1)).forceRecalc();
+        verify(monitoringControllerAdapter, times(1)).forceRecalc();
     }
 
     @Test
     @DisplayName("Deve retornar zero quando não há serviços para recalcular")
     void forceRecalc_ShouldReturnZero_WhenNoLabors() throws Exception {
         ForceRecalcResponse response = new ForceRecalcResponse(0);
-        when(laborMonitoringService.forceRecalc()).thenReturn(response);
+        when(monitoringControllerAdapter.forceRecalc()).thenReturn(response);
 
         mockMvc.perform(put("/api/monitoring/force-recalc"))
                 .andExpect(status().isOk())
                 .andExpect(content().json("{\"laborsProcessed\":0}"));
 
-        verify(laborMonitoringService, times(1)).forceRecalc();
+        verify(monitoringControllerAdapter, times(1)).forceRecalc();
     }
 
     // ─────────────── helper ───────────────

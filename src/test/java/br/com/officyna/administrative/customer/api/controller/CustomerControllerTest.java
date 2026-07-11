@@ -3,8 +3,8 @@ package br.com.officyna.administrative.customer.api.controller;
 import br.com.officyna.administrative.customer.api.resources.AddressDTO;
 import br.com.officyna.administrative.customer.api.resources.CustomerRequest;
 import br.com.officyna.administrative.customer.api.resources.CustomerResponse;
+import br.com.officyna.administrative.customer.domain.controller.CustomerControllerAdapter;
 import br.com.officyna.administrative.customer.domain.entity.CustomerType;
-import br.com.officyna.administrative.customer.domain.service.CustomerService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.junit.jupiter.api.BeforeEach;
@@ -33,7 +33,7 @@ class CustomerControllerTest {
     private MockMvc mockMvc;
 
     @Mock
-    private CustomerService customerService;
+    private CustomerControllerAdapter customerControllerAdapter;
 
     @InjectMocks
     private CustomerController customerController;
@@ -51,13 +51,13 @@ class CustomerControllerTest {
     @DisplayName("Deve retornar lista de todos os clientes")
     void findAll_ShouldReturnOk() throws Exception {
         var response = createResponse();
-        when(customerService.findAll()).thenReturn(List.of(response));
+        when(customerControllerAdapter.findAll()).thenReturn(List.of(response));
 
         mockMvc.perform(get("/api/customers"))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON));
 
-        verify(customerService, times(1)).findAll();
+        verify(customerControllerAdapter, times(1)).findAll();
     }
 
     @Test
@@ -65,12 +65,12 @@ class CustomerControllerTest {
     void findById_ShouldReturnCustomer() throws Exception {
         String id = "123";
         var response = createResponse();
-        when(customerService.findById(id)).thenReturn(response);
+        when(customerControllerAdapter.findById(id)).thenReturn(response);
 
         mockMvc.perform(get("/api/customers/{id}", id))
                 .andExpect(status().isOk());
 
-        verify(customerService, times(1)).findById(id);
+        verify(customerControllerAdapter, times(1)).findById(id);
     }
 
     @Test
@@ -78,12 +78,12 @@ class CustomerControllerTest {
     void findByDocument_ShouldReturnCustomer() throws Exception {
         String document = "123.456.789-09";
         var response = createResponse();
-        when(customerService.findByDocument(document)).thenReturn(response);
+        when(customerControllerAdapter.findByDocument(document)).thenReturn(response);
 
         mockMvc.perform(get("/api/customers/document/{document}", document))
                 .andExpect(status().isOk());
 
-        verify(customerService, times(1)).findByDocument(document);
+        verify(customerControllerAdapter, times(1)).findByDocument(document);
     }
 
     @Test
@@ -91,14 +91,14 @@ class CustomerControllerTest {
     void create_ShouldReturnCreated() throws Exception {
         var request = createRequest();
         var response = createResponse();
-        when(customerService.create(any(CustomerRequest.class))).thenReturn(response);
+        when(customerControllerAdapter.create(any(CustomerRequest.class))).thenReturn(response);
 
         mockMvc.perform(post("/api/customers")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated());
 
-        verify(customerService, times(1)).create(any(CustomerRequest.class));
+        verify(customerControllerAdapter, times(1)).create(any(CustomerRequest.class));
     }
 
     @Test
@@ -107,26 +107,26 @@ class CustomerControllerTest {
         String id = "123";
         var request = createRequest();
         var response = createResponse();
-        when(customerService.update(eq(id), any(CustomerRequest.class))).thenReturn(response);
+        when(customerControllerAdapter.update(eq(id), any(CustomerRequest.class))).thenReturn(response);
 
         mockMvc.perform(put("/api/customers/{id}", id)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk());
 
-        verify(customerService, times(1)).update(eq(id), any(CustomerRequest.class));
+        verify(customerControllerAdapter, times(1)).update(eq(id), any(CustomerRequest.class));
     }
 
     @Test
     @DisplayName("Deve deletar um cliente e retornar No Content")
     void delete_ShouldReturnNoContent() throws Exception {
         String id = "123";
-        doNothing().when(customerService).delete(id);
+        doNothing().when(customerControllerAdapter).delete(id);
 
         mockMvc.perform(delete("/api/customers/{id}", id))
                 .andExpect(status().isNoContent());
 
-        verify(customerService, times(1)).delete(id);
+        verify(customerControllerAdapter, times(1)).delete(id);
     }
 
     private CustomerRequest createRequest() {

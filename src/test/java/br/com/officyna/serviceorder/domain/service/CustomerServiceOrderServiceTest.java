@@ -1,16 +1,14 @@
 package br.com.officyna.serviceorder.domain.service;
 
-import br.com.officyna.administrative.customer.api.resources.CustomerResponse;
+import br.com.officyna.administrative.customer.domain.entity.Customer;
 import br.com.officyna.infrastructure.exception.DomainException;
 import br.com.officyna.infrastructure.exception.NotFoundException;
 import br.com.officyna.serviceorder.api.resources.ModifySituationRequest;
-import br.com.officyna.serviceorder.api.resources.ServiceOrderResponse;
 import br.com.officyna.serviceorder.domain.dto.LaborDetailDTO;
 import br.com.officyna.serviceorder.domain.dto.LaborsDTO;
 import br.com.officyna.serviceorder.domain.entity.ServiceOrder;
 import br.com.officyna.serviceorder.domain.enums.LaborSituation;
 import br.com.officyna.serviceorder.domain.enums.ServiceOrderStatus;
-import br.com.officyna.serviceorder.domain.mapper.ServiceOrderMapper;
 import br.com.officyna.serviceorder.domain.repository.ServiceOrderRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -38,9 +36,6 @@ class CustomerServiceOrderServiceTest {
     private CustomerAndMecnichalService customerService;
 
     @Mock
-    private ServiceOrderMapper mapper;
-
-    @Mock
     private ServiceOrderService serviceOrderService;
 
     @InjectMocks
@@ -49,24 +44,18 @@ class CustomerServiceOrderServiceTest {
     @Test
     @DisplayName("Deve retornar todas as ordens do cliente quando o status for nulo")
     void findByCustomerDocument_WhenStatusIsNull_ShouldReturnAllOrders() {
-        // Arrange
         String document = "12345678900";
         String customerId = "cust-1";
-        CustomerResponse customerResponse = mock(CustomerResponse.class);
-        when(customerResponse.id()).thenReturn(customerId);
-        when(customerService.getCustomerByDocument(document)).thenReturn(customerResponse);
+        Customer customer = mock(Customer.class);
+        when(customer.getId()).thenReturn(customerId);
+        when(customerService.getCustomerByDocument(document)).thenReturn(customer);
 
         ServiceOrder entity1 = ServiceOrder.builder().status(ServiceOrderStatus.RECEBIDA).build();
         ServiceOrder entity2 = ServiceOrder.builder().status(ServiceOrderStatus.EM_EXECUCAO).build();
         when(serviceOrderRepository.findByCustomerId(customerId)).thenReturn(List.of(entity1, entity2));
 
-        ServiceOrderResponse response = mock(ServiceOrderResponse.class);
-        when(mapper.toResponse(any(ServiceOrder.class))).thenReturn(response);
+        List<ServiceOrder> result = service.findByCustomerDocument(document, null);
 
-        // Act
-        List<ServiceOrderResponse> result = service.findByCustomerDocument(document, null);
-
-        // Assert
         assertThat(result).hasSize(2);
         verify(customerService).getCustomerByDocument(document);
         verify(serviceOrderRepository).findByCustomerId(customerId);
@@ -75,56 +64,45 @@ class CustomerServiceOrderServiceTest {
     @Test
     @DisplayName("Deve retornar apenas ordens com status específico")
     void findByCustomerDocument_WhenStatusIsProvided_ShouldFilterOrders() {
-        // Arrange
         String document = "12345678900";
         String customerId = "cust-1";
-        CustomerResponse customerResponse = mock(CustomerResponse.class);
-        when(customerResponse.id()).thenReturn(customerId);
-        when(customerService.getCustomerByDocument(document)).thenReturn(customerResponse);
+        Customer customer = mock(Customer.class);
+        when(customer.getId()).thenReturn(customerId);
+        when(customerService.getCustomerByDocument(document)).thenReturn(customer);
 
         ServiceOrder entity1 = ServiceOrder.builder().status(ServiceOrderStatus.RECEBIDA).build();
         ServiceOrder entity2 = ServiceOrder.builder().status(ServiceOrderStatus.EM_EXECUCAO).build();
         when(serviceOrderRepository.findByCustomerId(customerId)).thenReturn(List.of(entity1, entity2));
 
-        ServiceOrderResponse response = mock(ServiceOrderResponse.class);
-        when(mapper.toResponse(any(ServiceOrder.class))).thenReturn(response);
+        List<ServiceOrder> result = service.findByCustomerDocument(document, ServiceOrderStatus.EM_EXECUCAO);
 
-        // Act
-        List<ServiceOrderResponse> result = service.findByCustomerDocument(document, ServiceOrderStatus.EM_EXECUCAO);
-
-        // Assert
         assertThat(result).hasSize(1);
-        verify(mapper, times(1)).toResponse(entity2);
-        verify(mapper, never()).toResponse(entity1);
+        assertThat(result.get(0)).isSameAs(entity2);
     }
 
     @Test
     @DisplayName("Deve retornar lista vazia quando o cliente não possui ordens")
     void findByCustomerDocument_WhenNoOrdersFound_ShouldReturnEmptyList() {
-        // Arrange
         String document = "12345678900";
         String customerId = "cust-1";
-        CustomerResponse customerResponse = mock(CustomerResponse.class);
-        when(customerResponse.id()).thenReturn(customerId);
-        when(customerService.getCustomerByDocument(document)).thenReturn(customerResponse);
+        Customer customer = mock(Customer.class);
+        when(customer.getId()).thenReturn(customerId);
+        when(customerService.getCustomerByDocument(document)).thenReturn(customer);
 
         when(serviceOrderRepository.findByCustomerId(customerId)).thenReturn(List.of());
 
-        // Act
-        List<ServiceOrderResponse> result = service.findByCustomerDocument(document, null);
+        List<ServiceOrder> result = service.findByCustomerDocument(document, null);
 
-        // Assert
         assertThat(result).isEmpty();
     }
 
     @Test
     @DisplayName("Deve atualizar a situação dos serviços com sucesso")
     void updateLaborSituation_ShouldSucceed() {
-        // Arrange
         String orderId = "order-1";
         LaborDetailDTO labor1 = LaborDetailDTO.builder().laborId("l1").situation(LaborSituation.PENDENTE).build();
         LaborDetailDTO labor2 = LaborDetailDTO.builder().laborId("l2").situation(LaborSituation.PENDENTE).build();
-        
+
         ServiceOrder entity = ServiceOrder.builder()
                 .id(orderId)
                 .status(ServiceOrderStatus.AGUARDANDO_APROVACAO)
@@ -138,24 +116,21 @@ class CustomerServiceOrderServiceTest {
 
         when(serviceOrderRepository.findById(orderId)).thenReturn(Optional.of(entity));
         when(serviceOrderService.save(any())).thenReturn(entity);
-        when(mapper.toResponse(any())).thenReturn(mock(ServiceOrderResponse.class));
 
-        // Act
-        service.updateLaborSituation(orderId, request);
+        ServiceOrder result = service.updateLaborSituation(orderId, request);
 
-        // Assert
+        assertThat(result).isSameAs(entity);
         assertThat(labor1.getSituation()).isEqualTo(LaborSituation.APROVADO);
         assertThat(labor1.getSituationDate()).isNotNull();
         assertThat(labor2.getSituation()).isEqualTo(LaborSituation.REJEITADO);
         assertThat(labor2.getSituationDate()).isNotNull();
-        
+
         verify(serviceOrderService).save(entity);
     }
 
     @Test
     @DisplayName("Deve lançar exceção se a O.S não estiver em AGUARDANDO APROVACAO")
     void updateLaborSituation_InvalidStatus_ShouldThrowException() {
-        // Arrange
         String orderId = "order-1";
         ServiceOrder entity = ServiceOrder.builder()
                 .status(ServiceOrderStatus.RECEBIDA)
@@ -163,11 +138,9 @@ class CustomerServiceOrderServiceTest {
 
         when(serviceOrderRepository.findById(orderId)).thenReturn(Optional.of(entity));
 
-        // Act & Assert
         assertThatThrownBy(() -> service.updateLaborSituation(orderId, List.of()))
                 .isInstanceOf(DomainException.class)
                 .hasMessage("Só é possivel atualizar a situação de um serviço para O.S AGUARDANDO APROVAÇÃO");
-        
     }
 
     @Test

@@ -1,6 +1,6 @@
 package br.com.officyna.serviceorder.domain.service;
 
-import br.com.officyna.administrative.supply.api.resources.SupplyResponse;
+import br.com.officyna.administrative.supply.domain.entity.Supply;
 import br.com.officyna.administrative.supply.domain.service.SupplyService;
 import br.com.officyna.infrastructure.exception.DomainException;
 import br.com.officyna.serviceorder.api.resources.SupplysRequest;
@@ -25,13 +25,13 @@ public class SupplySelectionService {
         if(supplysIdList != null && !supplysIdList.isEmpty()){
             List<SupplyDetailDTO> newSupplys = supplysIdList.stream()
                     .map(id -> {
-                SupplyResponse response = service.findById(id.getId());
-                return new SupplyDetailDTO(response.id(),
-                        response.name(),
-                        response.description(),
+                Supply supply = service.findById(id.getId());
+                return new SupplyDetailDTO(supply.getId(),
+                        supply.getName(),
+                        supply.getDescription(),
                         id.getQuantity(),
-                        response.salePrice(),
-                        this.calculateTotalPriceForUnitSupply(id.getQuantity(), response.salePrice())
+                        supply.getSalePrice(),
+                        this.calculateTotalPriceForUnitSupply(id.getQuantity(), supply.getSalePrice())
                 );
             }).toList();
             allSupplys.addAll(newSupplys);
