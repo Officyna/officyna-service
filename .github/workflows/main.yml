@@ -5,11 +5,21 @@ on:
     branches:
       - main
       - developer
-      - feature/subida-aplicacao-eks
   pull_request:
     branches:
       - main
       - developer
+
+  workflow_dispatch:
+    inputs:
+      destroy:
+        description: "Executar a destruição da infraestrutura?"
+        required: true
+        default: "false"
+        type: choice
+        options:
+          - "false"
+          - "true"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -21,6 +31,7 @@ env:
 
 jobs:
   build-test:
+    if: github.event_name == 'push' || github.event_name == 'pull_request'
     name: Build e Testes
     runs-on: ubuntu-latest
     env:
@@ -307,9 +318,7 @@ jobs:
     runs-on: ubuntu-latest
 
     # Aguarda o deploy do cluster e da aplicação terminarem
-    needs: [ deploy-eks, deploy-app ]
-
-    if: always() && needs.deploy-eks.result != 'skipped' && github.event_name == 'push'
+    if: github.event_name == 'workflow_dispatch' && inputs.destroy == 'true'
 
     defaults:
       run:
@@ -361,9 +370,10 @@ jobs:
     name: Limpeza Automática (Destruir Banco)
     runs-on: ubuntu-latest
     # MUDANÇA CRÍTICA: Ele espera o deploy terminar (sucesso ou falha) para começar a destruir
-    needs: [deploy-db, deploy-app, destroy-eks]
+    needs: [destroy-eks]
     # MUDANÇA CRÍTICA: Só roda se o deploy-db NÃO tiver sido pulado (evita rodar em branches não autorizadas)
-    if: always() && needs.deploy-db.result != 'skipped' && github.event_name == 'push'
+    if: github.event_name == 'workflow_dispatch' && inputs.destroy == 'true'
+
     defaults:
       run:
         working-directory: infra/db
