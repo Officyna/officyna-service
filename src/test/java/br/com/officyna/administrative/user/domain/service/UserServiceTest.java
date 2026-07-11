@@ -3,8 +3,8 @@ package br.com.officyna.administrative.user.domain.service;
 import br.com.officyna.administrative.user.domain.entity.User;
 import br.com.officyna.administrative.user.domain.entity.UserRole;
 import br.com.officyna.administrative.user.domain.repository.UserRepository;
-import br.com.officyna.infrastructure.exception.DomainException;
-import br.com.officyna.infrastructure.exception.NotFoundException;
+import br.com.officyna.administrative.user.domain.exception.UserBusinessException;
+import br.com.officyna.administrative.user.domain.exception.UserNotFoundException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -107,7 +107,7 @@ class UserServiceTest {
     void findById_ShouldThrowNotFoundException() {
         when(userRepository.findById("inexistente")).thenReturn(Optional.empty());
 
-        assertThrows(NotFoundException.class, () -> userService.findById("inexistente"));
+        assertThrows(UserNotFoundException.class, () -> userService.findById("inexistente"));
     }
 
     // ─── findByEmail ──────────────────────────────────────────────────────────
@@ -129,7 +129,7 @@ class UserServiceTest {
     void findByEmail_ShouldThrowNotFoundException() {
         when(userRepository.findByEmail("naoexiste@email.com")).thenReturn(Optional.empty());
 
-        assertThrows(NotFoundException.class, () -> userService.findByEmail("naoexiste@email.com"));
+        assertThrows(UserNotFoundException.class, () -> userService.findByEmail("naoexiste@email.com"));
     }
 
     // ─── create ───────────────────────────────────────────────────────────────
@@ -173,7 +173,7 @@ class UserServiceTest {
         setupSecurityContext("ROLE_ATTENDANT");
         User incoming = buildIncoming("novo@email.com");
 
-        assertThrows(DomainException.class, () -> userService.create(incoming));
+        assertThrows(UserBusinessException.class, () -> userService.create(incoming));
         verify(userRepository, never()).save(any());
     }
 
@@ -185,7 +185,7 @@ class UserServiceTest {
         User incoming = buildIncoming("existente@email.com");
         when(userRepository.findByEmail("existente@email.com")).thenReturn(Optional.of(existing));
 
-        assertThrows(DomainException.class, () -> userService.create(incoming));
+        assertThrows(UserBusinessException.class, () -> userService.create(incoming));
         verify(userRepository, never()).save(any());
     }
 
@@ -235,7 +235,7 @@ class UserServiceTest {
         when(userRepository.findById("1")).thenReturn(Optional.of(entity));
         when(userRepository.existsByEmail("ocupado@email.com")).thenReturn(true);
 
-        assertThrows(DomainException.class, () -> userService.update("1", changes));
+        assertThrows(UserBusinessException.class, () -> userService.update("1", changes));
         verify(userRepository, never()).save(any());
     }
 
@@ -272,7 +272,7 @@ class UserServiceTest {
     void delete_ShouldThrowNotFoundException() {
         when(userRepository.findById("inexistente")).thenReturn(Optional.empty());
 
-        assertThrows(NotFoundException.class, () -> userService.delete("inexistente"));
+        assertThrows(UserNotFoundException.class, () -> userService.delete("inexistente"));
         verify(userRepository, never()).save(any());
     }
 }

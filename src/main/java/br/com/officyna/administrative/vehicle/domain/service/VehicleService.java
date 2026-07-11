@@ -4,8 +4,8 @@ import br.com.officyna.administrative.customer.domain.entity.Customer;
 import br.com.officyna.administrative.customer.domain.service.CustomerService;
 import br.com.officyna.administrative.vehicle.domain.entity.Vehicle;
 import br.com.officyna.administrative.vehicle.domain.repository.VehicleRepository;
-import br.com.officyna.infrastructure.exception.DomainException;
-import br.com.officyna.infrastructure.exception.NotFoundException;
+import br.com.officyna.administrative.vehicle.domain.exception.VehicleBusinessException;
+import br.com.officyna.administrative.vehicle.domain.exception.VehicleNotFoundException;
 import java.util.List;
 
 public class VehicleService {
@@ -32,7 +32,7 @@ public class VehicleService {
 
     public Vehicle create(Vehicle vehicle) {
         if (repository.existsByPlate(vehicle.getPlate())) {
-            throw new DomainException("Plate already registered: " + vehicle.getPlate());
+            throw new VehicleBusinessException("Plate already registered: " + vehicle.getPlate());
         }
         Customer customer = customerService.findEntityById(vehicle.getCustomerId());
         vehicle.setCustomerName(customer.getName());
@@ -44,7 +44,7 @@ public class VehicleService {
 
         boolean plateChanged = !entity.getPlate().equals(changes.getPlate());
         if (plateChanged && repository.existsByPlate(changes.getPlate())) {
-            throw new DomainException("Plate already registered: " + changes.getPlate());
+            throw new VehicleBusinessException("Plate already registered: " + changes.getPlate());
         }
 
         Customer customer = customerService.findEntityById(changes.getCustomerId());
@@ -67,6 +67,6 @@ public class VehicleService {
     // Utility method for internal use (e.g. WorkOrderService)
     public Vehicle findEntityById(String id) {
         return repository.findById(id)
-                .orElseThrow(() -> NotFoundException.of("Vehicle", id));
+                .orElseThrow(() -> VehicleNotFoundException.of(id));
     }
 }

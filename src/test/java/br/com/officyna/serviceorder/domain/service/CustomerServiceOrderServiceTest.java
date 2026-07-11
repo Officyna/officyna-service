@@ -1,8 +1,8 @@
 package br.com.officyna.serviceorder.domain.service;
 
 import br.com.officyna.administrative.customer.domain.entity.Customer;
-import br.com.officyna.infrastructure.exception.DomainException;
-import br.com.officyna.infrastructure.exception.NotFoundException;
+import br.com.officyna.serviceorder.domain.exception.ServiceOrderBusinessException;
+import br.com.officyna.serviceorder.domain.exception.ServiceOrderNotFoundException;
 import br.com.officyna.serviceorder.api.resources.ModifySituationRequest;
 import br.com.officyna.serviceorder.domain.dto.LaborDetailDTO;
 import br.com.officyna.serviceorder.domain.dto.LaborsDTO;
@@ -139,7 +139,7 @@ class CustomerServiceOrderServiceTest {
         when(serviceOrderRepository.findById(orderId)).thenReturn(Optional.of(entity));
 
         assertThatThrownBy(() -> service.updateLaborSituation(orderId, List.of()))
-                .isInstanceOf(DomainException.class)
+                .isInstanceOf(ServiceOrderBusinessException.class)
                 .hasMessage("Só é possivel atualizar a situação de um serviço para O.S AGUARDANDO APROVAÇÃO");
     }
 
@@ -150,6 +150,6 @@ class CustomerServiceOrderServiceTest {
         when(serviceOrderRepository.findById(orderId)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> service.updateLaborSituation(orderId, List.of()))
-                .isInstanceOf(NotFoundException.class);
+                .isInstanceOf(ServiceOrderNotFoundException.class);
     }
 }

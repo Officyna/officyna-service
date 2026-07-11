@@ -1,6 +1,6 @@
 package br.com.officyna.serviceorder.domain.entity;
 
-import br.com.officyna.infrastructure.exception.DomainException;
+import br.com.officyna.serviceorder.domain.exception.ServiceOrderBusinessException;
 import br.com.officyna.serviceorder.domain.dto.*;
 import br.com.officyna.serviceorder.domain.enums.LaborSituation;
 import br.com.officyna.serviceorder.domain.enums.ServiceOrderStatus;
@@ -74,38 +74,38 @@ public class ServiceOrder {
         }
 
         if(status.equals(this.status)) {
-            throw new DomainException("A Ordem de Serviço já foi processada com status " + status.getStatusName() + ".");
+            throw new ServiceOrderBusinessException("A Ordem de Serviço já foi processada com status " + status.getStatusName() + ".");
         }else if(status.equals(ServiceOrderStatus.RECEBIDA) && this.status != null){
-            throw new DomainException("A Ordem de Serviço já foi recebida e não pode retornar a este status.");
+            throw new ServiceOrderBusinessException("A Ordem de Serviço já foi recebida e não pode retornar a este status.");
         }else if(status.equals(ServiceOrderStatus.EM_DIAGNOSTICO)){
             if (!ServiceOrderStatus.RECEBIDA.equals(this.status)) {
-                throw new DomainException("Para iniciar o diagnóstico, a O.S. deve estar no status RECEBIDA.");
+                throw new ServiceOrderBusinessException("Para iniciar o diagnóstico, a O.S. deve estar no status RECEBIDA.");
             }
         }else if(status.equals(ServiceOrderStatus.AGUARDANDO_APROVACAO)){
             if (!ServiceOrderStatus.EM_DIAGNOSTICO.equals(this.status)) {
-                throw new DomainException("Para aguardar aprovação, a O.S. deve ter passado pelo diagnóstico.");
+                throw new ServiceOrderBusinessException("Para aguardar aprovação, a O.S. deve ter passado pelo diagnóstico.");
             }
         }else if(status.equals(ServiceOrderStatus.APROVADA)){
             if (!ServiceOrderStatus.AGUARDANDO_APROVACAO.equals(this.status)) {
-                throw new DomainException("Apenas ordens AGUARDANDO APROVAÇÃO podem ser aprovadas.");
+                throw new ServiceOrderBusinessException("Apenas ordens AGUARDANDO APROVAÇÃO podem ser aprovadas.");
             }
             this.validateLaborsForAProvalStatus();
         }else if(status.equals(ServiceOrderStatus.EM_EXECUCAO)){
             if (!ServiceOrderStatus.APROVADA.equals(this.status)) {
-                throw new DomainException("Apenas ordens APROVADAS podem entrar em execução.");
+                throw new ServiceOrderBusinessException("Apenas ordens APROVADAS podem entrar em execução.");
             }
         }else if(status.equals(ServiceOrderStatus.FINALIZADA)){
             if (!ServiceOrderStatus.EM_EXECUCAO.equals(this.status)) {
-                throw new DomainException("Apenas ordens EM EXECUÇÃO podem ser finalizadas.");
+                throw new ServiceOrderBusinessException("Apenas ordens EM EXECUÇÃO podem ser finalizadas.");
             }
             this.validateLaborsForFinishServiceOrder();
         }else if(status.equals(ServiceOrderStatus.ENTREGUE)){
             if (!ServiceOrderStatus.FINALIZADA.equals(this.status)) {
-                throw new DomainException("Apenas ordes FINALIZADAS podem ser consideradas entregues");
+                throw new ServiceOrderBusinessException("Apenas ordes FINALIZADAS podem ser consideradas entregues");
             }
         }else if(status.equals(ServiceOrderStatus.RECUSADA)){
             if (!ServiceOrderStatus.AGUARDANDO_APROVACAO.equals(this.status)) {
-                throw new DomainException("Apenas ordens AGUARDANDO APROVAÇÃO podem ser recusadas.");
+                throw new ServiceOrderBusinessException("Apenas ordens AGUARDANDO APROVAÇÃO podem ser recusadas.");
             }
         }
         setTimeDateByStatus(status);
@@ -118,7 +118,7 @@ public class ServiceOrder {
                 .toList();
         labors.forEach(item -> {
             if (item.getStartDate() == null || item.getEndDate() == null) {
-                throw new DomainException("Não é possível finalizar ordem com serviços em aberto");
+                throw new ServiceOrderBusinessException("Não é possível finalizar ordem com serviços em aberto");
             }
         });
     }
@@ -128,11 +128,11 @@ public class ServiceOrder {
             this.getLabors().getLaborsDetails()
                     .forEach(item -> {
                         if(item.getSituation().equals(LaborSituation.PENDENTE)){
-                            throw  new DomainException("Todos os serviços devem ser analisados e rejeitados ou aprovados");
+                            throw  new ServiceOrderBusinessException("Todos os serviços devem ser analisados e rejeitados ou aprovados");
                         }
                     });
         } else{
-            throw new DomainException("A O.S precisa ter ao menos um serviço");
+            throw new ServiceOrderBusinessException("A O.S precisa ter ao menos um serviço");
         }
     }
 

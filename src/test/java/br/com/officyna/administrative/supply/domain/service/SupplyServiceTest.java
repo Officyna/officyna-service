@@ -3,8 +3,8 @@ package br.com.officyna.administrative.supply.domain.service;
 import br.com.officyna.administrative.supply.domain.entity.Supply;
 import br.com.officyna.administrative.supply.domain.entity.SupplyType;
 import br.com.officyna.administrative.supply.domain.repository.SupplyRepository;
-import br.com.officyna.infrastructure.exception.DomainException;
-import br.com.officyna.infrastructure.exception.NotFoundException;
+import br.com.officyna.administrative.supply.domain.exception.SupplyBusinessException;
+import br.com.officyna.administrative.supply.domain.exception.SupplyNotFoundException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -97,7 +97,7 @@ class SupplyServiceTest {
         String id = "nonExistentId";
         when(supplyRepository.findById(id)).thenReturn(Optional.empty());
 
-        assertThrows(NotFoundException.class, () -> supplyService.findById(id));
+        assertThrows(SupplyNotFoundException.class, () -> supplyService.findById(id));
         verify(supplyRepository, times(1)).findById(id);
     }
 
@@ -124,7 +124,7 @@ class SupplyServiceTest {
         Supply incoming = createSupplyEntity(null, "Insumo Existente", SupplyType.SUPPLY, true);
         when(supplyRepository.existsByName("Insumo Existente")).thenReturn(true);
 
-        assertThrows(DomainException.class, () -> supplyService.create(incoming));
+        assertThrows(SupplyBusinessException.class, () -> supplyService.create(incoming));
         verify(supplyRepository, times(1)).existsByName("Insumo Existente");
         verify(supplyRepository, never()).save(any(Supply.class));
     }
@@ -159,7 +159,7 @@ class SupplyServiceTest {
         when(supplyRepository.findById(id)).thenReturn(Optional.of(existingEntity));
         when(supplyRepository.existsByName("Nome Já Existente")).thenReturn(true);
 
-        assertThrows(DomainException.class, () -> supplyService.update(id, changes));
+        assertThrows(SupplyBusinessException.class, () -> supplyService.update(id, changes));
         verify(supplyRepository, times(1)).findById(id);
         verify(supplyRepository, times(1)).existsByName("Nome Já Existente");
         verify(supplyRepository, never()).save(any(Supply.class));
@@ -188,7 +188,7 @@ class SupplyServiceTest {
         String id = "nonExistentId";
         when(supplyRepository.findById(id)).thenReturn(Optional.empty());
 
-        assertThrows(NotFoundException.class, () -> supplyService.delete(id));
+        assertThrows(SupplyNotFoundException.class, () -> supplyService.delete(id));
         verify(supplyRepository, times(1)).findById(id);
         verify(supplyRepository, never()).save(any(Supply.class));
     }

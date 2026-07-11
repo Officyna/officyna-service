@@ -8,6 +8,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDateTime;
+import java.time.Month;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -31,7 +32,7 @@ class CustomerPresenterTest {
     @Test
     @DisplayName("toResponse deve mapear todos os campos corretamente com endereço")
     void toResponse_ShouldMapAllFields_WithAddress() {
-        LocalDateTime createdAt = LocalDateTime.of(2024, 3, 10, 9, 0);
+        LocalDateTime createdAt = LocalDateTime.of(2024, Month.MARCH, 10, 9, 0);
         Customer entity = Customer.builder()
                 .id("cust-1")
                 .name("João Silva")

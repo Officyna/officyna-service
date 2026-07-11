@@ -9,6 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
 
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Optional;
@@ -35,7 +36,7 @@ public class LaborMonitoringService {
 
     @Async
     public void updateExecutionTimeInDays(String laborId, LocalDateTime startDate, LocalDateTime endDate) {
-        double durationInDays = ChronoUnit.SECONDS.between(startDate, endDate) / WORK_DAY_SECONDS_DOUBLE;
+        double durationInDays = ChronoUnit.SECONDS.between(startDate.atOffset(ZoneOffset.UTC), endDate.atOffset(ZoneOffset.UTC)) / WORK_DAY_SECONDS_DOUBLE;
 
         if (durationInDays < 0) {
             log.warn("Ignorando atualização de tempo médio para laborId={}: endDate anterior ao startDate", laborId);
@@ -101,7 +102,7 @@ public class LaborMonitoringService {
                     .filter(detail -> labor.getId().equals(detail.getLaborId())
                             && detail.getStartDate() != null
                             && detail.getEndDate() != null)
-                    .map(detail -> ChronoUnit.SECONDS.between(detail.getStartDate(), detail.getEndDate()) / WORK_DAY_SECONDS_DOUBLE)
+                    .map(detail -> ChronoUnit.SECONDS.between(detail.getStartDate().atOffset(ZoneOffset.UTC), detail.getEndDate().atOffset(ZoneOffset.UTC)) / WORK_DAY_SECONDS_DOUBLE)
                     .filter(duration -> duration >= 0)
                     .toList();
 
