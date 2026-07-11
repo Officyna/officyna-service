@@ -2,8 +2,8 @@ package br.com.officyna.administrative.labor.domain.service;
 
 import br.com.officyna.administrative.labor.domain.entity.Labor;
 import br.com.officyna.administrative.labor.domain.repository.LaborRepository;
-import br.com.officyna.infrastructure.exception.DomainException;
-import br.com.officyna.infrastructure.exception.NotFoundException;
+import br.com.officyna.administrative.labor.domain.exception.LaborBusinessException;
+import br.com.officyna.administrative.labor.domain.exception.LaborNotFoundException;
 import br.com.officyna.monitoring.domain.service.LaborMonitoringService;
 import java.util.List;
 
@@ -27,7 +27,7 @@ public class LaborService {
 
     public Labor create(Labor labor) {
         if (repository.existsByName(labor.getName())) {
-            throw new DomainException("Labor already registered with name: " + labor.getName());
+            throw new LaborBusinessException("Labor already registered with name: " + labor.getName());
         }
         Labor saved = repository.save(labor);
         laborMonitoringService.initializeFromEstimate(saved.getId(), saved.getName(), saved.getDescription(), saved.getExecutionTimeInDays());
@@ -39,7 +39,7 @@ public class LaborService {
 
         boolean nameChanged = !entity.getName().equalsIgnoreCase(changes.getName());
         if (nameChanged && repository.existsByName(changes.getName())) {
-            throw new DomainException("Labor already registered with name: " + changes.getName());
+            throw new LaborBusinessException("Labor already registered with name: " + changes.getName());
         }
 
         entity.setName(changes.getName());
@@ -58,6 +58,6 @@ public class LaborService {
 
     public Labor findEntityById(String id) {
         return repository.findById(id)
-                .orElseThrow(() -> NotFoundException.of("Labor", id));
+                .orElseThrow(() -> LaborNotFoundException.of(id));
     }
 }

@@ -3,8 +3,8 @@ package br.com.officyna.administrative.supply.domain.service;
 import br.com.officyna.administrative.supply.domain.entity.Supply;
 import br.com.officyna.administrative.supply.domain.entity.SupplyType;
 import br.com.officyna.administrative.supply.domain.repository.SupplyRepository;
-import br.com.officyna.infrastructure.exception.DomainException;
-import br.com.officyna.infrastructure.exception.NotFoundException;
+import br.com.officyna.administrative.supply.domain.exception.SupplyBusinessException;
+import br.com.officyna.administrative.supply.domain.exception.SupplyNotFoundException;
 import br.com.officyna.serviceorder.domain.dto.SupplyDetailDTO;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -101,7 +101,7 @@ class StockServiceTest {
     void reserveSupplies_ShouldThrowNotFoundException_WhenSupplyNotFound() {
         when(supplyRepository.findById("inexistente")).thenReturn(Optional.empty());
 
-        assertThrows(NotFoundException.class,
+        assertThrows(SupplyNotFoundException.class,
                 () -> stockService.reserveSupplies(List.of(buildItem("inexistente", 2))));
     }
 
@@ -138,7 +138,7 @@ class StockServiceTest {
         Supply supply = buildSupply("s1", 2, 5, 2);
         when(supplyRepository.findById("s1")).thenReturn(Optional.of(supply));
 
-        assertThrows(DomainException.class,
+        assertThrows(SupplyBusinessException.class,
                 () -> stockService.consumeSupplies(List.of(buildItem("s1", 5))));
         verify(supplyRepository, never()).save(any());
     }

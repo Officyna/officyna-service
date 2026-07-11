@@ -3,8 +3,8 @@ package br.com.officyna.administrative.supply.domain.service;
 import br.com.officyna.administrative.supply.domain.entity.Supply;
 import br.com.officyna.administrative.supply.domain.entity.SupplyType;
 import br.com.officyna.administrative.supply.domain.repository.SupplyRepository;
-import br.com.officyna.infrastructure.exception.DomainException;
-import br.com.officyna.infrastructure.exception.NotFoundException;
+import br.com.officyna.administrative.supply.domain.exception.SupplyBusinessException;
+import br.com.officyna.administrative.supply.domain.exception.SupplyNotFoundException;
 import java.util.List;
 
 public class SupplyService {
@@ -29,7 +29,7 @@ public class SupplyService {
 
     public Supply create(Supply supply) {
         if (repository.existsByName(supply.getName())) {
-            throw new DomainException("Supply already registered with name: " + supply.getName());
+            throw new SupplyBusinessException("Supply already registered with name: " + supply.getName());
         }
         return repository.save(supply);
     }
@@ -39,7 +39,7 @@ public class SupplyService {
 
         boolean nameChanged = !entity.getName().equals(changes.getName());
         if (nameChanged && repository.existsByName(changes.getName())) {
-            throw new DomainException("Supply already registered with name: " + changes.getName());
+            throw new SupplyBusinessException("Supply already registered with name: " + changes.getName());
         }
 
         entity.setName(changes.getName());
@@ -61,6 +61,6 @@ public class SupplyService {
 
     public Supply findEntityById(String id) {
         return repository.findById(id)
-                .orElseThrow(() -> NotFoundException.of("Supply", id));
+                .orElseThrow(() -> SupplyNotFoundException.of(id));
     }
 }

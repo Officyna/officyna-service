@@ -4,8 +4,8 @@ import br.com.officyna.administrative.customer.domain.entity.Customer;
 import br.com.officyna.administrative.customer.domain.service.CustomerService;
 import br.com.officyna.administrative.vehicle.domain.entity.Vehicle;
 import br.com.officyna.administrative.vehicle.domain.repository.VehicleRepository;
-import br.com.officyna.infrastructure.exception.DomainException;
-import br.com.officyna.infrastructure.exception.NotFoundException;
+import br.com.officyna.administrative.vehicle.domain.exception.VehicleBusinessException;
+import br.com.officyna.administrative.vehicle.domain.exception.VehicleNotFoundException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -94,7 +94,7 @@ class VehicleServiceTest {
         String id = "nonExistentId";
         when(vehicleRepository.findById(id)).thenReturn(Optional.empty());
 
-        assertThrows(NotFoundException.class, () -> vehicleService.findById(id));
+        assertThrows(VehicleNotFoundException.class, () -> vehicleService.findById(id));
         verify(vehicleRepository, times(1)).findById(id);
     }
 
@@ -140,7 +140,7 @@ class VehicleServiceTest {
         Vehicle incoming = createVehicleEntity(null, "ABC-1234", true);
         when(vehicleRepository.existsByPlate("ABC-1234")).thenReturn(true);
 
-        assertThrows(DomainException.class, () -> vehicleService.create(incoming));
+        assertThrows(VehicleBusinessException.class, () -> vehicleService.create(incoming));
         verify(vehicleRepository, times(1)).existsByPlate("ABC-1234");
         verify(customerService, never()).findEntityById(any());
         verify(vehicleRepository, never()).save(any(Vehicle.class));
@@ -179,7 +179,7 @@ class VehicleServiceTest {
         when(vehicleRepository.findById(id)).thenReturn(Optional.of(existingEntity));
         when(vehicleRepository.existsByPlate("EXISTING-PLATE")).thenReturn(true);
 
-        assertThrows(DomainException.class, () -> vehicleService.update(id, changes));
+        assertThrows(VehicleBusinessException.class, () -> vehicleService.update(id, changes));
         verify(vehicleRepository, times(1)).findById(id);
         verify(vehicleRepository, times(1)).existsByPlate("EXISTING-PLATE");
         verify(customerService, never()).findEntityById(any());
@@ -209,7 +209,7 @@ class VehicleServiceTest {
         String id = "nonExistentId";
         when(vehicleRepository.findById(id)).thenReturn(Optional.empty());
 
-        assertThrows(NotFoundException.class, () -> vehicleService.delete(id));
+        assertThrows(VehicleNotFoundException.class, () -> vehicleService.delete(id));
         verify(vehicleRepository, times(1)).findById(id);
         verify(vehicleRepository, never()).save(any(Vehicle.class));
     }

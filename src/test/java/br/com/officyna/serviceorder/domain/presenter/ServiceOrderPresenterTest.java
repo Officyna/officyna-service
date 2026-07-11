@@ -8,6 +8,7 @@ import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.time.Month;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -28,7 +29,7 @@ class ServiceOrderPresenterTest {
     @Test
     @DisplayName("Deve retornar a data de registro quando o status for RECEBIDA")
     void toResponse_ShouldReturnRegistrationDate_WhenStatusIsRecebida() {
-        LocalDateTime date = LocalDateTime.of(2024, 1, 15, 9, 30);
+        LocalDateTime date = LocalDateTime.of(2024, Month.JANUARY, 15, 9, 30);
         ServiceOrder entity = baseEntity(ServiceOrderStatus.RECEBIDA);
         entity.setRegistrationDate(date);
 
@@ -40,7 +41,7 @@ class ServiceOrderPresenterTest {
     @Test
     @DisplayName("Deve retornar a data de diagnóstico quando o status for EM_DIAGNOSTICO")
     void toResponse_ShouldReturnDiagnosisDate_WhenStatusIsDiagnosis() {
-        LocalDateTime now = LocalDateTime.of(2023, 10, 27, 10, 0);
+        LocalDateTime now = LocalDateTime.of(2023, Month.OCTOBER, 27, 10, 0);
         ServiceOrder entity = ServiceOrder.builder()
                 .id("1")
                 .serviceOrderNumber(100L)
@@ -58,7 +59,7 @@ class ServiceOrderPresenterTest {
     @Test
     @DisplayName("Deve retornar a data de envio ao cliente quando o status for AGUARDANDO_APROVACAO")
     void toResponse_ShouldReturnClientSendDate_WhenStatusIsAguardandoAprovacao() {
-        LocalDateTime date = LocalDateTime.of(2024, 2, 10, 14, 0);
+        LocalDateTime date = LocalDateTime.of(2024, Month.FEBRUARY, 10, 14, 0);
         ServiceOrder entity = baseEntity(ServiceOrderStatus.AGUARDANDO_APROVACAO);
         entity.setClientSendDate(date);
 
@@ -70,7 +71,7 @@ class ServiceOrderPresenterTest {
     @Test
     @DisplayName("Deve retornar a data de aprovação quando o status for APROVADA")
     void toResponse_ShouldReturnApprovalDate_WhenStatusIsAprovada() {
-        LocalDateTime date = LocalDateTime.of(2024, 3, 5, 11, 15);
+        LocalDateTime date = LocalDateTime.of(2024, Month.MARCH, 5, 11, 15);
         ServiceOrder entity = baseEntity(ServiceOrderStatus.APROVADA);
         entity.setApprovalDate(date);
 
@@ -82,7 +83,7 @@ class ServiceOrderPresenterTest {
     @Test
     @DisplayName("Deve retornar a data de início de execução quando o status for EM_EXECUCAO")
     void toResponse_ShouldReturnExecutionStartDate_WhenStatusIsEmExecucao() {
-        LocalDateTime date = LocalDateTime.of(2024, 4, 20, 8, 0);
+        LocalDateTime date = LocalDateTime.of(2024, Month.APRIL, 20, 8, 0);
         ServiceOrder entity = baseEntity(ServiceOrderStatus.EM_EXECUCAO);
         entity.setExecutionStartDate(date);
 
@@ -94,7 +95,7 @@ class ServiceOrderPresenterTest {
     @Test
     @DisplayName("Deve retornar a data de finalização quando o status for FINALIZADA")
     void toResponse_ShouldReturnFinalizationDate_WhenStatusIsFinalizda() {
-        LocalDateTime date = LocalDateTime.of(2024, 5, 1, 17, 30);
+        LocalDateTime date = LocalDateTime.of(2024, Month.MAY, 1, 17, 30);
         ServiceOrder entity = baseEntity(ServiceOrderStatus.FINALIZADA);
         entity.setFinalizationDate(date);
 
@@ -106,7 +107,7 @@ class ServiceOrderPresenterTest {
     @Test
     @DisplayName("Deve retornar a data de entrega quando o status for ENTREGUE")
     void toResponse_ShouldReturnDeliveryDate_WhenStatusIsEntregue() {
-        LocalDateTime date = LocalDateTime.of(2024, 5, 3, 10, 0);
+        LocalDateTime date = LocalDateTime.of(2024, Month.MAY, 3, 10, 0);
         ServiceOrder entity = baseEntity(ServiceOrderStatus.ENTREGUE);
         entity.setDeliveryDate(date);
 
@@ -118,7 +119,7 @@ class ServiceOrderPresenterTest {
     @Test
     @DisplayName("Deve retornar a data de recusa quando o status for RECUSADA")
     void toResponse_ShouldReturnRefuseDate_WhenStatusIsRecusada() {
-        LocalDateTime date = LocalDateTime.of(2024, 6, 12, 16, 45);
+        LocalDateTime date = LocalDateTime.of(2024, Month.JUNE, 12, 16, 45);
         ServiceOrder entity = baseEntity(ServiceOrderStatus.RECUSADA);
         entity.setRefuseDate(date);
 

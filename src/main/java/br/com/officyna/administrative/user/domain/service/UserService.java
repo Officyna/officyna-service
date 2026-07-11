@@ -2,8 +2,8 @@ package br.com.officyna.administrative.user.domain.service;
 
 import br.com.officyna.administrative.user.domain.entity.User;
 import br.com.officyna.administrative.user.domain.repository.UserRepository;
-import br.com.officyna.infrastructure.exception.DomainException;
-import br.com.officyna.infrastructure.exception.NotFoundException;
+import br.com.officyna.administrative.user.domain.exception.UserBusinessException;
+import br.com.officyna.administrative.user.domain.exception.UserNotFoundException;
 import org.jspecify.annotations.NonNull;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -34,14 +34,14 @@ public class UserService {
 
     public User findByEmail(String email) {
         return repository.findByEmail(email)
-                .orElseThrow(() -> new NotFoundException("Usuário não encontrado com este email: " + email));
+                .orElseThrow(() -> new UserNotFoundException("Usuário não encontrado com este email: " + email));
     }
 
     public User create(User user) {
         validateAdminOrManager();
         Optional<User> userExist = repository.findByEmail(user.getEmail());
         if (userExist.isPresent() && Boolean.TRUE.equals(userExist.get().getActive())) {
-            throw new DomainException("Já existe um usuário com este email: " + user.getEmail());
+            throw new UserBusinessException("Já existe um usuário com este email: " + user.getEmail());
         }
         user.setId(userExist.map(User::getId).orElse(null));
         user.setEmail(normalizeEmail(user));
@@ -55,7 +55,7 @@ public class UserService {
         boolean hasPermission = auth.getAuthorities().stream()
                 .anyMatch(a -> Objects.equals(a.getAuthority(), "ROLE_ADMIN") || Objects.equals(a.getAuthority(), "ROLE_MANAGER"));
         if (!hasPermission) {
-            throw new DomainException("Apenas ADMIN ou MANAGER podem criar usuários internos.");
+            throw new UserBusinessException("Apenas ADMIN ou MANAGER podem criar usuários internos.");
         }
     }
 
@@ -68,7 +68,7 @@ public class UserService {
 
         boolean emailChanged = !entity.getEmail().equals(changes.getEmail());
         if (emailChanged && repository.existsByEmail(changes.getEmail())) {
-            throw new DomainException("Já existe um usário com este email: " + changes.getEmail());
+            throw new UserBusinessException("Já existe um usário com este email: " + changes.getEmail());
         }
 
         entity.setName(changes.getName());
@@ -85,6 +85,6 @@ public class UserService {
 
     public User findEntityById(String id) {
         return repository.findById(id)
-                .orElseThrow(() -> NotFoundException.of("User", id));
+                .orElseThrow(() -> UserNotFoundException.of(id));
     }
 }

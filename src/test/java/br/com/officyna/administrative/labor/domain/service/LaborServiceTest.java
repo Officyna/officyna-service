@@ -2,8 +2,8 @@ package br.com.officyna.administrative.labor.domain.service;
 
 import br.com.officyna.administrative.labor.domain.entity.Labor;
 import br.com.officyna.administrative.labor.domain.repository.LaborRepository;
-import br.com.officyna.infrastructure.exception.DomainException;
-import br.com.officyna.infrastructure.exception.NotFoundException;
+import br.com.officyna.administrative.labor.domain.exception.LaborBusinessException;
+import br.com.officyna.administrative.labor.domain.exception.LaborNotFoundException;
 import br.com.officyna.monitoring.domain.service.LaborMonitoringService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -82,7 +82,7 @@ class LaborServiceTest {
         String id = "nonExistentId";
         when(laborRepository.findById(id)).thenReturn(Optional.empty());
 
-        assertThrows(NotFoundException.class, () -> laborService.findById(id));
+        assertThrows(LaborNotFoundException.class, () -> laborService.findById(id));
         verify(laborRepository, times(1)).findById(id);
     }
 
@@ -111,7 +111,7 @@ class LaborServiceTest {
         Labor incoming = createLaborEntity(null, "Existing Labor", true);
         when(laborRepository.existsByName("Existing Labor")).thenReturn(true);
 
-        assertThrows(DomainException.class, () -> laborService.create(incoming));
+        assertThrows(LaborBusinessException.class, () -> laborService.create(incoming));
         verify(laborRepository, times(1)).existsByName("Existing Labor");
         verify(laborRepository, never()).save(any(Labor.class));
         verify(laborMonitoringService, never()).initializeFromEstimate(any(), any(), any(), any());
@@ -147,7 +147,7 @@ class LaborServiceTest {
         when(laborRepository.findById(id)).thenReturn(Optional.of(existingEntity));
         when(laborRepository.existsByName("Existing Labor Name")).thenReturn(true);
 
-        assertThrows(DomainException.class, () -> laborService.update(id, changes));
+        assertThrows(LaborBusinessException.class, () -> laborService.update(id, changes));
         verify(laborRepository, times(1)).findById(id);
         verify(laborRepository, times(1)).existsByName("Existing Labor Name");
         verify(laborRepository, never()).save(any(Labor.class));
@@ -176,7 +176,7 @@ class LaborServiceTest {
         String id = "nonExistentId";
         when(laborRepository.findById(id)).thenReturn(Optional.empty());
 
-        assertThrows(NotFoundException.class, () -> laborService.delete(id));
+        assertThrows(LaborNotFoundException.class, () -> laborService.delete(id));
         verify(laborRepository, times(1)).findById(id);
         verify(laborRepository, never()).save(any(Labor.class));
     }

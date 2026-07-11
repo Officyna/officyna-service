@@ -1,7 +1,7 @@
 package br.com.officyna.serviceorder.domain.service;
 
-import br.com.officyna.infrastructure.exception.DomainException;
-import br.com.officyna.infrastructure.exception.NotFoundException;
+import br.com.officyna.serviceorder.domain.exception.ServiceOrderBusinessException;
+import br.com.officyna.serviceorder.domain.exception.ServiceOrderNotFoundException;
 import br.com.officyna.monitoring.domain.service.LaborMonitoringService;
 import br.com.officyna.serviceorder.api.resources.*;
 import br.com.officyna.serviceorder.domain.dto.*;
@@ -178,7 +178,7 @@ class ServiceOrderServiceTest {
         when(repository.findById("missing")).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> service.findById("missing"))
-                .isInstanceOf(NotFoundException.class);
+                .isInstanceOf(ServiceOrderNotFoundException.class);
     }
 
     // ─────────────── findByServiceOrderNumber ───────────────
@@ -201,7 +201,7 @@ class ServiceOrderServiceTest {
         when(repository.findByServiceOrderNumber(999L)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> service.findByServiceOrderNumber(999L))
-                .isInstanceOf(NotFoundException.class);
+                .isInstanceOf(ServiceOrderNotFoundException.class);
     }
 
     // ─────────────── createServiceOrder ───────────────
@@ -383,7 +383,7 @@ class ServiceOrderServiceTest {
         when(repository.findById("123")).thenReturn(Optional.of(entity));
 
         assertThatThrownBy(() -> service.updateStatus("123", ServiceOrderStatus.APROVADA))
-                .isInstanceOf(DomainException.class)
+                .isInstanceOf(ServiceOrderBusinessException.class)
                 .hasMessageContaining("Apenas ordens AGUARDANDO APROVAÇÃO podem ser aprovadas.");
     }
 
@@ -395,7 +395,7 @@ class ServiceOrderServiceTest {
         when(repository.findById("123")).thenReturn(Optional.of(entity));
 
         assertThatThrownBy(() -> service.updateStatus("123", ServiceOrderStatus.RECEBIDA))
-                .isInstanceOf(DomainException.class)
+                .isInstanceOf(ServiceOrderBusinessException.class)
                 .hasMessageContaining("A Ordem de Serviço já foi recebida e não pode retornar a este status.");
     }
 
@@ -407,7 +407,7 @@ class ServiceOrderServiceTest {
         when(repository.findById("123")).thenReturn(Optional.of(entity));
 
         assertThatThrownBy(() -> service.updateStatus("123", ServiceOrderStatus.EM_DIAGNOSTICO))
-                .isInstanceOf(DomainException.class)
+                .isInstanceOf(ServiceOrderBusinessException.class)
                 .hasMessageContaining("A Ordem de Serviço já foi processada com status " + ServiceOrderStatus.EM_DIAGNOSTICO.getStatusName() + ".");
     }
 
@@ -419,7 +419,7 @@ class ServiceOrderServiceTest {
         when(repository.findById("123")).thenReturn(Optional.of(entity));
 
         assertThatThrownBy(() -> service.updateStatus("123", ServiceOrderStatus.ENTREGUE))
-                .isInstanceOf(DomainException.class)
+                .isInstanceOf(ServiceOrderBusinessException.class)
                 .hasMessageContaining("Apenas ordes FINALIZADAS podem ser consideradas entregues");
     }
 
@@ -461,7 +461,7 @@ class ServiceOrderServiceTest {
         when(repository.findById("id-1")).thenReturn(Optional.of(entity));
 
         assertThatThrownBy(() -> service.startLabor("id-1", "lab-1"))
-                .isInstanceOf(DomainException.class)
+                .isInstanceOf(ServiceOrderBusinessException.class)
                 .hasMessageContaining("O serviço já foi iniciado");
     }
 
@@ -480,7 +480,7 @@ class ServiceOrderServiceTest {
         when(repository.findById("id-1")).thenReturn(Optional.of(entity));
 
         assertThatThrownBy(() -> service.startLabor("id-1", "lab-inexistente"))
-                .isInstanceOf(NotFoundException.class)
+                .isInstanceOf(ServiceOrderNotFoundException.class)
                 .hasMessageContaining("A O.S não possui este serviço");
     }
 
@@ -494,7 +494,7 @@ class ServiceOrderServiceTest {
         when(repository.findById("id-1")).thenReturn(Optional.of(entity));
 
         assertThatThrownBy(() -> service.startLabor("id-1", "lab-1"))
-                .isInstanceOf(DomainException.class);
+                .isInstanceOf(ServiceOrderBusinessException.class);
     }
 
     // ─────────────── finishLabor ───────────────
@@ -539,7 +539,7 @@ class ServiceOrderServiceTest {
         when(repository.findById("id-1")).thenReturn(Optional.of(entity));
 
         assertThatThrownBy(() -> service.finishLabor("id-1", "lab-1"))
-                .isInstanceOf(DomainException.class)
+                .isInstanceOf(ServiceOrderBusinessException.class)
                 .hasMessageContaining("Não é possível finalizar um serviço que não foi iniciado ou já foi finalizado.");
     }
 
@@ -559,7 +559,7 @@ class ServiceOrderServiceTest {
         when(repository.findById("id-1")).thenReturn(Optional.of(entity));
 
         assertThatThrownBy(() -> service.finishLabor("id-1", "lab-inexistente"))
-                .isInstanceOf(NotFoundException.class)
+                .isInstanceOf(ServiceOrderNotFoundException.class)
                 .hasMessageContaining("A O.S não possui este serviço");
     }
 

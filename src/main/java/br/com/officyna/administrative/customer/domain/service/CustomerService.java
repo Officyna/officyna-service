@@ -3,8 +3,8 @@ package br.com.officyna.administrative.customer.domain.service;
 import br.com.officyna.administrative.customer.domain.entity.Customer;
 import br.com.officyna.administrative.customer.domain.validation.DocumentUtils;
 import br.com.officyna.administrative.customer.domain.repository.CustomerRepository;
-import br.com.officyna.infrastructure.exception.DomainException;
-import br.com.officyna.infrastructure.exception.NotFoundException;
+import br.com.officyna.administrative.customer.domain.exception.CustomerBusinessException;
+import br.com.officyna.administrative.customer.domain.exception.CustomerNotFoundException;
 import java.util.List;
 
 public class CustomerService {
@@ -26,13 +26,13 @@ public class CustomerService {
     public Customer findByDocument(String document) {
         String normalized = DocumentUtils.normalize(document);
         return repository.findByDocument(normalized)
-                .orElseThrow(() -> new NotFoundException("Customer not found with document: " + normalized));
+                .orElseThrow(() -> new CustomerNotFoundException("Customer not found with document: " + normalized));
     }
 
     public Customer create(Customer customer) {
         String normalized = DocumentUtils.normalize(customer.getDocument());
         if (repository.existsByDocument(normalized)) {
-            throw new DomainException("Document already registered: " + normalized);
+            throw new CustomerBusinessException("Document already registered: " + normalized);
         }
         customer.setDocument(normalized);
         customer.setActive(true);
@@ -45,7 +45,7 @@ public class CustomerService {
 
         boolean documentChanged = !entity.getDocument().equals(normalized);
         if (documentChanged && repository.existsByDocument(normalized)) {
-            throw new DomainException("Document already registered: " + normalized);
+            throw new CustomerBusinessException("Document already registered: " + normalized);
         }
 
         entity.setName(changes.getName());
@@ -68,6 +68,6 @@ public class CustomerService {
     // Utility method for internal use (e.g. VehicleService)
     public Customer findEntityById(String id) {
         return repository.findById(id)
-                .orElseThrow(() -> NotFoundException.of("Customer", id));
+                .orElseThrow(() -> CustomerNotFoundException.of(id));
     }
 }

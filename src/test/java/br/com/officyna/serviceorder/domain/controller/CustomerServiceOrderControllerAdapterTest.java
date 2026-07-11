@@ -3,7 +3,6 @@ package br.com.officyna.serviceorder.domain.controller;
 import br.com.officyna.serviceorder.api.resources.ModifySituationRequest;
 import br.com.officyna.serviceorder.api.resources.ServiceOrderResponse;
 import br.com.officyna.serviceorder.domain.entity.ServiceOrder;
-import br.com.officyna.serviceorder.domain.enums.ServiceOrderStatus;
 import br.com.officyna.serviceorder.domain.presenter.ServiceOrderPresenter;
 import br.com.officyna.serviceorder.domain.service.CustomerServiceOrderService;
 import org.junit.jupiter.api.DisplayName;

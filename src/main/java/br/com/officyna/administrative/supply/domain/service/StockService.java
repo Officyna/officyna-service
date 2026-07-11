@@ -2,7 +2,7 @@ package br.com.officyna.administrative.supply.domain.service;
 
 import br.com.officyna.administrative.supply.domain.entity.Supply;
 import br.com.officyna.administrative.supply.domain.repository.SupplyRepository;
-import br.com.officyna.infrastructure.exception.NotFoundException;
+import br.com.officyna.administrative.supply.domain.exception.SupplyNotFoundException;
 import br.com.officyna.serviceorder.domain.dto.SupplyDetailDTO;
 import lombok.extern.slf4j.Slf4j;
 
@@ -64,6 +64,6 @@ public class StockService {
 
     private Supply findById(String id) {
         return repository.findById(id)
-                .orElseThrow(() -> NotFoundException.of("Supply", id));
+                .orElseThrow(() -> SupplyNotFoundException.of(id));
     }
 }

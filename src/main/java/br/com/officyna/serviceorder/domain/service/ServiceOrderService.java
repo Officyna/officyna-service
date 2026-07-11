@@ -1,8 +1,8 @@
 package br.com.officyna.serviceorder.domain.service;
 
 import br.com.officyna.administrative.supply.domain.service.StockService;
-import br.com.officyna.infrastructure.exception.DomainException;
-import br.com.officyna.infrastructure.exception.NotFoundException;
+import br.com.officyna.serviceorder.domain.exception.ServiceOrderBusinessException;
+import br.com.officyna.serviceorder.domain.exception.ServiceOrderNotFoundException;
 import br.com.officyna.monitoring.domain.service.LaborMonitoringService;
 import br.com.officyna.serviceorder.api.resources.*;
 import br.com.officyna.serviceorder.domain.dto.*;
@@ -55,7 +55,7 @@ public class ServiceOrderService {
 
     private ServiceOrder findEntityById(String id){
         return repository.findById(id)
-                .orElseThrow(() -> NotFoundException.of("Service Order", id));
+                .orElseThrow(() -> ServiceOrderNotFoundException.of(id));
     }
 
     public List<ServiceOrder> findAll() {
@@ -89,7 +89,7 @@ public class ServiceOrderService {
     public ServiceOrder findByServiceOrderNumber(Long serviceOrderNumber) {
         return repository.findByServiceOrderNumber(serviceOrderNumber)
                 .orElseThrow(
-                        () -> NotFoundException.of("Service Order ", serviceOrderNumber)
+                        () -> ServiceOrderNotFoundException.of(serviceOrderNumber)
                 );
     }
 
@@ -143,7 +143,7 @@ public class ServiceOrderService {
     public ServiceOrder addSupplyFromServiceOrder(String id, List<SupplysRequest> supplyIdList) {
         log.info("Adicionando {} suprimento(s) à O.S. ID: {}", supplyIdList.size(), id);
         ServiceOrder entity = repository.findById(id)
-                .orElseThrow(() -> NotFoundException.of("Service Order", id));
+                .orElseThrow(() -> ServiceOrderNotFoundException.of(id));
         SupplyDTO supply = supplySelectionService.addSupplys(
                 supplyIdList,
                 (entity.getSupplys() == null) ? List.of() : entity.getSupplys().getSupplysDetails()
@@ -183,14 +183,14 @@ public class ServiceOrderService {
                     break;
                 } else {
                     log.error("Tentativa de iniciar serviço já iniciado. O.S. ID: {}, Labor ID: {}", id, laborId);
-                    throw new DomainException("O serviço já foi iniciado");
+                    throw new ServiceOrderBusinessException("O serviço já foi iniciado");
                 }
             }
         }
 
         if (!found) {
             log.error("Serviço ID: {} não encontrado na O.S. ID: {}", laborId, id);
-            throw new NotFoundException("A O.S não possui este serviço");
+            throw new ServiceOrderNotFoundException("A O.S não possui este serviço");
         }
         if(entity.getStatus().equals(ServiceOrderStatus.APROVADA)){
             entity.setStatus(ServiceOrderStatus.EM_EXECUCAO);
@@ -218,14 +218,14 @@ public class ServiceOrderService {
                     break;
                 } else {
                     log.error("Falha ao finalizar serviço. Verifique se foi iniciado ou se já está finalizado. O.S. ID: {}, Labor ID: {}", id, laborId);
-                    throw new DomainException("Não é possível finalizar um serviço que não foi iniciado ou já foi finalizado.");
+                    throw new ServiceOrderBusinessException("Não é possível finalizar um serviço que não foi iniciado ou já foi finalizado.");
                 }
             }
         }
 
         if (!found) {
             log.error("Serviço ID: {} não encontrado na O.S. ID: {}", laborId, id);
-            throw new NotFoundException("A O.S não possui este serviço");
+            throw new ServiceOrderNotFoundException("A O.S não possui este serviço");
         }
 
         return this.save(entity);
@@ -246,13 +246,13 @@ public class ServiceOrderService {
     private void validateStatusForStartExecution(ServiceOrder entity) {
         if (!(ServiceOrderStatus.APROVADA.equals(entity.getStatus()) || ServiceOrderStatus.EM_EXECUCAO.equals(entity.getStatus()))) {
             log.warn("Falha na validação: Tentativa de operar serviços em O.S. com status inválido. Status atual: {}, O.S. ID: {}", entity.getStatus(), entity.getId());
-            throw new DomainException("Um serviço só pode ser iniciado ou finalizado se o status da ordem de serviço for APROVADA ou EM EXECUÇÃO.");
+            throw new ServiceOrderBusinessException("Um serviço só pode ser iniciado ou finalizado se o status da ordem de serviço for APROVADA ou EM EXECUÇÃO.");
         }
 
         LaborsDTO labors = entity.getLabors();
         if (labors == null || labors.getLaborsDetails() == null || labors.getLaborsDetails().isEmpty()) {
             log.warn("Falha na validação: Tentativa de iniciar execução em O.S. sem serviços cadastrados. O.S. ID: {}", entity.getId());
-            throw new DomainException("A ordem de serviço não possui serviços cadastrados.");
+            throw new ServiceOrderBusinessException("A ordem de serviço não possui serviços cadastrados.");
         }
     }
 }

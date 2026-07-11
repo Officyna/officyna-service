@@ -1,8 +1,8 @@
 package br.com.officyna.serviceorder.domain.service;
 
 import br.com.officyna.administrative.customer.domain.entity.Customer;
-import br.com.officyna.infrastructure.exception.DomainException;
-import br.com.officyna.infrastructure.exception.NotFoundException;
+import br.com.officyna.serviceorder.domain.exception.ServiceOrderBusinessException;
+import br.com.officyna.serviceorder.domain.exception.ServiceOrderNotFoundException;
 import br.com.officyna.serviceorder.api.resources.ModifySituationRequest;
 import br.com.officyna.serviceorder.domain.entity.ServiceOrder;
 import br.com.officyna.serviceorder.domain.enums.LaborSituation;
@@ -51,7 +51,7 @@ public class CustomerServiceOrderService {
 
     public ServiceOrder updateLaborSituation(String serviceOrderId, List<ModifySituationRequest> request) {
         ServiceOrder entity = repository.findById(serviceOrderId)
-                .orElseThrow(() -> NotFoundException.of("Service Order", serviceOrderId));
+                .orElseThrow(() -> ServiceOrderNotFoundException.of(serviceOrderId));
         if(entity.getStatus().equals(ServiceOrderStatus.AGUARDANDO_APROVACAO)) {
             LocalDateTime now = LocalDateTime.now();
             Map<String, LaborSituation> laborsToUpdateMap = request.stream()
@@ -68,7 +68,7 @@ public class CustomerServiceOrderService {
                     });
             entity.setStatus(ServiceOrderStatus.APROVADA);
         } else {
-            throw new DomainException("Só é possivel atualizar a situação de um serviço para O.S AGUARDANDO APROVAÇÃO");
+            throw new ServiceOrderBusinessException("Só é possivel atualizar a situação de um serviço para O.S AGUARDANDO APROVAÇÃO");
         }
         return serviceOrderService.save(entity);
     }

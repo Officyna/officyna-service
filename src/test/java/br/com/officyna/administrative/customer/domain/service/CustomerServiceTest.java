@@ -4,8 +4,8 @@ import br.com.officyna.administrative.customer.domain.entity.Address;
 import br.com.officyna.administrative.customer.domain.entity.Customer;
 import br.com.officyna.administrative.customer.domain.entity.CustomerType;
 import br.com.officyna.administrative.customer.domain.repository.CustomerRepository;
-import br.com.officyna.infrastructure.exception.DomainException;
-import br.com.officyna.infrastructure.exception.NotFoundException;
+import br.com.officyna.administrative.customer.domain.exception.CustomerBusinessException;
+import br.com.officyna.administrative.customer.domain.exception.CustomerNotFoundException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -101,7 +101,7 @@ class CustomerServiceTest {
         String id = "nonExistentId";
         when(customerRepository.findById(id)).thenReturn(Optional.empty());
 
-        assertThrows(NotFoundException.class, () -> customerService.findById(id));
+        assertThrows(CustomerNotFoundException.class, () -> customerService.findById(id));
         verify(customerRepository).findById(id);
     }
 
@@ -139,7 +139,7 @@ class CustomerServiceTest {
     void findByDocument_ShouldThrowNotFoundException() {
         when(customerRepository.findByDocument(CPF_NORMALIZED)).thenReturn(Optional.empty());
 
-        assertThrows(NotFoundException.class, () -> customerService.findByDocument(CPF_FORMATTED));
+        assertThrows(CustomerNotFoundException.class, () -> customerService.findByDocument(CPF_FORMATTED));
         verify(customerRepository).findByDocument(CPF_NORMALIZED);
     }
 
@@ -172,7 +172,7 @@ class CustomerServiceTest {
         Customer incoming = createCustomerEntity(null, CPF_FORMATTED, false);
         when(customerRepository.existsByDocument(CPF_NORMALIZED)).thenReturn(true);
 
-        assertThrows(DomainException.class, () -> customerService.create(incoming));
+        assertThrows(CustomerBusinessException.class, () -> customerService.create(incoming));
         verify(customerRepository).existsByDocument(CPF_NORMALIZED);
         verify(customerRepository, never()).save(any(Customer.class));
     }
@@ -232,7 +232,7 @@ class CustomerServiceTest {
         when(customerRepository.findById(id)).thenReturn(Optional.of(existingEntity));
         when(customerRepository.existsByDocument(CPF_ALT_NORMALIZED)).thenReturn(true);
 
-        assertThrows(DomainException.class, () -> customerService.update(id, changes));
+        assertThrows(CustomerBusinessException.class, () -> customerService.update(id, changes));
         verify(customerRepository).findById(id);
         verify(customerRepository).existsByDocument(CPF_ALT_NORMALIZED);
         verify(customerRepository, never()).save(any());
@@ -263,7 +263,7 @@ class CustomerServiceTest {
         String id = "nonExistentId";
         when(customerRepository.findById(id)).thenReturn(Optional.empty());
 
-        assertThrows(NotFoundException.class, () -> customerService.delete(id));
+        assertThrows(CustomerNotFoundException.class, () -> customerService.delete(id));
         verify(customerRepository).findById(id);
         verify(customerRepository, never()).save(any(Customer.class));
     }

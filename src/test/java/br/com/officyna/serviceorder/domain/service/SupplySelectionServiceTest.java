@@ -3,7 +3,7 @@ package br.com.officyna.serviceorder.domain.service;
 import br.com.officyna.administrative.supply.domain.entity.Supply;
 import br.com.officyna.administrative.supply.domain.entity.SupplyType;
 import br.com.officyna.administrative.supply.domain.service.SupplyService;
-import br.com.officyna.infrastructure.exception.DomainException;
+import br.com.officyna.serviceorder.domain.exception.ServiceOrderBusinessException;
 import br.com.officyna.serviceorder.api.resources.SupplysRequest;
 import br.com.officyna.serviceorder.domain.dto.SupplyDTO;
 import br.com.officyna.serviceorder.domain.dto.SupplyDetailDTO;
@@ -84,7 +84,7 @@ class SupplySelectionServiceTest {
         supplys.setSupplysDetails(new ArrayList<>());
 
         assertThatThrownBy(() -> service.removeSupply(supplys, "any-id"))
-                .isInstanceOf(DomainException.class)
+                .isInstanceOf(ServiceOrderBusinessException.class)
                 .hasMessage("A Ordem de Serviço não possui suprimentos cadastrados.");
     }
 }
