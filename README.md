@@ -50,59 +50,135 @@ A aplicação é construída como um back-end monolítico organizado seguindo os
 
 ```bash
 officyna-service/
+├officyna-service/ # Raiz do microsserviço
 ├── .github/
-│   └── workflows/
-│       └── main.yml                  # Pipeline de CI/CD
-├── db-seed/
-│   └── 01-seed.js                    # Scripts de inicialização do banco
-├── infra/                            # Provisionamento IaC
-│   ├── main.tf                       # AWS DocumentDB
-│   ├── outputs.tf
-│   ├── providers.tf
-│   ├── README.md
-│   ├── variables.tf
-│   └── versions.tf
-├── k8s/                              # Manifestos Kubernetes
-│   ├── configmap.yaml
-│   ├── deployment.yaml
-│   ├── hpa.yaml
-│   └── service.yaml
-├── src/
-│   ├── main/
-│   │   ├── java/
-│   │   │   └── br/com/officyna/
-│   │   │       ├── administrative/   # Gestão de Clientes, Veículos, Usuários, etc.
-│   │   │       │   ├── customer/
-│   │   │       │   │   ├── api/      # Controllers e DTOs
-│   │   │       │   │   └── domain/   # Entidades, Services e Interfaces
-│   │   │       │   ├── labor/
-│   │   │       │   ├── supply/
-│   │   │       │   ├── user/
-│   │   │       │   └── vehicle/
-│   │   │       ├── infrastructure/   # Camada Técnica / Cross-cutting
-│   │   │       │   ├── auth/         # Login e Autenticação
-│   │   │       │   ├── config/       # Spring, Mongo, Security, Swagger
-│   │   │       │   ├── exception/    # Tratamento Global de Erros
-│   │   │       │   ├── persistence/  # Implementação de Repositórios
-│   │   │       │   │   ├── mapper/   # Conversão Entity <-> Document
-│   │   │       │   │   └── mongodb/  # Gateways e Repositórios Spring Data
-│   │   │       │   └── security/     # JWT e UserDetails
-│   │   │       ├── monitoring/       # Acompanhamento de Performance
-│   │   │       │   ├── api/
-│   │   │       │   └── domain/
-│   │   │       ├── serviceorder/     # Coração do Sistema - Ordens de Serviço
-│   │   │       │   ├── api/
-│   │   │       │   └── domain/       # DTOs, Entidades e Regras de Negócio
-│   │   │       └── ApplicationService.java # Classe Principal
-│   │   └── resources/
-│   │       └── application.yml
-│   └── test/                         # Estrutura de testes espelhada da aplicação
-├── docker-compose.yml
-├── Dockerfile
-├── mvnw
-├── mvnw.cmd
-├── pom.xml                           # Gerenciador de Dependências Maven
-└── README.md
+│   └── workflows/ # Pipelines de CI/CD
+├── db-seed/ # Scripts para popular o banco de dados inicial
+├── infra/ # Infraestrutura como Código (ex: Terraform)
+├── k8s/ # Manifestos de orquestração do Kubernetes
+└── src/
+    ├── main/
+    │   ├── java/
+    │   │   └── br/
+    │   │       └── com/
+    │   │           └── officyna/
+    │   │               ├── administrative/ # Módulo Administrativo (Bounded Context / Vertical Slice)
+    │   │               │   ├── customer/ # Agregado/Subdomínio de Cliente
+    │   │               │   │   ├── api/ # Camada de Entrada/Apresentação (Primary Adapters)
+    │   │               │   │   │   ├── controller/ # Endpoints REST
+    │   │               │   │   │   ├── handler/ # Tratamento de eventos/exceções da API
+    │   │               │   │   │   └── resources/ # Payloads, DTOs de Request/Response
+    │   │               │   │   └── domain/ # Núcleo da Regra de Negócio (Core / Domain Layer)
+    │   │               │   │       ├── controller/ # Interfaces/Ports de entrada (Casos de Uso)
+    │   │               │   │       ├── entity/ # Entidades de Domínio
+    │   │               │   │       ├── exception/ # Exceções específicas de negócio
+    │   │               │   │       ├── mapper/ # Conversores entre DTOs e Entidades
+    │   │               │   │       ├── presenter/ # Formatação de dados de saída
+    │   │               │   │       ├── repository/ # Interfaces/Ports de saída para persistência
+    │   │               │   │       ├── service/ # Serviços de Domínio / Implementação de Casos de Uso
+    │   │               │   │       └── validation/ # Regras de validação de negócio
+    │   │               │   ├── labor/ # Agregado/Subdomínio de Mão de Obra
+    │   │               │   │   ├── api/
+    │   │               │   │   │   ├── controller/
+    │   │               │   │   │   ├── handler/
+    │   │               │   │   │   └── resources/
+    │   │               │   │   └── domain/
+    │   │               │   │       ├── controller/
+    │   │               │   │       ├── entity/
+    │   │               │   │       ├── exception/
+    │   │               │   │       ├── mapper/
+    │   │               │   │       ├── presenter/
+    │   │               │   │       ├── repository/
+    │   │               │   │       └── service/
+    │   │               │   ├── supply/ # Agregado/Subdomínio de Suprimentos
+    │   │               │   │   ├── api/
+    │   │               │   │   │   ├── controller/
+    │   │               │   │   │   ├── handler/
+    │   │               │   │   │   └── resources/
+    │   │               │   │   └── domain/
+    │   │               │   │       ├── controller/
+    │   │               │   │       ├── entity/
+    │   │               │   │       ├── exception/
+    │   │               │   │       ├── mapper/
+    │   │               │   │       ├── presenter/
+    │   │               │   │       ├── repository/
+    │   │               │   │       └── service/
+    │   │               │   ├── user/ # Agregado/Subdomínio de Usuários
+    │   │               │   │   ├── api/
+    │   │               │   │   │   ├── controller/
+    │   │               │   │   │   ├── handler/
+    │   │               │   │   │   └── resources/
+    │   │               │   │   └── domain/
+    │   │               │   │       ├── controller/
+    │   │               │   │       ├── entity/
+    │   │               │   │       ├── exception/
+    │   │               │   │       ├── mapper/
+    │   │               │   │       ├── presenter/
+    │   │               │   │       ├── repository/
+    │   │               │   │       └── service/
+    │   │               │   └── vehicle/ # Agregado/Subdomínio de Veículos
+    │   │               │       ├── api/
+    │   │               │       │   ├── controller/
+    │   │               │       │   ├── handler/
+    │   │               │       │   └── resources/
+    │   │               │       └── domain/
+    │   │               │           ├── controller/
+    │   │               │           ├── entity/
+    │   │               │           ├── exception/
+    │   │               │           ├── mapper/
+    │   │               │           ├── presenter/
+    │   │               │           ├── repository/
+    │   │               │           └── service/
+    │   │               ├── infrastructure/ # Camada de Infraestrutura Transversal (Secondary Adapters / Frameworks)
+    │   │               │   ├── auth/ # Implementações de Autenticação
+    │   │               │   ├── config/ # Configurações gerais do Spring Boot (Beans, etc.)
+    │   │               │   ├── converter/ # Conversores globais da aplicação
+    │   │               │   ├── exception/ # Tratamento de exceções globais da infra
+    │   │               │   ├── persistence/ # Implementações dos Repositories do Domínio
+    │   │               │   │   ├── component/ # Componentes utilitários de banco
+    │   │               │   │   ├── config/ # Configuração do banco de dados
+    │   │               │   ├── mapper/ # Conversores Infra <-> Domínio
+    │   │               │   └── mongodb/ # Adaptador específico do MongoDB
+    │   │               │       ├── gateway/ # Implementação concreta das interfaces do domínio
+    │   │               │       ├── model/ # Documentos/Entidades do MongoDB (@Document)
+    │   │               │       └── repository/ # Interfaces do Spring Data MongoDB
+    │   │               │   └── security/ # Configurações de Segurança (Spring Security)
+    │   │               ├── inventory/ # Módulo de Estoque
+    │   │               │   ├── api/
+    │   │               │   │   ├── controller/
+    │   │               │   │   └── resources/
+    │   │               │   ├── domain/
+    │   │               │   │   ├── mapper/
+    │   │               │   │   └── service/
+    │   │               │   └── repository/ # Repositório fora da infra transversal (Abordagem mais acoplada neste módulo)
+    │   │               ├── monitoring/ # Módulo de Monitoramento / Telemetria
+    │   │               │   ├── api/
+    │   │               │   │   ├── controller/
+    │   │               │   │   └── resources/
+    │   │               │   └── domain/
+    │   │               │       ├── controller/
+    │   │               │       ├── entity/
+    │   │               │       ├── presenter/
+    │   │               │       ├── repository/
+    │   │               │       └── service/
+    │   │               ├── seed/ # Modulo para cadastrar dados básicos durante o deploy
+    │   │               └── serviceorder/ # Módulo de Ordem de Serviço
+    │   │                   ├── api/
+    │   │                   │   ├── controller/
+    │   │                   │   ├── handler/
+    │   │                   │   └── resources/
+    │   │                   └── domain/
+    │   │                       ├── controller/
+    │   │                       ├── dto/ # Transferência de dados interna do domínio
+    │   │                       ├── entity/
+    │   │                       ├── enums/ # Enumerações de negócio (ex: Status da OS)
+    │   │                       ├── exception/
+    │   │                       ├── mapper/
+    │   │                       ├── presenter/
+    │   │                       ├── repository/
+    │   │                       └── service/
+    │   └── resources/ # Arquivos de configuração (application.yml), properties e recursos estáticos
+    └── test/ # Diretório base para testes (Unitários, Integração, Arquitetura)
 ````
 
 ### Camada de Domínio: 
