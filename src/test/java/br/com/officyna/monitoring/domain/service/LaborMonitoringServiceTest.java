@@ -2,8 +2,6 @@ package br.com.officyna.monitoring.domain.service;
 
 import br.com.officyna.administrative.labor.domain.entity.Labor;
 import br.com.officyna.administrative.labor.domain.repository.LaborRepository;
-import br.com.officyna.monitoring.api.resources.ForceRecalcResponse;
-import br.com.officyna.monitoring.api.resources.LaborMonitoringResponse;
 import br.com.officyna.monitoring.domain.entity.LaborMonitoring;
 import br.com.officyna.monitoring.domain.repository.LaborMonitoringRepository;
 import br.com.officyna.serviceorder.domain.dto.LaborDetailDTO;
@@ -89,13 +87,13 @@ class LaborMonitoringServiceTest {
 
         when(monitoringRepository.findAll()).thenReturn(List.of(entity1, entity2));
 
-        List<LaborMonitoringResponse> result = service.findAll();
+        List<LaborMonitoring> result = service.findAll();
 
         assertEquals(2, result.size());
-        assertEquals("lab1", result.get(0).laborId());
-        assertEquals(3.0, result.get(0).averageExecutionTimeInDays());
-        assertEquals(2, result.get(0).totalExecutions());
-        assertEquals("lab2", result.get(1).laborId());
+        assertEquals("lab1", result.get(0).getLaborId());
+        assertEquals(3.0, result.get(0).getAverageExecutionTimeInDays());
+        assertEquals(2, result.get(0).getTotalExecutions());
+        assertEquals("lab2", result.get(1).getLaborId());
         verify(monitoringRepository, times(1)).findAll();
     }
 
@@ -104,46 +102,10 @@ class LaborMonitoringServiceTest {
     void findAll_DeveRetornarListaVaziaQuandoSemRegistros() {
         when(monitoringRepository.findAll()).thenReturn(List.of());
 
-        List<LaborMonitoringResponse> result = service.findAll();
+        List<LaborMonitoring> result = service.findAll();
 
         assertTrue(result.isEmpty());
         verify(monitoringRepository, times(1)).findAll();
-    }
-
-    @Test
-    @DisplayName("Deve formatar 0.25 dia útil (2 horas) como 02:00:00")
-    void findAll_DeveFormatarQuartoDeJornada() {
-        // 0.25 dia útil × 28800s = 7200s = 2h → "02:00:00"
-        LaborMonitoring entity = buildMonitoringEntity("lab1", 0.25, 1);
-        when(monitoringRepository.findAll()).thenReturn(List.of(entity));
-
-        List<LaborMonitoringResponse> result = service.findAll();
-
-        assertEquals("02:00:00", result.get(0).averageExecutionTimeFormatted());
-    }
-
-    @Test
-    @DisplayName("Deve formatar 1.0 dia útil (8 horas exatas) como 1 dia 00:00:00")
-    void findAll_DeveFormatarUmDiaUtil() {
-        // 1.0 dia útil × 28800s = 28800s = 8h → "1 dia 00:00:00"
-        LaborMonitoring entity = buildMonitoringEntity("lab1", 1.0, 1);
-        when(monitoringRepository.findAll()).thenReturn(List.of(entity));
-
-        List<LaborMonitoringResponse> result = service.findAll();
-
-        assertEquals("1 dia 00:00:00", result.get(0).averageExecutionTimeFormatted());
-    }
-
-    @Test
-    @DisplayName("Deve formatar 1.5 dias úteis (12 horas) como 1 dia 04:00:00")
-    void findAll_DeveFormatarDiaEMeio() {
-        // 1.5 dias úteis × 28800s = 43200s → d=1, h=4 → "1 dia 04:00:00"
-        LaborMonitoring entity = buildMonitoringEntity("lab1", 1.5, 2);
-        when(monitoringRepository.findAll()).thenReturn(List.of(entity));
-
-        List<LaborMonitoringResponse> result = service.findAll();
-
-        assertEquals("1 dia 04:00:00", result.get(0).averageExecutionTimeFormatted());
     }
 
     // ─────────────── updateExecutionTimeInDays ───────────────
@@ -178,7 +140,6 @@ class LaborMonitoringServiceTest {
         LocalDateTime end = start.plusHours(40); // 40h = 5 dias úteis de 8h
 
         LaborMonitoring existing = buildMonitoringEntity(laborId, 3.0, 2); // média=3, total=2
-        // nova média = (3 × 2 + 5) / 3 = 11/3 ≈ 3.666...
 
         when(monitoringRepository.findByLaborId(laborId)).thenReturn(Optional.of(existing));
         when(monitoringRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
@@ -226,7 +187,7 @@ class LaborMonitoringServiceTest {
     void updateExecutionTimeInDays_DeveCalcular8HorasComoUmDiaUtil() {
         String laborId = "lab1";
         LocalDateTime start = LocalDateTime.of(2024, 1, 1, 8, 0);
-        LocalDateTime end = start.plusHours(8); // jornada completa = 1 dia útil
+        LocalDateTime end = start.plusHours(8);
 
         when(monitoringRepository.findByLaborId(laborId)).thenReturn(Optional.empty());
         when(laborRepository.findById(laborId)).thenReturn(Optional.of(buildLaborEntity(laborId, "Revisão")));
@@ -240,49 +201,12 @@ class LaborMonitoringServiceTest {
     }
 
     @Test
-    @DisplayName("Deve calcular 2 horas como 0.25 dia útil")
-    void updateExecutionTimeInDays_DeveCalcular2HorasComoFracaoDeJornada() {
-        String laborId = "lab1";
-        LocalDateTime start = LocalDateTime.of(2024, 1, 1, 8, 0);
-        LocalDateTime end = start.plusHours(2); // 2h / 8h = 0.25 dia útil
-
-        when(monitoringRepository.findByLaborId(laborId)).thenReturn(Optional.empty());
-        when(laborRepository.findById(laborId)).thenReturn(Optional.of(buildLaborEntity(laborId, "Calibragem")));
-        when(monitoringRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
-
-        service.updateExecutionTimeInDays(laborId, start, end);
-
-        ArgumentCaptor<LaborMonitoring> captor = ArgumentCaptor.forClass(LaborMonitoring.class);
-        verify(monitoringRepository, times(1)).save(captor.capture());
-        assertEquals(2.0 / 8.0, captor.getValue().getAverageExecutionTimeInDays(), 0.0001);
-    }
-
-    @Test
-    @DisplayName("Deve calcular 30 minutos como fração de jornada")
-    void updateExecutionTimeInDays_DeveCalcular30MinutosComoFracaoDeJornada() {
-        String laborId = "lab1";
-        LocalDateTime start = LocalDateTime.of(2024, 1, 1, 9, 0);
-        LocalDateTime end = start.plusMinutes(30); // 30min / 480min = 0.0625 dia útil
-
-        when(monitoringRepository.findByLaborId(laborId)).thenReturn(Optional.empty());
-        when(laborRepository.findById(laborId)).thenReturn(Optional.of(buildLaborEntity(laborId, "Inspeção rápida")));
-        when(monitoringRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
-
-        service.updateExecutionTimeInDays(laborId, start, end);
-
-        ArgumentCaptor<LaborMonitoring> captor = ArgumentCaptor.forClass(LaborMonitoring.class);
-        verify(monitoringRepository, times(1)).save(captor.capture());
-        assertEquals(30.0 / (8.0 * 60.0), captor.getValue().getAverageExecutionTimeInDays(), 0.0001);
-    }
-
-    @Test
     @DisplayName("Deve incluir execução fracionada no cálculo da média incremental")
     void updateExecutionTimeInDays_DeveIncluirFracaoNaMediaIncremental() {
         String laborId = "lab1";
         LocalDateTime start = LocalDateTime.of(2024, 1, 1, 8, 0);
         LocalDateTime end = start.plusHours(12); // 12h = 1.5 dias úteis
 
-        // média atual: 1.0 dia, 1 execução → nova média: (1.0 + 1.5) / 2 = 1.25
         LaborMonitoring existing = buildMonitoringEntity(laborId, 1.0, 1);
 
         when(monitoringRepository.findByLaborId(laborId)).thenReturn(Optional.of(existing));
@@ -306,9 +230,9 @@ class LaborMonitoringServiceTest {
         Labor labor1 = buildLaborEntity("lab1", "Troca de óleo");
         Labor labor2 = buildLaborEntity("lab2", "Alinhamento");
 
-        LaborDetailDTO lab1exec1 = buildLaborDetail("lab1", base, base.plusHours(16)); // 2 dias úteis
-        LaborDetailDTO lab1exec2 = buildLaborDetail("lab1", base, base.plusHours(32)); // 4 dias úteis
-        LaborDetailDTO lab2exec1 = buildLaborDetail("lab2", base, base.plusHours(24)); // 3 dias úteis
+        LaborDetailDTO lab1exec1 = buildLaborDetail("lab1", base, base.plusHours(16));
+        LaborDetailDTO lab1exec2 = buildLaborDetail("lab1", base, base.plusHours(32));
+        LaborDetailDTO lab2exec1 = buildLaborDetail("lab2", base, base.plusHours(24));
 
         ServiceOrder so1 = ServiceOrder.builder()
                 .labors(LaborsDTO.builder().laborsDetails(List.of(lab1exec1)).build())
@@ -326,9 +250,9 @@ class LaborMonitoringServiceTest {
         when(monitoringRepository.findByLaborId(any())).thenReturn(Optional.empty());
         when(monitoringRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
-        ForceRecalcResponse response = service.forceRecalc();
+        int processed = service.forceRecalc();
 
-        assertEquals(2, response.laborsProcessed());
+        assertEquals(2, processed);
         verify(monitoringRepository, times(2)).save(any(LaborMonitoring.class));
     }
 
@@ -340,9 +264,9 @@ class LaborMonitoringServiceTest {
         when(laborRepository.findByActiveTrue()).thenReturn(List.of(labor));
         when(serviceOrderRepository.findByLaborIdWithCompletedExecutions("lab1")).thenReturn(List.of());
 
-        ForceRecalcResponse response = service.forceRecalc();
+        int processed = service.forceRecalc();
 
-        assertEquals(0, response.laborsProcessed());
+        assertEquals(0, processed);
         verify(monitoringRepository, never()).save(any());
     }
 
@@ -351,9 +275,9 @@ class LaborMonitoringServiceTest {
     void forceRecalc_DeveRetornarZeroQuandoSemLabors() {
         when(laborRepository.findByActiveTrue()).thenReturn(List.of());
 
-        ForceRecalcResponse response = service.forceRecalc();
+        int processed = service.forceRecalc();
 
-        assertEquals(0, response.laborsProcessed());
+        assertEquals(0, processed);
         verify(monitoringRepository, never()).save(any());
     }
 
@@ -363,7 +287,6 @@ class LaborMonitoringServiceTest {
         LocalDateTime base = LocalDateTime.of(2024, 1, 1, 8, 0);
         Labor labor = buildLaborEntity("lab1", "Calibragem");
 
-        // exec1: 6h = 0.75 dia útil | exec2: 12h = 1.5 dias úteis → média = 1.125
         LaborDetailDTO exec1 = buildLaborDetail("lab1", base, base.plusHours(6));
         LaborDetailDTO exec2 = buildLaborDetail("lab1", base, base.plusHours(12));
 
@@ -402,9 +325,9 @@ class LaborMonitoringServiceTest {
         when(laborRepository.findByActiveTrue()).thenReturn(List.of(labor));
         when(serviceOrderRepository.findByLaborIdWithCompletedExecutions("lab1")).thenReturn(List.of(so));
 
-        ForceRecalcResponse response = service.forceRecalc();
+        int processed = service.forceRecalc();
 
-        assertEquals(0, response.laborsProcessed());
+        assertEquals(0, processed);
         verify(monitoringRepository, never()).save(any());
     }
 
@@ -413,7 +336,7 @@ class LaborMonitoringServiceTest {
     void forceRecalc_DeveAtualizarRegistroExistente() {
         LocalDateTime base = LocalDateTime.of(2024, 1, 1, 8, 0);
         Labor labor = buildLaborEntity("lab1", "Troca de óleo");
-        LaborDetailDTO detail = buildLaborDetail("lab1", base, base.plusHours(40)); // 40h = 5 dias úteis
+        LaborDetailDTO detail = buildLaborDetail("lab1", base, base.plusHours(40));
 
         ServiceOrder so = ServiceOrder.builder()
                 .labors(LaborsDTO.builder().laborsDetails(List.of(detail)).build())

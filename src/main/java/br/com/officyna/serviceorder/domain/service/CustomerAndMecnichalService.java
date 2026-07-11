@@ -2,7 +2,7 @@ package br.com.officyna.serviceorder.domain.service;
 
 import br.com.officyna.administrative.customer.domain.entity.Customer;
 import br.com.officyna.administrative.customer.domain.service.CustomerService;
-import br.com.officyna.administrative.user.api.resources.UserResponse;
+import br.com.officyna.administrative.user.domain.entity.User;
 import br.com.officyna.administrative.user.domain.service.UserService;
 import br.com.officyna.serviceorder.domain.dto.CustomerDTO;
 import br.com.officyna.serviceorder.domain.dto.MechanicDTO;
@@ -37,7 +37,7 @@ public class CustomerAndMecnichalService {
     }
 
     MechanicDTO getMechanic(String id) {
-        UserResponse response = userService.findById(id);
-        return new MechanicDTO(response.getId(), response.getName());
+        User user = userService.findById(id);
+        return new MechanicDTO(user.getId(), user.getName());
     }
 }

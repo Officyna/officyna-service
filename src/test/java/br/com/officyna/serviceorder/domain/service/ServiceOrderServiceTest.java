@@ -26,6 +26,7 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -66,26 +67,18 @@ class ServiceOrderServiceTest {
         return entity;
     }
 
-    private ServiceOrderResponse buildResponse() {
-        return new ServiceOrderResponse("id", "1", null, null, null, null, null, null, "RECEBIDA", null, "R$ 0,00", null);
-    }
-
     // ─────────────── findAll ───────────────
     @Test
-    @DisplayName("findAll deve retornar lista de respostas mapeadas")
-    void findAll_ShouldReturnMappedList() {
+    @DisplayName("findAll deve retornar lista de ordens de domínio")
+    void findAll_ShouldReturnList() {
         ServiceOrder entity = buildEntity("id-1", ServiceOrderStatus.RECEBIDA);
-        ServiceOrderResponse response = buildResponse();
 
         when(repository.findAll()).thenReturn(List.of(entity));
-        when(mapper.toResponse(entity)).thenReturn(response);
 
-        List<ServiceOrderResponse> result = service.findAll();
+        List<ServiceOrder> result = service.findAll();
 
-        assertThat(result).hasSize(1).contains(response);
-
+        assertThat(result).hasSize(1).contains(entity);
         verify(repository).findAll();
-        verify(mapper).toResponse(entity);
     }
 
     @Test
@@ -93,7 +86,7 @@ class ServiceOrderServiceTest {
     void findAll_ShouldReturnEmptyList_WhenNoOrders() {
         when(repository.findAll()).thenReturn(List.of());
 
-        List<ServiceOrderResponse> result = service.findAll();
+        List<ServiceOrder> result = service.findAll();
 
         assertThat(result).isEmpty();
     }
@@ -101,7 +94,6 @@ class ServiceOrderServiceTest {
     @Test
     @DisplayName("findAll deve filtrar e ordenar por prioridade do status e data de criação")
     void findAll_ShouldFilterAndSortByStatusAndCreatedAt() {
-
         ServiceOrder recebidaMaisNova = ServiceOrder.builder()
                 .id("1")
                 .status(ServiceOrderStatus.RECEBIDA)
@@ -132,7 +124,6 @@ class ServiceOrderServiceTest {
                 .createdAt(LocalDateTime.of(2025, 1, 15, 10, 0))
                 .build();
 
-
         when(repository.findAll()).thenReturn(List.of(
                 recebidaMaisNova,
                 emDiagnostico,
@@ -141,74 +132,44 @@ class ServiceOrderServiceTest {
                 emExecucao
         ));
 
-        ServiceOrderResponse responseExecucao = buildResponse();
-        ServiceOrderResponse responseAguardando = buildResponse();
-        ServiceOrderResponse responseDiagnostico = buildResponse();
-        ServiceOrderResponse responseRecebidaAntiga = buildResponse();
-        ServiceOrderResponse responseRecebidaNova = buildResponse();
-
-        when(mapper.toResponse(emExecucao)).thenReturn(responseExecucao);
-        when(mapper.toResponse(aguardandoAprovacao)).thenReturn(responseAguardando);
-        when(mapper.toResponse(emDiagnostico)).thenReturn(responseDiagnostico);
-        when(mapper.toResponse(recebidaMaisAntiga)).thenReturn(responseRecebidaAntiga);
-        when(mapper.toResponse(recebidaMaisNova)).thenReturn(responseRecebidaNova);
-
-        List<ServiceOrderResponse> result = service.findAll();
+        List<ServiceOrder> result = service.findAll();
 
         assertThat(result).containsExactly(
-                responseExecucao,
-                responseAguardando,
-                responseDiagnostico,
-                responseRecebidaAntiga,
-                responseRecebidaNova
+                emExecucao,
+                aguardandoAprovacao,
+                emDiagnostico,
+                recebidaMaisAntiga,
+                recebidaMaisNova
         );
-
     }
 
     @Test
     @DisplayName("findAll deve ignorar ordens com status não permitidos")
     void findAll_ShouldFilterUnsupportedStatuses() {
+        ServiceOrder recebida = buildEntity("1", ServiceOrderStatus.RECEBIDA);
+        ServiceOrder finalizada = buildEntity("2", ServiceOrderStatus.FINALIZADA);
 
-        ServiceOrder recebida = buildEntity(
-                "1",
-                ServiceOrderStatus.RECEBIDA
-        );
+        when(repository.findAll()).thenReturn(List.of(recebida, finalizada));
 
-        ServiceOrder finalizada = buildEntity(
-                "2",
-                ServiceOrderStatus.FINALIZADA
-        );
-
-        ServiceOrderResponse response = buildResponse();
-
-        when(repository.findAll()).thenReturn(
-                List.of(recebida, finalizada)
-        );
-
-        when(mapper.toResponse(recebida)).thenReturn(response);
-
-        List<ServiceOrderResponse> result = service.findAll();
+        List<ServiceOrder> result = service.findAll();
 
         assertThat(result)
                 .hasSize(1)
-                .containsExactly(response);
-
-        verify(mapper, never()).toResponse(finalizada);
+                .containsExactly(recebida);
     }
+
     // ─────────────── findById ───────────────
 
     @Test
-    @DisplayName("findById deve retornar response quando encontrado")
-    void findById_ShouldReturnResponse_WhenFound() {
+    @DisplayName("findById deve retornar a ordem quando encontrada")
+    void findById_ShouldReturnOrder_WhenFound() {
         ServiceOrder entity = buildEntity("id-1", ServiceOrderStatus.RECEBIDA);
-        ServiceOrderResponse response = buildResponse();
 
         when(repository.findById("id-1")).thenReturn(Optional.of(entity));
-        when(mapper.toResponse(entity)).thenReturn(response);
 
-        ServiceOrderResponse result = service.findById("id-1");
+        ServiceOrder result = service.findById("id-1");
 
-        assertThat(result).isEqualTo(response);
+        assertThat(result).isEqualTo(entity);
     }
 
     @Test
@@ -223,17 +184,15 @@ class ServiceOrderServiceTest {
     // ─────────────── findByServiceOrderNumber ───────────────
 
     @Test
-    @DisplayName("findByServiceOrderNumber deve retornar response quando encontrado")
-    void findByServiceOrderNumber_ShouldReturnResponse_WhenFound() {
+    @DisplayName("findByServiceOrderNumber deve retornar a ordem quando encontrada")
+    void findByServiceOrderNumber_ShouldReturnOrder_WhenFound() {
         ServiceOrder entity = buildEntity("id-1", ServiceOrderStatus.RECEBIDA);
-        ServiceOrderResponse response = buildResponse();
 
         when(repository.findByServiceOrderNumber(100L)).thenReturn(Optional.of(entity));
-        when(mapper.toResponse(entity)).thenReturn(response);
 
-        ServiceOrderResponse result = service.findByServiceOrderNumber(100L);
+        ServiceOrder result = service.findByServiceOrderNumber(100L);
 
-        assertThat(result).isEqualTo(response);
+        assertThat(result).isEqualTo(entity);
     }
 
     @Test
@@ -261,18 +220,16 @@ class ServiceOrderServiceTest {
         CustomerDTO customer = new CustomerDTO();
         VehicleDTO vehicle = new VehicleDTO();
         ServiceOrder entity = buildEntity(null, null);
-        ServiceOrderResponse response = buildResponse();
 
         when(laborSelectionService.addLabors(any(), any())).thenReturn(labors);
         when(customerAndMecnichalService.getCustomer("cust-1")).thenReturn(customer);
         when(vehicleSelectionService.getVehicle("veh-1")).thenReturn(vehicle);
         when(mapper.toCreateEntity(any(), any(), any(), any())).thenReturn(entity);
         when(repository.save(any())).thenReturn(entity);
-        when(mapper.toResponse(entity)).thenReturn(response);
 
-        ServiceOrderResponse result = service.createServiceOrder(request);
+        ServiceOrder result = service.createServiceOrder(request);
 
-        assertThat(result).isEqualTo(response);
+        assertThat(result).isEqualTo(entity);
         verify(repository).save(entity);
     }
 
@@ -284,17 +241,15 @@ class ServiceOrderServiceTest {
         ServiceOrder entity = buildEntity("id-1", ServiceOrderStatus.RECEBIDA);
         ExistServiceOrderRequest request = new ExistServiceOrderRequest("Observação", "mech-1");
         MechanicDTO mechanic = new MechanicDTO("mech-1", "Carlos");
-        ServiceOrderResponse response = buildResponse();
 
         when(repository.findById("id-1")).thenReturn(Optional.of(entity));
         when(customerAndMecnichalService.getMechanic("mech-1")).thenReturn(mechanic);
         when(mapper.toUpdateEntity(request, entity, mechanic)).thenReturn(entity);
         when(repository.save(any())).thenReturn(entity);
-        when(mapper.toResponse(entity)).thenReturn(response);
 
-        ServiceOrderResponse result = service.updateServiceOrder("id-1", request);
+        ServiceOrder result = service.updateServiceOrder("id-1", request);
 
-        assertThat(result).isEqualTo(response);
+        assertThat(result).isEqualTo(entity);
         verify(customerAndMecnichalService).getMechanic("mech-1");
     }
 
@@ -303,12 +258,10 @@ class ServiceOrderServiceTest {
     void updateServiceOrder_ShouldUpdateWithoutMechanic_WhenMechanicIdIsNull() {
         ServiceOrder entity = buildEntity("id-1", ServiceOrderStatus.RECEBIDA);
         ExistServiceOrderRequest request = new ExistServiceOrderRequest("Observação", null);
-        ServiceOrderResponse response = buildResponse();
 
         when(repository.findById("id-1")).thenReturn(Optional.of(entity));
         when(mapper.toUpdateEntity(request, entity, null)).thenReturn(entity);
         when(repository.save(any())).thenReturn(entity);
-        when(mapper.toResponse(entity)).thenReturn(response);
 
         service.updateServiceOrder("id-1", request);
 
@@ -338,16 +291,14 @@ class ServiceOrderServiceTest {
 
         LaborDetailDTO labor = new LaborDetailDTO("lab-1", "Serviço", "Desc", BigDecimal.TEN, null, null, LaborSituation.PENDENTE, LocalDateTime.now());
         LaborsDTO updatedLabors = new LaborsDTO(List.of(labor), BigDecimal.TEN);
-        ServiceOrderResponse response = buildResponse();
 
         when(repository.findById("id-1")).thenReturn(Optional.of(entity));
         when(laborSelectionService.addLabors(any(), any())).thenReturn(updatedLabors);
         when(repository.save(any())).thenReturn(entity);
-        when(mapper.toResponse(any())).thenReturn(response);
 
-        ServiceOrderResponse result = service.addLaborsInServiceOrder("id-1", List.of(new LaborsRequest("lab-1")));
+        ServiceOrder result = service.addLaborsInServiceOrder("id-1", List.of(new LaborsRequest("lab-1")));
 
-        assertThat(result).isEqualTo(response);
+        assertThat(result).isEqualTo(entity);
         verify(laborSelectionService).addLabors(any(), any());
     }
 
@@ -362,11 +313,9 @@ class ServiceOrderServiceTest {
 
         ServiceOrder entity = buildEntity("id-1", ServiceOrderStatus.RECEBIDA);
         entity.setLabors(labors);
-        ServiceOrderResponse response = buildResponse();
 
         when(repository.findById("id-1")).thenReturn(Optional.of(entity));
         when(repository.save(any())).thenReturn(entity);
-        when(mapper.toResponse(any())).thenReturn(response);
 
         service.removeLaborFromServiceOrder("id-1", "lab-1");
 
@@ -383,12 +332,10 @@ class ServiceOrderServiceTest {
         entity.setSupplys(null);
 
         SupplyDTO supply = new SupplyDTO(List.of(), BigDecimal.ZERO);
-        ServiceOrderResponse response = buildResponse();
 
         when(repository.findById("id-1")).thenReturn(Optional.of(entity));
         when(supplySelectionService.addSupplys(any(), any())).thenReturn(supply);
         when(repository.save(any())).thenReturn(entity);
-        when(mapper.toResponse(any())).thenReturn(response);
 
         service.addSupplyFromServiceOrder("id-1", List.of(new SupplysRequest("sup-1", 2)));
 
@@ -401,12 +348,10 @@ class ServiceOrderServiceTest {
     @DisplayName("removeSupplyFromServiceOrder deve remover suprimento e salvar")
     void removeSupplyFromServiceOrder_ShouldRemoveSupplyAndSave() {
         ServiceOrder entity = buildEntity("id-1", ServiceOrderStatus.RECEBIDA);
-        ServiceOrderResponse response = buildResponse();
 
         when(repository.findById("id-1")).thenReturn(Optional.of(entity));
         doNothing().when(supplySelectionService).removeSupply(any(), any());
         when(repository.save(any())).thenReturn(entity);
-        when(mapper.toResponse(any())).thenReturn(response);
 
         service.removeSupplyFromServiceOrder("id-1", "sup-1");
 
@@ -423,7 +368,6 @@ class ServiceOrderServiceTest {
 
         when(repository.findById("123")).thenReturn(Optional.of(entity));
         when(repository.save(any())).thenReturn(entity);
-        when(mapper.toResponse(any())).thenReturn(buildResponse());
 
         service.updateStatus("123", ServiceOrderStatus.EM_DIAGNOSTICO);
 
@@ -492,11 +436,9 @@ class ServiceOrderServiceTest {
 
         ServiceOrder entity = buildEntity("id-1", ServiceOrderStatus.APROVADA);
         entity.setLabors(labors);
-        ServiceOrderResponse response = buildResponse();
 
         when(repository.findById("id-1")).thenReturn(Optional.of(entity));
         when(repository.save(any())).thenReturn(entity);
-        when(mapper.toResponse(any())).thenReturn(response);
 
         service.startLabor("id-1", "lab-1");
 
@@ -570,12 +512,10 @@ class ServiceOrderServiceTest {
 
         ServiceOrder entity = buildEntity("id-1", ServiceOrderStatus.EM_EXECUCAO);
         entity.setLabors(labors);
-        ServiceOrderResponse response = buildResponse();
 
         when(repository.findById("id-1")).thenReturn(Optional.of(entity));
         doNothing().when(laborMonitoringService).updateExecutionTimeInDays(any(), any(), any());
         when(repository.save(any())).thenReturn(entity);
-        when(mapper.toResponse(any())).thenReturn(response);
 
         service.finishLabor("id-1", "lab-1");
 
@@ -633,14 +573,13 @@ class ServiceOrderServiceTest {
         when(repository.findById("id-1")).thenReturn(Optional.of(entity));
         when(repository.save(any())).thenReturn(entity);
 
-        SendToCustomerResponse result = service.sendToCustomer("id-1");
+        service.sendToCustomer("id-1");
 
-        assertThat(result.message()).contains("enviada para o cliente");
         assertThat(entity.getStatus()).isEqualTo(ServiceOrderStatus.AGUARDANDO_APROVACAO);
         verify(repository).save(entity);
     }
 
-    // ─────────────── save ─────────────��─
+    // ─────────────── save ───────────────
 
     @Test
     @DisplayName("save deve calcular orçamento e persistir entidade")

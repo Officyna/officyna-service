@@ -1,6 +1,6 @@
 package br.com.officyna.serviceorder.domain.service;
 
-import br.com.officyna.administrative.vehicle.api.resources.VehicleResponse;
+import br.com.officyna.administrative.vehicle.domain.entity.Vehicle;
 import br.com.officyna.administrative.vehicle.domain.service.VehicleService;
 import br.com.officyna.serviceorder.domain.dto.VehicleDTO;
 
@@ -13,8 +13,8 @@ public class VehicleSelectionService {
     }
 
     public VehicleDTO getVehicle(String id) {
-        VehicleResponse response = vehicleService.findById(id);
-        return new VehicleDTO(response.id(), response.plate(), response.brand(), response.model(), response.color());
+        Vehicle vehicle = vehicleService.findById(id);
+        return new VehicleDTO(vehicle.getId(), vehicle.getPlate(), vehicle.getBrand(), vehicle.getModel(), vehicle.getColor());
     }
 
 }

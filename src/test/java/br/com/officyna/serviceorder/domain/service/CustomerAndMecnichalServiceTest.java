@@ -4,7 +4,7 @@ import br.com.officyna.administrative.customer.domain.entity.Address;
 import br.com.officyna.administrative.customer.domain.entity.Customer;
 import br.com.officyna.administrative.customer.domain.entity.CustomerType;
 import br.com.officyna.administrative.customer.domain.service.CustomerService;
-import br.com.officyna.administrative.user.api.resources.UserResponse;
+import br.com.officyna.administrative.user.domain.entity.User;
 import br.com.officyna.administrative.user.domain.service.UserService;
 import br.com.officyna.serviceorder.domain.dto.CustomerDTO;
 import br.com.officyna.serviceorder.domain.dto.MechanicDTO;
@@ -74,9 +74,9 @@ class CustomerAndMecnichalServiceTest {
     @DisplayName("Deve buscar mecânico e mapear para DTO corretamente")
     void getMechanic_ShouldReturnMechanicDTO() {
         String id = "mech-1";
-        UserResponse response = UserResponse.builder().id(id).name("Mecânico Master").build();
+        User user = User.builder().id(id).name("Mecânico Master").build();
 
-        when(userService.findById(id)).thenReturn(response);
+        when(userService.findById(id)).thenReturn(user);
 
         MechanicDTO result = service.getMechanic(id);
 

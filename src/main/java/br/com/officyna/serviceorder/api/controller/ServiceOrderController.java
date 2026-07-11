@@ -2,8 +2,8 @@ package br.com.officyna.serviceorder.api.controller;
 
 import br.com.officyna.serviceorder.api.ServiceOrderApi;
 import br.com.officyna.serviceorder.api.resources.*;
+import br.com.officyna.serviceorder.domain.controller.ServiceOrderControllerAdapter;
 import br.com.officyna.serviceorder.domain.enums.ServiceOrderStatus;
-import br.com.officyna.serviceorder.domain.service.ServiceOrderService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -16,76 +16,76 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ServiceOrderController implements ServiceOrderApi {
 
-    private final ServiceOrderService service;
+    private final ServiceOrderControllerAdapter serviceOrderControllerAdapter;
 
     @Override
     public ResponseEntity<List<ServiceOrderResponse>> findAll() {
-        return ResponseEntity.ok(service.findAll());
+        return ResponseEntity.ok(serviceOrderControllerAdapter.findAll());
     }
 
     @Override
     public ResponseEntity<ServiceOrderResponse> findById(String id) {
-        return ResponseEntity.ok(service.findById(id));
+        return ResponseEntity.ok(serviceOrderControllerAdapter.findById(id));
     }
 
     @Override
     public ResponseEntity<ServiceOrderResponse> findByServiceOrderNumber(Long serviceOrderNumber) {
-        return ResponseEntity.ok(service.findByServiceOrderNumber(serviceOrderNumber));
+        return ResponseEntity.ok(serviceOrderControllerAdapter.findByServiceOrderNumber(serviceOrderNumber));
     }
 
     @Override
     public ResponseEntity<ServiceOrderResponse> createServiceOrder(@RequestBody NewServiceOrderRequest request) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(service.createServiceOrder(request));
+        return ResponseEntity.status(HttpStatus.CREATED).body(serviceOrderControllerAdapter.createServiceOrder(request));
     }
 
     @Override
     public ResponseEntity<ServiceOrderResponse> updateServiceOrder(String id, ExistServiceOrderRequest request) {
-        return ResponseEntity.ok(service.updateServiceOrder(id, request));
+        return ResponseEntity.ok(serviceOrderControllerAdapter.updateServiceOrder(id, request));
     }
 
     @Override
     public ResponseEntity<ServiceOrderResponse> addLaborInServiceOrder(String id, List<LaborsRequest> laborsIdList) {
-        return ResponseEntity.ok(service.addLaborsInServiceOrder(id, laborsIdList));
+        return ResponseEntity.ok(serviceOrderControllerAdapter.addLaborInServiceOrder(id, laborsIdList));
     }
 
     @Override
     public ResponseEntity<ServiceOrderResponse> removeLaborFromServiceOrder(String id, String laborId) {
-        return ResponseEntity.ok(service.removeLaborFromServiceOrder(id, laborId));
+        return ResponseEntity.ok(serviceOrderControllerAdapter.removeLaborFromServiceOrder(id, laborId));
     }
 
     @Override
     public ResponseEntity<ServiceOrderResponse> addSupplyInServiceOrder(String id, List<SupplysRequest> supplyIdList) {
-        return ResponseEntity.ok(service.addSupplyFromServiceOrder(id, supplyIdList));
+        return ResponseEntity.ok(serviceOrderControllerAdapter.addSupplyInServiceOrder(id, supplyIdList));
     }
 
     @Override
     public ResponseEntity<ServiceOrderResponse> removeSupplyFromServiceOrder(String id, String supplyId) {
-        return ResponseEntity.ok(service.removeSupplyFromServiceOrder(id, supplyId));
+        return ResponseEntity.ok(serviceOrderControllerAdapter.removeSupplyFromServiceOrder(id, supplyId));
     }
 
     @Override
     public ResponseEntity<Void> deleteServiceOrder(String id) {
-        service.deleteServiceOrder(id);
+        serviceOrderControllerAdapter.deleteServiceOrder(id);
         return ResponseEntity.noContent().build();
     }
 
     @Override
     public ResponseEntity<ServiceOrderResponse> startLabor(String id, String laborId) {
-        return ResponseEntity.ok(service.startLabor(id, laborId));
+        return ResponseEntity.ok(serviceOrderControllerAdapter.startLabor(id, laborId));
     }
 
     @Override
     public ResponseEntity<ServiceOrderResponse> finishLabor(String id, String laborId) {
-        return ResponseEntity.ok(service.finishLabor(id, laborId));
+        return ResponseEntity.ok(serviceOrderControllerAdapter.finishLabor(id, laborId));
     }
 
     @Override
     public ResponseEntity<ServiceOrderResponse> updateStatus(String id, ServiceOrderStatus status) {
-        return ResponseEntity.ok(service.updateStatus(id, status));
+        return ResponseEntity.ok(serviceOrderControllerAdapter.updateStatus(id, status));
     }
 
     @Override
     public ResponseEntity<SendToCustomerResponse> sendToCustomer(String id) {
-        return ResponseEntity.ok(service.sendToCustomer(id));
+        return ResponseEntity.ok(serviceOrderControllerAdapter.sendToCustomer(id));
     }
 }
