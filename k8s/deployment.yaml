@@ -2,12 +2,11 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: officyna-service
-  namespace: officyna
   labels:
     app.kubernetes.io/name: officyna
     app.kubernetes.io/component: api
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app.kubernetes.io/name: officyna
@@ -18,16 +17,18 @@ spec:
         app.kubernetes.io/name: officyna
         app.kubernetes.io/component: api
     spec:
+      imagePullSecrets:
+        - name: ghcr-secret
       containers:
         - name: officyna-service
           image: ghcr.io/officyna/officyna-service:latest
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: Always
           ports:
             - name: http
               containerPort: 8080
           envFrom:
             - configMapRef:
-                name: officyna-config
+                name: officyna-configmap
             - secretRef:
                 name: officyna-secret
           resources:

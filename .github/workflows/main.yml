@@ -10,6 +10,17 @@ on:
       - main
       - developer
 
+  workflow_dispatch:
+    inputs:
+      destroy:
+        description: "Executar a destruição da infraestrutura?"
+        required: true
+        default: "false"
+        type: choice
+        options:
+          - "false"
+          - "true"
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
@@ -20,6 +31,7 @@ env:
 
 jobs:
   build-test:
+    if: github.event_name == 'push' || github.event_name == 'pull_request'
     name: Build e Testes
     runs-on: ubuntu-latest
     env:
@@ -103,12 +115,58 @@ jobs:
   # ==========================================
   deploy-db:
     name: Provisionar Banco de Dados (Terraform)
+    outputs:
+      documentdb_endpoint: ${{ steps.docdb.outputs.endpoint }}
     runs-on: ubuntu-latest
-    needs: build-test
-#    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/feat/125/provisionamento-banco-dados')
+    needs: [docker, build-test]
+    if: github.event_name == 'push'
+#    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/feature/subida-aplicacao-eks')
     defaults:
       run:
-        working-directory: infra
+        working-directory: infra/db
+    steps:
+      - name: Checkout do código
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_wrapper: false
+
+      - name: Configurar Credenciais AWS
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Terraform Init
+        run: terraform init
+
+      - name: Terraform Plan
+        run: terraform plan -var="db_password=${{ secrets.DB_PASSWORD }}"
+
+      - name: Terraform Apply
+        run: terraform apply -auto-approve -var="db_password=${{ secrets.DB_PASSWORD }}"
+
+      - name: Capturar endpoint do DocumentDB
+        id: docdb
+        run: |
+          ENDPOINT=$(terraform output -raw docdb_endpoint)
+          echo "endpoint=$ENDPOINT" >> $GITHUB_OUTPUT
+
+  # ==========================================
+  # JOB: Deploy da Infraestrutura (EKS)
+  # ==========================================
+  deploy-eks:
+    name: Provisionar EKS (Terraform)
+    runs-on: ubuntu-latest
+    needs: [docker, build-test, deploy-db]
+    if: github.event_name == 'push'
+    #    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/feat/125/provisionamento-banco-dados')
+    defaults:
+      run:
+        working-directory: infra/eks
     steps:
       - name: Checkout do código
         uses: actions/checkout@v4
@@ -121,21 +179,25 @@ jobs:
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: sa-east-1
+          aws-region: us-east-1
 
       - name: Terraform Init
         run: terraform init
 
+      - name: Terraform Plan
+        run: terraform plan
+
       - name: Terraform Apply
-        run: terraform apply -auto-approve -var="db_password=${{ secrets.DB_PASSWORD }}"
+        run: terraform apply -auto-approve
 
   # ==========================================
-  # JOB: Deploy Aplicativo (Kubernetes)
+  # JOB: Deploy Aplicacao (Kubernetes)
   # ==========================================
-  deploy:
+  deploy-app:
     name: Deploy no Kubernetes
     runs-on: ubuntu-latest
-    needs: [docker, deploy-db]
+    needs: [docker, deploy-db, deploy-eks]
+    if: github.event_name == 'push'
 #    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/feat/125/provisionamento-banco-dados')
     permissions:
       contents: read
@@ -144,53 +206,162 @@ jobs:
       - name: Checkout do código
         uses: actions/checkout@v4
 
-      - name: Criar cluster Kubernetes (kind)
-        uses: helm/kind-action@v1
+      - name: Configurar Credenciais AWS
+        uses: aws-actions/configure-aws-credentials@v2
         with:
-          cluster_name: officyna
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Atualizar kube config
+        run: aws eks update-kubeconfig --name eks-officyna-service --region us-east-1
 
       - name: Instalar metrics-server (necessário para o HPA)
         run: |
           kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
-          kubectl patch -n kube-system deployment metrics-server --type=json \
-            -p='[{"op":"add","path":"/spec/template/spec/containers/0/args/-","value":"--kubelet-insecure-tls"}]'
 
-      - name: Carregar a imagem no cluster kind
+      - name: Instalar envsubst
         run: |
-          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-          docker pull ${{ env.IMAGE_NAME }}:sha-${GITHUB_SHA::7}
-          kind load docker-image ${{ env.IMAGE_NAME }}:sha-${GITHUB_SHA::7} --name officyna
+          sudo apt-get update
+          sudo apt-get install -y gettext-base
 
-      - name: Aplicar namespace e configmap
+      - name: Aplicar configmap
         run: |
-          kubectl apply -f k8s/namespace.yaml
           kubectl apply -f k8s/configmap.yaml
 
-      - name: Criar Secret a partir dos GitHub Secrets
+      - name: Verificar URI gerada
+        env:
+          DOCDB_ENDPOINT: ${{ needs.deploy-db.outputs.documentdb_endpoint }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
         run: |
-          kubectl create secret generic officyna-secret \
-            --namespace officyna \
-            --from-literal=AWS_DOCUMENT_URI="${{ secrets.AWS_DOCUMENT_URI }}" \
-            --from-literal=JWT_SECRET="${{ secrets.JWT_SECRET }}" \
+          export MONGODB_URI="mongodb://officynasoatdbuser:${DB_PASSWORD}@${DOCDB_ENDPOINT}:27017/officyna?tls=true&replicaSet=rs0&readPreference=secondaryPreferred&retryWrites=false"
+          
+          echo "$MONGODB_URI"
+
+      - name: Mostrar secret gerado
+        env:
+          DOCDB_ENDPOINT: ${{ needs.deploy-db.outputs.documentdb_endpoint }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+        run: |
+          export MONGODB_URI="mongodb://officynasoatdbuser:${DB_PASSWORD}@${DOCDB_ENDPOINT}:27017/officyna?tls=true&replicaSet=rs0&readPreference=secondaryPreferred&retryWrites=false"
+      
+          envsubst < k8s/secret.yaml
+
+      - name: Aplicar Secret
+        env:
+          DOCDB_ENDPOINT: ${{ needs.deploy-db.outputs.documentdb_endpoint }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+        run: |
+          export MONGODB_URI="mongodb://officynasoatdbuser:${DB_PASSWORD}@${DOCDB_ENDPOINT}:27017/officyna?tls=true&replicaSet=rs0&readPreference=secondaryPreferred&retryWrites=false"
+          envsubst < k8s/secret.yaml | kubectl apply -f -
+
+      - name: Criar imagePullSecret
+        run: |
+          kubectl create secret docker-registry ghcr-secret \
+            --docker-server=ghcr.io \
+            --docker-username=${{ secrets.GHCR_USERNAME }} \
+            --docker-password=${{ secrets.GHCR_PAT }} \
             --dry-run=client -o yaml | kubectl apply -f -
 
       - name: Aplicar Deployment, Service e HPA
         run: |
-          sed -i "s|image: ${IMAGE_NAME}:latest|image: ${IMAGE_NAME}:sha-${GITHUB_SHA::7}|" k8s/deployment.yaml
+          sed -i "s|image: ${IMAGE_NAME}:latest|image: ${IMAGE_NAME}:${{ needs.docker.outputs.image_tag }}|" k8s/deployment.yaml          
           kubectl apply -f k8s/deployment.yaml
           kubectl apply -f k8s/service.yaml
           kubectl apply -f k8s/hpa.yaml
 
       - name: Aguardar rollout da aplicação
         run: |
-          kubectl rollout status deployment/officyna-service --namespace officyna --timeout=180s
-          kubectl get pods,svc,hpa --namespace officyna
+          kubectl rollout status deployment/officyna-service --timeout=300s
+          kubectl get pods,svc,hpa 
+
+      - name: Logs da aplicação
+        run: |
+          kubectl logs deployment/officyna-service
 
       - name: Diagnóstico em caso de falha
         if: failure()
         run: |
           echo "===== PODS ====="
-          kubectl get pods -n officyna -o wide
+          kubectl get pods -o wide
+          
+          echo "===== DESCRIBE POD ====="
+          kubectl describe pod -l app.kubernetes.io/name=officyna
+          
+          echo "===== EVENTS ====="
+          kubectl get events --sort-by=.metadata.creationTimestamp
+
+      - name: Logs do Pod
+        if: failure()
+        run: |
+          POD=$(kubectl get pods -l app.kubernetes.io/name=officyna -o jsonpath='{.items[0].metadata.name}')
+          
+          echo "===== POD ====="
+          echo "$POD"
+          
+          echo "===== LOGS ATUAIS ====="
+          kubectl logs $POD || true
+          
+          echo "===== LOGS ANTERIORES ====="
+          kubectl logs $POD --previous || true
+          
+          echo "===== VARIÁVEIS ====="
+          kubectl describe pod $POD
+#
+#  # ==========================================
+#  # JOB: Limpeza Automática (Destruição EKS)
+#  # ==========================================
+  destroy-eks:
+    name: Limpeza Automática (Destruir EKS)
+    runs-on: ubuntu-latest
+
+    # Aguarda o deploy do cluster e da aplicação terminarem
+    if: github.event_name == 'workflow_dispatch' && inputs.destroy == 'true'
+
+    defaults:
+      run:
+        working-directory: infra/eks
+
+    steps:
+      - name: Checkout do código
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+
+      - name: Configurar Credenciais AWS
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Atualizar kubeconfig
+        run: |
+          aws eks update-kubeconfig \
+            --name eks-officyna-service \
+            --region us-east-1
+
+      - name: Remover recursos do Kubernetes
+        run: |
+          kubectl delete -f ../../k8s/hpa.yaml --ignore-not-found=true
+          kubectl delete -f ../../k8s/service.yaml --ignore-not-found=true
+          kubectl delete -f ../../k8s/deployment.yaml --ignore-not-found=true
+          kubectl delete -f ../../k8s/secret.yaml --ignore-not-found=true
+          kubectl delete -f ../../k8s/configmap.yaml --ignore-not-found=true
+
+      - name: Aguardar remoção do LoadBalancer
+        run: |
+          echo "Aguardando a AWS remover o LoadBalancer..."
+          sleep 180
+
+      - name: Terraform Init
+        run: terraform init
+
+      - name: Terraform Destroy
+        run: terraform destroy -auto-approve
 
   # ==========================================
   # JOB: Limpeza Automática (Destruição)
@@ -199,24 +370,29 @@ jobs:
     name: Limpeza Automática (Destruir Banco)
     runs-on: ubuntu-latest
     # MUDANÇA CRÍTICA: Ele espera o deploy terminar (sucesso ou falha) para começar a destruir
-    needs: [deploy-db, deploy]
+    needs: [destroy-eks]
     # MUDANÇA CRÍTICA: Só roda se o deploy-db NÃO tiver sido pulado (evita rodar em branches não autorizadas)
-    if: always() && needs.deploy-db.result != 'skipped'
+    if: github.event_name == 'workflow_dispatch' && inputs.destroy == 'true'
+
     defaults:
       run:
-        working-directory: infra
+        working-directory: infra/db
     steps:
       - name: Checkout do código
         uses: actions/checkout@v4
+
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v2
+
       - name: Configurar Credenciais da AWS
         uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: sa-east-1
+          aws-region: us-east-1
+
       - name: Terraform Init
         run: terraform init
+
       - name: Terraform Destroy
         run: terraform destroy -auto-approve -var="db_password=${{ secrets.DB_PASSWORD }}"

@@ -20,6 +20,10 @@ springdoc:
     path: /swagger-ui.html
     operationsSorter: alpha
 
+database:
+  seed:
+    enabled: false
+
 management:
   endpoints:
     web:
@@ -33,4 +37,3 @@ logging:
   level:
     br.com.officyna: INFO
     org.springframework.security: INFO
-
