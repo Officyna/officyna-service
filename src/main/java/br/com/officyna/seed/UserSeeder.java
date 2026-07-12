@@ -11,6 +11,7 @@ import org.springframework.stereotype.Component;
 @Slf4j
 @Component
 @RequiredArgsConstructor
+@SuppressWarnings("java:S6437")
 public class UserSeeder {
 
     private final UserMongoRepository repository;
