@@ -2,7 +2,7 @@ package br.com.officyna.administrative.labor.api.controller;
 
 import br.com.officyna.administrative.labor.api.resources.LaborRequest;
 import br.com.officyna.administrative.labor.api.resources.LaborResponse;
-import br.com.officyna.administrative.labor.domain.service.LaborService;
+import br.com.officyna.administrative.labor.domain.controller.LaborControllerAdapter;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -31,7 +31,7 @@ class LaborControllerTest {
     private MockMvc mockMvc;
 
     @Mock
-    private LaborService laborService;
+    private LaborControllerAdapter laborControllerAdapter;
 
     @InjectMocks
     private LaborController laborController;
@@ -48,13 +48,13 @@ class LaborControllerTest {
     @DisplayName("Deve retornar lista de todos os serviços (labors)")
     void findAll_ShouldReturnOk() throws Exception {
         var response = createResponse();
-        when(laborService.findAll()).thenReturn(List.of(response));
+        when(laborControllerAdapter.findAll()).thenReturn(List.of(response));
 
         mockMvc.perform(get("/api/labors"))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON));
 
-        verify(laborService, times(1)).findAll();
+        verify(laborControllerAdapter, times(1)).findAll();
     }
 
     @Test
@@ -62,12 +62,12 @@ class LaborControllerTest {
     void findById_ShouldReturnLabor() throws Exception {
         String id = "123";
         var response = createResponse();
-        when(laborService.findById(id)).thenReturn(response);
+        when(laborControllerAdapter.findById(id)).thenReturn(response);
 
         mockMvc.perform(get("/api/labors/{id}", id))
                 .andExpect(status().isOk());
 
-        verify(laborService, times(1)).findById(id);
+        verify(laborControllerAdapter, times(1)).findById(id);
     }
 
     @Test
@@ -75,14 +75,14 @@ class LaborControllerTest {
     void create_ShouldReturnCreated() throws Exception {
         var request = createRequest();
         var response = createResponse();
-        when(laborService.create(any(LaborRequest.class))).thenReturn(response);
+        when(laborControllerAdapter.create(any(LaborRequest.class))).thenReturn(response);
 
         mockMvc.perform(post("/api/labors")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated());
 
-        verify(laborService, times(1)).create(any(LaborRequest.class));
+        verify(laborControllerAdapter, times(1)).create(any(LaborRequest.class));
     }
 
     @Test
@@ -91,26 +91,26 @@ class LaborControllerTest {
         String id = "123";
         var request = createRequest();
         var response = createResponse();
-        when(laborService.update(eq(id), any(LaborRequest.class))).thenReturn(response);
+        when(laborControllerAdapter.update(eq(id), any(LaborRequest.class))).thenReturn(response);
 
         mockMvc.perform(put("/api/labors/{id}", id)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk());
 
-        verify(laborService, times(1)).update(eq(id), any(LaborRequest.class));
+        verify(laborControllerAdapter, times(1)).update(eq(id), any(LaborRequest.class));
     }
 
     @Test
     @DisplayName("Deve deletar um serviço e retornar No Content")
     void delete_ShouldReturnNoContent() throws Exception {
         String id = "123";
-        doNothing().when(laborService).delete(id);
+        doNothing().when(laborControllerAdapter).delete(id);
 
         mockMvc.perform(delete("/api/labors/{id}", id))
                 .andExpect(status().isNoContent());
 
-        verify(laborService, times(1)).delete(id);
+        verify(laborControllerAdapter, times(1)).delete(id);
     }
 
     private LaborRequest createRequest() {

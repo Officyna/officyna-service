@@ -2,8 +2,6 @@ package br.com.officyna.monitoring.domain.service;
 
 import br.com.officyna.administrative.labor.domain.entity.Labor;
 import br.com.officyna.administrative.labor.domain.repository.LaborRepository;
-import br.com.officyna.monitoring.api.resources.ForceRecalcResponse;
-import br.com.officyna.monitoring.api.resources.LaborMonitoringResponse;
 import br.com.officyna.monitoring.domain.entity.LaborMonitoring;
 import br.com.officyna.monitoring.domain.repository.LaborMonitoringRepository;
 import br.com.officyna.serviceorder.domain.repository.ServiceOrderRepository;
@@ -11,6 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
 
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Optional;
@@ -30,20 +29,14 @@ public class LaborMonitoringService {
 
     // 1 dia útil = 8 horas = 28800 segundos
     private static final double WORK_DAY_SECONDS_DOUBLE = 28800.0;
-    private static final int WORK_DAY_SECONDS_INT = 28800;
 
-
-
-    public List<LaborMonitoringResponse> findAll() {
-        return repository.findAll()
-                .stream()
-                .map(this::toResponse)
-                .toList();
+    public List<LaborMonitoring> findAll() {
+        return repository.findAll();
     }
 
     @Async
     public void updateExecutionTimeInDays(String laborId, LocalDateTime startDate, LocalDateTime endDate) {
-        double durationInDays = ChronoUnit.SECONDS.between(startDate, endDate) / WORK_DAY_SECONDS_DOUBLE;
+        double durationInDays = ChronoUnit.SECONDS.between(startDate.atOffset(ZoneOffset.UTC), endDate.atOffset(ZoneOffset.UTC)) / WORK_DAY_SECONDS_DOUBLE;
 
         if (durationInDays < 0) {
             log.warn("Ignorando atualização de tempo médio para laborId={}: endDate anterior ao startDate", laborId);
@@ -97,7 +90,7 @@ public class LaborMonitoringService {
         );
     }
 
-    public ForceRecalcResponse forceRecalc() {
+    public int forceRecalc() {
         List<Labor> labors = laborRepository.findByActiveTrue();
         int processed = 0;
 
@@ -109,7 +102,7 @@ public class LaborMonitoringService {
                     .filter(detail -> labor.getId().equals(detail.getLaborId())
                             && detail.getStartDate() != null
                             && detail.getEndDate() != null)
-                    .map(detail -> ChronoUnit.SECONDS.between(detail.getStartDate(), detail.getEndDate()) / WORK_DAY_SECONDS_DOUBLE)
+                    .map(detail -> ChronoUnit.SECONDS.between(detail.getStartDate().atOffset(ZoneOffset.UTC), detail.getEndDate().atOffset(ZoneOffset.UTC)) / WORK_DAY_SECONDS_DOUBLE)
                     .filter(duration -> duration >= 0)
                     .toList();
 
@@ -129,35 +122,10 @@ public class LaborMonitoringService {
             processed++;
         }
 
-        return new ForceRecalcResponse(processed);
+        return processed;
     }
 
     private double calculateNewAverage(double currentAverage, int totalExecutions, double newDuration) {
         return (currentAverage * totalExecutions + newDuration) / (totalExecutions + 1);
-    }
-
-    private String formatDays(Double days) {
-        if (days == null) return null;
-        long totalSeconds = Math.round(days * WORK_DAY_SECONDS_INT);
-        long d = totalSeconds / WORK_DAY_SECONDS_INT;
-        long h = (totalSeconds % WORK_DAY_SECONDS_INT) / 3600;
-        long m = (totalSeconds % 3600) / 60;
-        long s = totalSeconds % 60;
-        if (d > 0) {
-            return String.format("%d dia%s %02d:%02d:%02d", d, d > 1 ? "s" : "", h, m, s);
-        }
-        return String.format("%02d:%02d:%02d", h, m, s);
-    }
-
-    private LaborMonitoringResponse toResponse(LaborMonitoring entity) {
-        return new LaborMonitoringResponse(
-                entity.getLaborId(),
-                entity.getLaborName(),
-                entity.getLaborDescription(),
-                entity.getAverageExecutionTimeInDays(),
-                formatDays(entity.getAverageExecutionTimeInDays()),
-                entity.getTotalExecutions(),
-                entity.getUpdatedAt()
-        );
     }
 }

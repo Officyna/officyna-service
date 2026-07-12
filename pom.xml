@@ -29,6 +29,7 @@
 			**/infrastructure/config/AsyncConfig.class,
 			**/infrastructure/config/SwaggerConfig.class,
 			**/infrastructure/exception/**,
+			**/api/handler/**,
 			**/serviceorder/api/controller/**,
 			**/ApplicationService.class
 		</sonar.exclusions>

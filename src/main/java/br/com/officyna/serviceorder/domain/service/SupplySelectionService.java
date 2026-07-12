@@ -1,8 +1,8 @@
 package br.com.officyna.serviceorder.domain.service;
 
-import br.com.officyna.administrative.supply.api.resources.SupplyResponse;
+import br.com.officyna.administrative.supply.domain.entity.Supply;
 import br.com.officyna.administrative.supply.domain.service.SupplyService;
-import br.com.officyna.infrastructure.exception.DomainException;
+import br.com.officyna.serviceorder.domain.exception.ServiceOrderBusinessException;
 import br.com.officyna.serviceorder.api.resources.SupplysRequest;
 import br.com.officyna.serviceorder.domain.dto.SupplyDTO;
 import br.com.officyna.serviceorder.domain.dto.SupplyDetailDTO;
@@ -25,13 +25,13 @@ public class SupplySelectionService {
         if(supplysIdList != null && !supplysIdList.isEmpty()){
             List<SupplyDetailDTO> newSupplys = supplysIdList.stream()
                     .map(id -> {
-                SupplyResponse response = service.findById(id.getId());
-                return new SupplyDetailDTO(response.id(),
-                        response.name(),
-                        response.description(),
+                Supply supply = service.findById(id.getId());
+                return new SupplyDetailDTO(supply.getId(),
+                        supply.getName(),
+                        supply.getDescription(),
                         id.getQuantity(),
-                        response.salePrice(),
-                        this.calculateTotalPriceForUnitSupply(id.getQuantity(), response.salePrice())
+                        supply.getSalePrice(),
+                        this.calculateTotalPriceForUnitSupply(id.getQuantity(), supply.getSalePrice())
                 );
             }).toList();
             allSupplys.addAll(newSupplys);
@@ -43,7 +43,7 @@ public class SupplySelectionService {
 
     public void removeSupply(SupplyDTO supplys, String supplyId){
         if(supplys.getSupplysDetails().isEmpty() || supplyId == null)
-            throw new DomainException("A Ordem de Serviço não possui suprimentos cadastrados.");
+            throw new ServiceOrderBusinessException("A Ordem de Serviço não possui suprimentos cadastrados.");
         supplys.getSupplysDetails().removeIf(supply -> supply.getId().equals(supplyId));
     }
 

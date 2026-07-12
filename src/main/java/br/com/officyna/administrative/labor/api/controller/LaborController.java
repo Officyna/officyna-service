@@ -3,7 +3,7 @@ package br.com.officyna.administrative.labor.api.controller;
 import br.com.officyna.administrative.labor.api.LaborApi;
 import br.com.officyna.administrative.labor.api.resources.LaborRequest;
 import br.com.officyna.administrative.labor.api.resources.LaborResponse;
-import br.com.officyna.administrative.labor.domain.service.LaborService;
+import br.com.officyna.administrative.labor.domain.controller.LaborControllerAdapter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -15,31 +15,31 @@ import java.util.List;
 @RequiredArgsConstructor
 public class LaborController implements LaborApi {
 
-    private final LaborService laborService;
+    private final LaborControllerAdapter laborControllerAdapter;
 
     @Override
     public ResponseEntity<List<LaborResponse>> findAll() {
-        return ResponseEntity.ok(laborService.findAll());
+        return ResponseEntity.ok(laborControllerAdapter.findAll());
     }
 
     @Override
     public ResponseEntity<LaborResponse> findById(String id) {
-        return ResponseEntity.ok(laborService.findById(id));
+        return ResponseEntity.ok(laborControllerAdapter.findById(id));
     }
 
     @Override
     public ResponseEntity<LaborResponse> create(LaborRequest request) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(laborService.create(request));
+        return ResponseEntity.status(HttpStatus.CREATED).body(laborControllerAdapter.create(request));
     }
 
     @Override
     public ResponseEntity<LaborResponse> update(String id, LaborRequest request) {
-        return ResponseEntity.ok(laborService.update(id, request));
+        return ResponseEntity.ok(laborControllerAdapter.update(id, request));
     }
 
     @Override
     public ResponseEntity<Void> delete(String id) {
-        laborService.delete(id);
+        laborControllerAdapter.delete(id);
         return ResponseEntity.noContent().build();
     }
 }

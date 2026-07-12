@@ -3,7 +3,7 @@ package br.com.officyna.infrastructure.auth;
 import br.com.officyna.administrative.user.domain.entity.User;
 import br.com.officyna.administrative.user.domain.entity.UserRole;
 import br.com.officyna.administrative.user.domain.repository.UserRepository;
-import br.com.officyna.infrastructure.exception.NotFoundException;
+import br.com.officyna.administrative.user.domain.exception.UserNotFoundException;
 import br.com.officyna.infrastructure.security.JwtService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -124,7 +124,7 @@ class AuthServiceTest {
         when(userDetailsService.loadUserByUsername("joao@email.com")).thenReturn(userDetails);
         when(userRepository.findByEmail("joao@email.com")).thenReturn(Optional.empty());
 
-        assertThrows(NotFoundException.class, () -> authService.login(request));
+        assertThrows(UserNotFoundException.class, () -> authService.login(request));
         verify(jwtService, never()).generateToken(any());
     }
 }

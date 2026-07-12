@@ -1,12 +1,9 @@
 package br.com.officyna.administrative.user.domain.service;
 
-import br.com.officyna.administrative.user.api.resources.UserRequest;
-import br.com.officyna.administrative.user.api.resources.UserResponse;
 import br.com.officyna.administrative.user.domain.entity.User;
-import br.com.officyna.administrative.user.domain.mapper.UserMapper;
 import br.com.officyna.administrative.user.domain.repository.UserRepository;
-import br.com.officyna.infrastructure.exception.DomainException;
-import br.com.officyna.infrastructure.exception.NotFoundException;
+import br.com.officyna.administrative.user.domain.exception.UserBusinessException;
+import br.com.officyna.administrative.user.domain.exception.UserNotFoundException;
 import org.jspecify.annotations.NonNull;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -20,43 +17,36 @@ import java.util.Optional;
 public class UserService {
 
     private final UserRepository repository;
-    private final UserMapper userMapper;
     private final PasswordEncoder passwordEncoder;
 
-    public UserService(UserRepository repository, UserMapper userMapper, PasswordEncoder passwordEncoder) {
+    public UserService(UserRepository repository, PasswordEncoder passwordEncoder) {
         this.repository = repository;
-        this.userMapper = userMapper;
         this.passwordEncoder = passwordEncoder;
     }
 
-    public List<UserResponse> findAll() {
-        return repository.findByActiveTrue()
-                .stream()
-                .map(userMapper::toResponse)
-                .toList();
+    public List<User> findAll() {
+        return repository.findByActiveTrue();
     }
 
-    public UserResponse findById(String id) {
-        return userMapper.toResponse(findEntityById(id));
+    public User findById(String id) {
+        return findEntityById(id);
     }
 
-    public UserResponse findByEmail(String email) {
+    public User findByEmail(String email) {
         return repository.findByEmail(email)
-                .map(userMapper::toResponse)
-                .orElseThrow(() -> new NotFoundException("Usuário não encontrado com este email: " + email));
+                .orElseThrow(() -> new UserNotFoundException("Usuário não encontrado com este email: " + email));
     }
 
-    public UserResponse create(UserRequest request) {
+    public User create(User user) {
         validateAdminOrManager();
-        Optional<User> userExist = repository.findByEmail(request.email());
+        Optional<User> userExist = repository.findByEmail(user.getEmail());
         if (userExist.isPresent() && Boolean.TRUE.equals(userExist.get().getActive())) {
-            throw new DomainException("Já existe um usuário com este email: " + request.email());
+            throw new UserBusinessException("Já existe um usuário com este email: " + user.getEmail());
         }
-        User entity = userMapper.toEntity(request);
-        entity.setId(userExist.map(User::getId).orElse(null));
-        entity.setEmail(normalizeEmail(entity));
-        entity.setPassword(passwordEncoder.encode(request.password()));
-        return userMapper.toResponse(repository.save(entity));
+        user.setId(userExist.map(User::getId).orElse(null));
+        user.setEmail(normalizeEmail(user));
+        user.setPassword(passwordEncoder.encode(user.getPassword()));
+        return repository.save(user);
     }
 
     private void validateAdminOrManager() {
@@ -65,7 +55,7 @@ public class UserService {
         boolean hasPermission = auth.getAuthorities().stream()
                 .anyMatch(a -> Objects.equals(a.getAuthority(), "ROLE_ADMIN") || Objects.equals(a.getAuthority(), "ROLE_MANAGER"));
         if (!hasPermission) {
-            throw new DomainException("Apenas ADMIN ou MANAGER podem criar usuários internos.");
+            throw new UserBusinessException("Apenas ADMIN ou MANAGER podem criar usuários internos.");
         }
     }
 
@@ -73,16 +63,18 @@ public class UserService {
         return entity.getEmail().toLowerCase(Locale.ROOT).trim();
     }
 
-    public UserResponse update(String id, UserRequest request) {
+    public User update(String id, User changes) {
         User entity = findEntityById(id);
 
-        boolean emailChanged = !entity.getEmail().equals(request.email());
-        if (emailChanged && repository.existsByEmail(request.email())) {
-            throw new DomainException("Já existe um usário com este email: " + request.email());
+        boolean emailChanged = !entity.getEmail().equals(changes.getEmail());
+        if (emailChanged && repository.existsByEmail(changes.getEmail())) {
+            throw new UserBusinessException("Já existe um usário com este email: " + changes.getEmail());
         }
 
-        userMapper.updateEntity(entity, request);
-        return userMapper.toResponse(repository.save(entity));
+        entity.setName(changes.getName());
+        entity.setEmail(changes.getEmail());
+        entity.setUserRole(changes.getUserRole());
+        return repository.save(entity);
     }
 
     public void delete(String id) {
@@ -93,6 +85,6 @@ public class UserService {
 
     public User findEntityById(String id) {
         return repository.findById(id)
-                .orElseThrow(() -> NotFoundException.of("User", id));
+                .orElseThrow(() -> UserNotFoundException.of(id));
     }
 }

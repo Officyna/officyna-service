@@ -1,61 +1,56 @@
 package br.com.officyna.administrative.supply.domain.service;
 
-import br.com.officyna.administrative.supply.api.resources.SupplyRequest;
-import br.com.officyna.administrative.supply.api.resources.SupplyResponse;
 import br.com.officyna.administrative.supply.domain.entity.Supply;
 import br.com.officyna.administrative.supply.domain.entity.SupplyType;
-import br.com.officyna.administrative.supply.domain.mapper.SupplyMapper;
 import br.com.officyna.administrative.supply.domain.repository.SupplyRepository;
-import br.com.officyna.infrastructure.exception.DomainException;
-import br.com.officyna.infrastructure.exception.NotFoundException;
+import br.com.officyna.administrative.supply.domain.exception.SupplyBusinessException;
+import br.com.officyna.administrative.supply.domain.exception.SupplyNotFoundException;
 import java.util.List;
 
 public class SupplyService {
 
     private final SupplyRepository repository;
-    private final SupplyMapper supplyMapper;
 
-    public SupplyService(SupplyRepository repository, SupplyMapper supplyMapper) {
+    public SupplyService(SupplyRepository repository) {
         this.repository = repository;
-        this.supplyMapper = supplyMapper;
     }
 
-    public List<SupplyResponse> findAll() {
-        return repository.findByActiveTrue()
-                .stream()
-                .map(supplyMapper::toResponse)
-                .toList();
+    public List<Supply> findAll() {
+        return repository.findByActiveTrue();
     }
 
-    public List<SupplyResponse> findByType(SupplyType type) {
-        return repository.findByActiveTrueAndType(type)
-                .stream()
-                .map(supplyMapper::toResponse)
-                .toList();
+    public List<Supply> findByType(SupplyType type) {
+        return repository.findByActiveTrueAndType(type);
     }
 
-    public SupplyResponse findById(String id) {
-        return supplyMapper.toResponse(findEntityById(id));
+    public Supply findById(String id) {
+        return findEntityById(id);
     }
 
-    public SupplyResponse create(SupplyRequest request) {
-        if (repository.existsByName(request.name())) {
-            throw new DomainException("Supply already registered with name: " + request.name());
+    public Supply create(Supply supply) {
+        if (repository.existsByName(supply.getName())) {
+            throw new SupplyBusinessException("Supply already registered with name: " + supply.getName());
         }
-        Supply entity = supplyMapper.toEntity(request);
-        return supplyMapper.toResponse(repository.save(entity));
+        return repository.save(supply);
     }
 
-    public SupplyResponse update(String id, SupplyRequest request) {
+    public Supply update(String id, Supply changes) {
         Supply entity = findEntityById(id);
 
-        boolean nameChanged = !entity.getName().equals(request.name());
-        if (nameChanged && repository.existsByName(request.name())) {
-            throw new DomainException("Supply already registered with name: " + request.name());
+        boolean nameChanged = !entity.getName().equals(changes.getName());
+        if (nameChanged && repository.existsByName(changes.getName())) {
+            throw new SupplyBusinessException("Supply already registered with name: " + changes.getName());
         }
 
-        supplyMapper.updateEntity(entity, request);
-        return supplyMapper.toResponse(repository.save(entity));
+        entity.setName(changes.getName());
+        entity.setDescription(changes.getDescription());
+        entity.setType(changes.getType());
+        entity.setPurchasePrice(changes.getPurchasePrice());
+        entity.setSalePrice(changes.getSalePrice());
+        entity.setStockQuantity(changes.getStockQuantity());
+        entity.setMinimumQuantity(changes.getMinimumQuantity());
+        entity.setReservedQuantity(changes.getReservedQuantity());
+        return repository.save(entity);
     }
 
     public void delete(String id) {
@@ -66,6 +61,6 @@ public class SupplyService {
 
     public Supply findEntityById(String id) {
         return repository.findById(id)
-                .orElseThrow(() -> NotFoundException.of("Supply", id));
+                .orElseThrow(() -> SupplyNotFoundException.of(id));
     }
 }
