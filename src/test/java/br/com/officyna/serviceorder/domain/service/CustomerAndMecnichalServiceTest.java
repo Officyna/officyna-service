@@ -1,10 +1,10 @@
 package br.com.officyna.serviceorder.domain.service;
 
-import br.com.officyna.administrative.customer.api.resources.AddressDTO;
-import br.com.officyna.administrative.customer.api.resources.CustomerResponse;
+import br.com.officyna.administrative.customer.domain.entity.Address;
+import br.com.officyna.administrative.customer.domain.entity.Customer;
 import br.com.officyna.administrative.customer.domain.entity.CustomerType;
 import br.com.officyna.administrative.customer.domain.service.CustomerService;
-import br.com.officyna.administrative.user.api.resources.UserResponse;
+import br.com.officyna.administrative.user.domain.entity.User;
 import br.com.officyna.administrative.user.domain.service.UserService;
 import br.com.officyna.serviceorder.domain.dto.CustomerDTO;
 import br.com.officyna.serviceorder.domain.dto.MechanicDTO;
@@ -37,27 +37,30 @@ class CustomerAndMecnichalServiceTest {
     void getCustomer_ShouldReturnCustomerDTO() {
         String id = "1";
 
-        CustomerResponse response = new CustomerResponse("1",
-                "Ricardo Almeida",
-                "342.155.890-12",
-                CustomerType.INDIVIDUAL,
-                "ricardo.almeida@email.com",
-                "98765-4321",
-                "11",
-                "+55",
-                new AddressDTO("Rua Flaviano de Melo",
-                        "500",
-                        "Bloco B, Apt 12",
-                        "Centro",
-                        "Mogi das Cruzes",
-                        "SP",
-                        "08710-000",
-                        "Brazil"),
-                true,
-                LocalDateTime.now()
-        );
+        Customer customer = Customer.builder()
+                .id("1")
+                .name("Ricardo Almeida")
+                .document("342.155.890-12")
+                .type(CustomerType.INDIVIDUAL)
+                .email("ricardo.almeida@email.com")
+                .phone("98765-4321")
+                .areaCode("11")
+                .countryCode("+55")
+                .address(Address.builder()
+                        .street("Rua Flaviano de Melo")
+                        .number("500")
+                        .complement("Bloco B, Apt 12")
+                        .neighborhood("Centro")
+                        .city("Mogi das Cruzes")
+                        .state("SP")
+                        .zipCode("08710-000")
+                        .country("Brazil")
+                        .build())
+                .active(true)
+                .createdAt(LocalDateTime.now())
+                .build();
 
-        when(customerService.findById(id)).thenReturn(response);
+        when(customerService.findById(id)).thenReturn(customer);
 
         CustomerDTO result = service.getCustomer(id);
 
@@ -71,9 +74,9 @@ class CustomerAndMecnichalServiceTest {
     @DisplayName("Deve buscar mecânico e mapear para DTO corretamente")
     void getMechanic_ShouldReturnMechanicDTO() {
         String id = "mech-1";
-        UserResponse response = UserResponse.builder().id(id).name("Mecânico Master").build();
+        User user = User.builder().id(id).name("Mecânico Master").build();
 
-        when(userService.findById(id)).thenReturn(response);
+        when(userService.findById(id)).thenReturn(user);
 
         MechanicDTO result = service.getMechanic(id);
 

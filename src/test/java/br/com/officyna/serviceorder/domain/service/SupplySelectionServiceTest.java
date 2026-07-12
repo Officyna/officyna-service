@@ -1,9 +1,9 @@
 package br.com.officyna.serviceorder.domain.service;
 
-import br.com.officyna.administrative.supply.api.resources.SupplyResponse;
+import br.com.officyna.administrative.supply.domain.entity.Supply;
 import br.com.officyna.administrative.supply.domain.entity.SupplyType;
 import br.com.officyna.administrative.supply.domain.service.SupplyService;
-import br.com.officyna.infrastructure.exception.DomainException;
+import br.com.officyna.serviceorder.domain.exception.ServiceOrderBusinessException;
 import br.com.officyna.serviceorder.api.resources.SupplysRequest;
 import br.com.officyna.serviceorder.domain.dto.SupplyDTO;
 import br.com.officyna.serviceorder.domain.dto.SupplyDetailDTO;
@@ -15,7 +15,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -37,24 +36,20 @@ class SupplySelectionServiceTest {
     void addSupplys_ShouldAddNewSupplysAndCalculateTotal() {
         // Arrange
         SupplysRequest req = new SupplysRequest("supply-1", 2);
-        SupplyResponse response = new SupplyResponse(
-                "supply-1",
-                "Óleo 5W30",
-                "Óleo sintético",
-                SupplyType.SUPPLY,
-                BigDecimal.valueOf(50.00),
-                BigDecimal.valueOf(80.00),
-                BigDecimal.valueOf(30.00),
-                100,
-                50,
-                100,
-                50,
-                true,
-                true,
-                LocalDateTime.now(),
-                LocalDateTime.now());
-        
-        when(supplyService.findById("supply-1")).thenReturn(response);
+        Supply supply = Supply.builder()
+                .id("supply-1")
+                .name("Óleo 5W30")
+                .description("Óleo sintético")
+                .type(SupplyType.SUPPLY)
+                .purchasePrice(BigDecimal.valueOf(50.00))
+                .salePrice(BigDecimal.valueOf(80.00))
+                .stockQuantity(100)
+                .minimumQuantity(50)
+                .reservedQuantity(50)
+                .active(true)
+                .build();
+
+        when(supplyService.findById("supply-1")).thenReturn(supply);
 
         // Act
         SupplyDTO result = service.addSupplys(List.of(req), new ArrayList<>());
@@ -89,7 +84,7 @@ class SupplySelectionServiceTest {
         supplys.setSupplysDetails(new ArrayList<>());
 
         assertThatThrownBy(() -> service.removeSupply(supplys, "any-id"))
-                .isInstanceOf(DomainException.class)
+                .isInstanceOf(ServiceOrderBusinessException.class)
                 .hasMessage("A Ordem de Serviço não possui suprimentos cadastrados.");
     }
 }

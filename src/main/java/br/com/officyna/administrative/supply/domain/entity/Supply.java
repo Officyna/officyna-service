@@ -1,6 +1,6 @@
 package br.com.officyna.administrative.supply.domain.entity;
 
-import br.com.officyna.infrastructure.exception.DomainException;
+import br.com.officyna.administrative.supply.domain.exception.SupplyBusinessException;
 import lombok.*;
 
 import java.math.BigDecimal;
@@ -42,18 +42,18 @@ public class Supply {
     private LocalDateTime updatedAt;
 
     public void setStockQuantity(Integer stockQuantity){
-        if(stockQuantity <= 0) throw new DomainException("Stock quantity cannot be negative");
+        if(stockQuantity <= 0) throw new SupplyBusinessException("Stock quantity cannot be negative");
         this.stockQuantity = stockQuantity;
     }
 
     public void setMinimumQuantity(Integer minimumQuantity){
-        if(minimumQuantity <= 0) throw new DomainException("Minimum quantity cannot be negative");
+        if(minimumQuantity <= 0) throw new SupplyBusinessException("Minimum quantity cannot be negative");
         this.minimumQuantity = minimumQuantity;
     }
 
     public void setReservedQuantity(Integer reservedQuantity){
-        if(reservedQuantity < 0) throw new DomainException("Reserved quantity cannot be negative");
-        if(reservedQuantity > this.stockQuantity) throw new DomainException("Estoque insuficiente para o insumo '" + this.getName() +
+        if(reservedQuantity < 0) throw new SupplyBusinessException("Reserved quantity cannot be negative");
+        if(reservedQuantity > this.stockQuantity) throw new SupplyBusinessException("Estoque insuficiente para o insumo '" + this.getName() +
                 "'. Disponível: " + this.stockQuantity +
                 ", Solicitado: " + reservedQuantity);
         this.reservedQuantity = reservedQuantity;

@@ -1,63 +1,62 @@
 package br.com.officyna.administrative.customer.domain.service;
 
-import br.com.officyna.administrative.customer.api.resources.CustomerRequest;
-import br.com.officyna.administrative.customer.api.resources.CustomerResponse;
 import br.com.officyna.administrative.customer.domain.entity.Customer;
-import br.com.officyna.administrative.customer.domain.mapper.CustomerMapper;
 import br.com.officyna.administrative.customer.domain.validation.DocumentUtils;
 import br.com.officyna.administrative.customer.domain.repository.CustomerRepository;
-import br.com.officyna.infrastructure.exception.DomainException;
-import br.com.officyna.infrastructure.exception.NotFoundException;
+import br.com.officyna.administrative.customer.domain.exception.CustomerBusinessException;
+import br.com.officyna.administrative.customer.domain.exception.CustomerNotFoundException;
 import java.util.List;
 
 public class CustomerService {
 
     private final CustomerRepository repository;
-    private final CustomerMapper customerMapper;
 
-    public CustomerService(CustomerRepository repository, CustomerMapper customerMapper) {
+    public CustomerService(CustomerRepository repository) {
         this.repository = repository;
-        this.customerMapper = customerMapper;
     }
 
-    public List<CustomerResponse> findAll() {
-        return repository.findByActiveTrue()
-                .stream()
-                .map(customerMapper::toResponse)
-                .toList();
+    public List<Customer> findAll() {
+        return repository.findByActiveTrue();
     }
 
-    public CustomerResponse findById(String id) {
-        return customerMapper.toResponse(findEntityById(id));
+    public Customer findById(String id) {
+        return findEntityById(id);
     }
 
-    public CustomerResponse findByDocument(String document) {
+    public Customer findByDocument(String document) {
         String normalized = DocumentUtils.normalize(document);
         return repository.findByDocument(normalized)
-                .map(customerMapper::toResponse)
-                .orElseThrow(() -> new NotFoundException("Customer not found with document: " + normalized));
+                .orElseThrow(() -> new CustomerNotFoundException("Customer not found with document: " + normalized));
     }
 
-    public CustomerResponse create(CustomerRequest request) {
-        String normalized = DocumentUtils.normalize(request.document());
+    public Customer create(Customer customer) {
+        String normalized = DocumentUtils.normalize(customer.getDocument());
         if (repository.existsByDocument(normalized)) {
-            throw new DomainException("Document already registered: " + normalized);
+            throw new CustomerBusinessException("Document already registered: " + normalized);
         }
-        Customer entity = customerMapper.toEntity(request);
-        return customerMapper.toResponse(repository.save(entity));
+        customer.setDocument(normalized);
+        customer.setActive(true);
+        return repository.save(customer);
     }
 
-    public CustomerResponse update(String id, CustomerRequest request) {
+    public Customer update(String id, Customer changes) {
         Customer entity = findEntityById(id);
-        String normalized = DocumentUtils.normalize(request.document());
+        String normalized = DocumentUtils.normalize(changes.getDocument());
 
         boolean documentChanged = !entity.getDocument().equals(normalized);
         if (documentChanged && repository.existsByDocument(normalized)) {
-            throw new DomainException("Document already registered: " + normalized);
+            throw new CustomerBusinessException("Document already registered: " + normalized);
         }
 
-        customerMapper.updateEntity(entity, request);
-        return customerMapper.toResponse(repository.save(entity));
+        entity.setName(changes.getName());
+        entity.setDocument(normalized);
+        entity.setType(changes.getType());
+        entity.setEmail(changes.getEmail());
+        entity.setPhone(changes.getPhone());
+        entity.setAreaCode(changes.getAreaCode());
+        entity.setCountryCode(changes.getCountryCode());
+        entity.setAddress(changes.getAddress());
+        return repository.save(entity);
     }
 
     public void delete(String id) {
@@ -69,6 +68,6 @@ public class CustomerService {
     // Utility method for internal use (e.g. VehicleService)
     public Customer findEntityById(String id) {
         return repository.findById(id)
-                .orElseThrow(() -> NotFoundException.of("Customer", id));
+                .orElseThrow(() -> CustomerNotFoundException.of(id));
     }
 }
