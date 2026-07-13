@@ -1,6 +1,6 @@
 package br.com.officyna.administrative.user.api.resources;
 
-import br.com.officyna.administrative.user.domain.UserRole;
+import br.com.officyna.administrative.user.domain.entity.UserRole;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;

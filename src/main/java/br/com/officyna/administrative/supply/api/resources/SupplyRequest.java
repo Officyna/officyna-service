@@ -1,6 +1,6 @@
 package br.com.officyna.administrative.supply.api.resources;
 
-import br.com.officyna.administrative.supply.domain.SupplyType;
+import br.com.officyna.administrative.supply.domain.entity.SupplyType;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.*;
 

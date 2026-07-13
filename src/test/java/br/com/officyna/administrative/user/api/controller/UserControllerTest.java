@@ -2,8 +2,8 @@ package br.com.officyna.administrative.user.api.controller;
 
 import br.com.officyna.administrative.user.api.resources.UserRequest;
 import br.com.officyna.administrative.user.api.resources.UserResponse;
-import br.com.officyna.administrative.user.domain.UserRole;
-import br.com.officyna.administrative.user.domain.service.UserService;
+import br.com.officyna.administrative.user.domain.controller.UserControllerAdapter;
+import br.com.officyna.administrative.user.domain.entity.UserRole;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.junit.jupiter.api.BeforeEach;
@@ -32,7 +32,7 @@ class UserControllerTest {
     private MockMvc mockMvc;
 
     @Mock
-    private UserService userService;
+    private UserControllerAdapter userControllerAdapter;
 
     @InjectMocks
     private UserController userController;
@@ -51,25 +51,25 @@ class UserControllerTest {
     @Test
     @DisplayName("Deve retornar lista de todos os usuários com status 200")
     void findAll_ShouldReturnOk() throws Exception {
-        when(userService.findAll()).thenReturn(List.of(buildResponse()));
+        when(userControllerAdapter.findAll()).thenReturn(List.of(buildResponse()));
 
         mockMvc.perform(get("/api/users"))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON));
 
-        verify(userService, times(1)).findAll();
+        verify(userControllerAdapter, times(1)).findAll();
     }
 
     @Test
     @DisplayName("Deve retornar lista vazia quando não há usuários")
     void findAll_ShouldReturnEmptyList() throws Exception {
-        when(userService.findAll()).thenReturn(List.of());
+        when(userControllerAdapter.findAll()).thenReturn(List.of());
 
         mockMvc.perform(get("/api/users"))
                 .andExpect(status().isOk())
                 .andExpect(content().json("[]"));
 
-        verify(userService, times(1)).findAll();
+        verify(userControllerAdapter, times(1)).findAll();
     }
 
     // ─────────────── GET /api/users/{id} ───────────────
@@ -78,12 +78,12 @@ class UserControllerTest {
     @DisplayName("Deve retornar usuário por ID com status 200")
     void findById_ShouldReturnOk() throws Exception {
         String id = "usr-1";
-        when(userService.findById(id)).thenReturn(buildResponse());
+        when(userControllerAdapter.findById(id)).thenReturn(buildResponse());
 
         mockMvc.perform(get("/api/users/{id}", id))
                 .andExpect(status().isOk());
 
-        verify(userService, times(1)).findById(id);
+        verify(userControllerAdapter, times(1)).findById(id);
     }
 
     // ─────────────── GET /api/users/email/{email} ───────────────
@@ -92,12 +92,12 @@ class UserControllerTest {
     @DisplayName("Deve retornar usuário por email com status 200")
     void findByEmail_ShouldReturnOk() throws Exception {
         String email = "joao@email.com";
-        when(userService.findByEmail(email)).thenReturn(buildResponse());
+        when(userControllerAdapter.findByEmail(email)).thenReturn(buildResponse());
 
         mockMvc.perform(get("/api/users/email/{email}", email))
                 .andExpect(status().isOk());
 
-        verify(userService, times(1)).findByEmail(email);
+        verify(userControllerAdapter, times(1)).findByEmail(email);
     }
 
     // ─────────────── POST /api/users ───────────────
@@ -105,14 +105,14 @@ class UserControllerTest {
     @Test
     @DisplayName("Deve criar usuário e retornar status 201")
     void create_ShouldReturnCreated() throws Exception {
-        when(userService.create(any(UserRequest.class))).thenReturn(buildResponse());
+        when(userControllerAdapter.create(any(UserRequest.class))).thenReturn(buildResponse());
 
         mockMvc.perform(post("/api/users")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(buildRequest())))
                 .andExpect(status().isCreated());
 
-        verify(userService, times(1)).create(any(UserRequest.class));
+        verify(userControllerAdapter, times(1)).create(any(UserRequest.class));
     }
 
     // ─────────────── PUT /api/users/{id} ───────────────
@@ -121,14 +121,14 @@ class UserControllerTest {
     @DisplayName("Deve atualizar usuário e retornar status 200")
     void update_ShouldReturnOk() throws Exception {
         String id = "usr-1";
-        when(userService.update(eq(id), any(UserRequest.class))).thenReturn(buildResponse());
+        when(userControllerAdapter.update(eq(id), any(UserRequest.class))).thenReturn(buildResponse());
 
         mockMvc.perform(put("/api/users/{id}", id)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(buildRequest())))
                 .andExpect(status().isOk());
 
-        verify(userService, times(1)).update(eq(id), any(UserRequest.class));
+        verify(userControllerAdapter, times(1)).update(eq(id), any(UserRequest.class));
     }
 
     // ─────────────── DELETE /api/users/{id} ───────────────
@@ -137,12 +137,12 @@ class UserControllerTest {
     @DisplayName("Deve desativar usuário e retornar status 204")
     void delete_ShouldReturnNoContent() throws Exception {
         String id = "usr-1";
-        doNothing().when(userService).delete(id);
+        doNothing().when(userControllerAdapter).delete(id);
 
         mockMvc.perform(delete("/api/users/{id}", id))
                 .andExpect(status().isNoContent());
 
-        verify(userService, times(1)).delete(id);
+        verify(userControllerAdapter, times(1)).delete(id);
     }
 
     // ─────────────── helpers ───────────────

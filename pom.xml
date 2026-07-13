@@ -29,6 +29,7 @@
 			**/infrastructure/config/AsyncConfig.class,
 			**/infrastructure/config/SwaggerConfig.class,
 			**/infrastructure/exception/**,
+			**/api/handler/**,
 			**/serviceorder/api/controller/**,
 			**/ApplicationService.class
 		</sonar.exclusions>
@@ -204,7 +205,7 @@
 										<limit>
 											<counter>LINE</counter>
 											<value>COVEREDRATIO</value>
-											<minimum>0.50</minimum>
+											<minimum>0.80</minimum>
 										</limit>
 									</limits>
 								</rule>

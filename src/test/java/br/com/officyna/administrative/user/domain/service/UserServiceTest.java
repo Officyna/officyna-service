@@ -1,13 +1,10 @@
 package br.com.officyna.administrative.user.domain.service;
 
-import br.com.officyna.administrative.user.api.resources.UserRequest;
-import br.com.officyna.administrative.user.api.resources.UserResponse;
-import br.com.officyna.administrative.user.domain.UserEntity;
-import br.com.officyna.administrative.user.domain.UserRole;
-import br.com.officyna.administrative.user.domain.mapper.UserMapper;
-import br.com.officyna.administrative.user.repository.UserRepository;
-import br.com.officyna.infrastructure.exception.DomainException;
-import br.com.officyna.infrastructure.exception.NotFoundException;
+import br.com.officyna.administrative.user.domain.entity.User;
+import br.com.officyna.administrative.user.domain.entity.UserRole;
+import br.com.officyna.administrative.user.domain.repository.UserRepository;
+import br.com.officyna.administrative.user.domain.exception.UserBusinessException;
+import br.com.officyna.administrative.user.domain.exception.UserNotFoundException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -33,7 +30,6 @@ import static org.mockito.Mockito.*;
 class UserServiceTest {
 
     @Mock private UserRepository userRepository;
-    @Mock private UserMapper userMapper;
     @Mock private PasswordEncoder passwordEncoder;
 
     @InjectMocks
@@ -46,23 +42,25 @@ class UserServiceTest {
 
     // ─── helpers ──────────────────────────────────────────────────────────────
 
-    private UserEntity buildEntity(String id, String email, UserRole role, boolean active) {
-        return UserEntity.builder()
+    private User buildEntity(String id, String email, UserRole role, boolean active) {
+        return User.builder()
                 .id(id).name("João Silva").email(email)
                 .password("encoded").userRole(role).active(active)
                 .createdAt(LocalDateTime.now()).updatedAt(LocalDateTime.now())
                 .build();
     }
 
-    private UserRequest buildRequest(String email) {
-        return new UserRequest("João Silva", email, "senha123", UserRole.ATTENDANT);
+    private User buildIncoming(String email) {
+        return User.builder()
+                .name("João Silva").email(email)
+                .password("senha123").userRole(UserRole.ATTENDANT).active(true)
+                .build();
     }
 
-    private UserResponse buildResponse(String id, String email) {
-        return UserResponse.builder()
-                .id(id).name("João Silva").email(email)
-                .userRole(UserRole.ATTENDANT).active(true)
-                .createdAt(LocalDateTime.now()).build();
+    private User buildChanges(String email) {
+        return User.builder()
+                .name("João Silva").email(email).userRole(UserRole.ATTENDANT)
+                .build();
     }
 
     private void setupSecurityContext(String role) {
@@ -78,16 +76,12 @@ class UserServiceTest {
     @Test
     @DisplayName("Deve retornar todos os usuários ativos")
     void findAll_ShouldReturnActiveUsers() {
-        UserEntity e1 = buildEntity("1", "a@email.com", UserRole.ADMIN, true);
-        UserEntity e2 = buildEntity("2", "b@email.com", UserRole.MECHANIC, true);
-        UserResponse r1 = buildResponse("1", "a@email.com");
-        UserResponse r2 = buildResponse("2", "b@email.com");
+        User e1 = buildEntity("1", "a@email.com", UserRole.ADMIN, true);
+        User e2 = buildEntity("2", "b@email.com", UserRole.MECHANIC, true);
 
         when(userRepository.findByActiveTrue()).thenReturn(List.of(e1, e2));
-        when(userMapper.toResponse(e1)).thenReturn(r1);
-        when(userMapper.toResponse(e2)).thenReturn(r2);
 
-        List<UserResponse> result = userService.findAll();
+        List<User> result = userService.findAll();
 
         assertEquals(2, result.size());
         verify(userRepository).findByActiveTrue();
@@ -98,13 +92,11 @@ class UserServiceTest {
     @Test
     @DisplayName("Deve retornar usuário pelo ID")
     void findById_ShouldReturnUser() {
-        UserEntity entity = buildEntity("1", "a@email.com", UserRole.ADMIN, true);
-        UserResponse response = buildResponse("1", "a@email.com");
+        User entity = buildEntity("1", "a@email.com", UserRole.ADMIN, true);
 
         when(userRepository.findById("1")).thenReturn(Optional.of(entity));
-        when(userMapper.toResponse(entity)).thenReturn(response);
 
-        UserResponse result = userService.findById("1");
+        User result = userService.findById("1");
 
         assertEquals("1", result.getId());
         verify(userRepository).findById("1");
@@ -115,7 +107,7 @@ class UserServiceTest {
     void findById_ShouldThrowNotFoundException() {
         when(userRepository.findById("inexistente")).thenReturn(Optional.empty());
 
-        assertThrows(NotFoundException.class, () -> userService.findById("inexistente"));
+        assertThrows(UserNotFoundException.class, () -> userService.findById("inexistente"));
     }
 
     // ─── findByEmail ──────────────────────────────────────────────────────────
@@ -123,13 +115,11 @@ class UserServiceTest {
     @Test
     @DisplayName("Deve retornar usuário pelo email")
     void findByEmail_ShouldReturnUser() {
-        UserEntity entity = buildEntity("1", "joao@email.com", UserRole.ADMIN, true);
-        UserResponse response = buildResponse("1", "joao@email.com");
+        User entity = buildEntity("1", "joao@email.com", UserRole.ADMIN, true);
 
         when(userRepository.findByEmail("joao@email.com")).thenReturn(Optional.of(entity));
-        when(userMapper.toResponse(entity)).thenReturn(response);
 
-        UserResponse result = userService.findByEmail("joao@email.com");
+        User result = userService.findByEmail("joao@email.com");
 
         assertEquals("joao@email.com", result.getEmail());
     }
@@ -139,60 +129,51 @@ class UserServiceTest {
     void findByEmail_ShouldThrowNotFoundException() {
         when(userRepository.findByEmail("naoexiste@email.com")).thenReturn(Optional.empty());
 
-        assertThrows(NotFoundException.class, () -> userService.findByEmail("naoexiste@email.com"));
+        assertThrows(UserNotFoundException.class, () -> userService.findByEmail("naoexiste@email.com"));
     }
 
     // ─── create ───────────────────────────────────────────────────────────────
 
     @Test
-    @DisplayName("ADMIN deve criar usuário com sucesso")
+    @DisplayName("ADMIN deve criar usuário com sucesso codificando a senha")
     void create_ShouldCreateUser_WhenCalledByAdmin() {
         setupSecurityContext("ROLE_ADMIN");
-        UserRequest request = buildRequest("novo@email.com");
-        UserEntity entity = buildEntity(null, "novo@email.com", UserRole.ATTENDANT, true);
-        UserEntity saved = buildEntity("newId", "novo@email.com", UserRole.ATTENDANT, true);
-        UserResponse response = buildResponse("newId", "novo@email.com");
+        User incoming = buildIncoming("novo@email.com");
+        User saved = buildEntity("newId", "novo@email.com", UserRole.ATTENDANT, true);
 
-        when(userRepository.findByEmail(request.email())).thenReturn(Optional.empty());
-        when(userMapper.toEntity(request)).thenReturn(entity);
-        when(passwordEncoder.encode(request.password())).thenReturn("encoded");
-        when(userRepository.save(entity)).thenReturn(saved);
-        when(userMapper.toResponse(saved)).thenReturn(response);
+        when(userRepository.findByEmail("novo@email.com")).thenReturn(Optional.empty());
+        when(passwordEncoder.encode("senha123")).thenReturn("encoded");
+        when(userRepository.save(incoming)).thenReturn(saved);
 
-        UserResponse result = userService.create(request);
+        User result = userService.create(incoming);
 
         assertEquals("newId", result.getId());
-        verify(passwordEncoder).encode(request.password());
-        verify(userRepository).save(entity);
+        assertEquals("encoded", incoming.getPassword());
+        verify(passwordEncoder).encode("senha123");
+        verify(userRepository).save(incoming);
     }
 
     @Test
     @DisplayName("MANAGER deve criar usuário com sucesso")
     void create_ShouldCreateUser_WhenCalledByManager() {
         setupSecurityContext("ROLE_MANAGER");
-        UserRequest request = buildRequest("novo@email.com");
-        UserEntity entity = buildEntity(null, "novo@email.com", UserRole.ATTENDANT, true);
-        UserEntity saved = buildEntity("newId", "novo@email.com", UserRole.ATTENDANT, true);
-        UserResponse response = buildResponse("newId", "novo@email.com");
+        User incoming = buildIncoming("novo@email.com");
+        User saved = buildEntity("newId", "novo@email.com", UserRole.ATTENDANT, true);
 
-        when(userRepository.findByEmail(request.email())).thenReturn(Optional.empty());
-        when(userMapper.toEntity(request)).thenReturn(entity);
-        when(passwordEncoder.encode(request.password())).thenReturn("encoded");
-        when(userRepository.save(entity)).thenReturn(saved);
-        when(userMapper.toResponse(saved)).thenReturn(response);
+        when(userRepository.findByEmail("novo@email.com")).thenReturn(Optional.empty());
+        when(passwordEncoder.encode("senha123")).thenReturn("encoded");
+        when(userRepository.save(incoming)).thenReturn(saved);
 
-        UserResponse result = userService.create(request);
-
-        assertNotNull(result);
+        assertNotNull(userService.create(incoming));
     }
 
     @Test
     @DisplayName("Deve lançar DomainException quando usuário sem permissão tenta criar")
     void create_ShouldThrowDomainException_WhenCalledByAttendant() {
         setupSecurityContext("ROLE_ATTENDANT");
-        UserRequest request = buildRequest("novo@email.com");
+        User incoming = buildIncoming("novo@email.com");
 
-        assertThrows(DomainException.class, () -> userService.create(request));
+        assertThrows(UserBusinessException.class, () -> userService.create(incoming));
         verify(userRepository, never()).save(any());
     }
 
@@ -200,11 +181,11 @@ class UserServiceTest {
     @DisplayName("Deve lançar DomainException quando email já está em uso por usuário ativo")
     void create_ShouldThrowDomainException_WhenEmailAlreadyActive() {
         setupSecurityContext("ROLE_ADMIN");
-        UserEntity existing = buildEntity("1", "existente@email.com", UserRole.ATTENDANT, true);
-        UserRequest request = buildRequest("existente@email.com");
+        User existing = buildEntity("1", "existente@email.com", UserRole.ATTENDANT, true);
+        User incoming = buildIncoming("existente@email.com");
         when(userRepository.findByEmail("existente@email.com")).thenReturn(Optional.of(existing));
 
-        assertThrows(DomainException.class, () -> userService.create(request));
+        assertThrows(UserBusinessException.class, () -> userService.create(incoming));
         verify(userRepository, never()).save(any());
     }
 
@@ -212,22 +193,18 @@ class UserServiceTest {
     @DisplayName("Deve reutilizar ID de usuário inativo ao criar com mesmo email")
     void create_ShouldReuseId_WhenEmailBelongsToInactiveUser() {
         setupSecurityContext("ROLE_ADMIN");
-        UserEntity inactive = buildEntity("oldId", "reuso@email.com", UserRole.ATTENDANT, false);
-        UserRequest request = buildRequest("reuso@email.com");
-        UserEntity entity = buildEntity(null, "reuso@email.com", UserRole.ATTENDANT, true);
-        UserEntity saved = buildEntity("oldId", "reuso@email.com", UserRole.ATTENDANT, true);
-        UserResponse response = buildResponse("oldId", "reuso@email.com");
+        User inactive = buildEntity("oldId", "reuso@email.com", UserRole.ATTENDANT, false);
+        User incoming = buildIncoming("reuso@email.com");
+        User saved = buildEntity("oldId", "reuso@email.com", UserRole.ATTENDANT, true);
 
-        when(userRepository.findByEmail(request.email())).thenReturn(Optional.of(inactive));
-        when(userMapper.toEntity(request)).thenReturn(entity);
-        when(passwordEncoder.encode(request.password())).thenReturn("encoded");
-        when(userRepository.save(entity)).thenReturn(saved);
-        when(userMapper.toResponse(saved)).thenReturn(response);
+        when(userRepository.findByEmail("reuso@email.com")).thenReturn(Optional.of(inactive));
+        when(passwordEncoder.encode("senha123")).thenReturn("encoded");
+        when(userRepository.save(incoming)).thenReturn(saved);
 
-        UserResponse result = userService.create(request);
+        User result = userService.create(incoming);
 
         assertEquals("oldId", result.getId());
-        assertEquals("oldId", entity.getId()); // ID foi reutilizado
+        assertEquals("oldId", incoming.getId()); // ID foi reutilizado
     }
 
     // ─── update ───────────────────────────────────────────────────────────────
@@ -235,48 +212,43 @@ class UserServiceTest {
     @Test
     @DisplayName("Deve atualizar usuário existente com sucesso")
     void update_ShouldUpdateUser() {
-        UserEntity entity = buildEntity("1", "antigo@email.com", UserRole.ATTENDANT, true);
-        UserRequest request = buildRequest("novo@email.com");
-        UserResponse response = buildResponse("1", "novo@email.com");
+        User entity = buildEntity("1", "antigo@email.com", UserRole.ATTENDANT, true);
+        User changes = buildChanges("novo@email.com");
 
         when(userRepository.findById("1")).thenReturn(Optional.of(entity));
         when(userRepository.existsByEmail("novo@email.com")).thenReturn(false);
-        doNothing().when(userMapper).updateEntity(entity, request);
         when(userRepository.save(entity)).thenReturn(entity);
-        when(userMapper.toResponse(entity)).thenReturn(response);
 
-        UserResponse result = userService.update("1", request);
+        User result = userService.update("1", changes);
 
         assertNotNull(result);
-        verify(userMapper).updateEntity(entity, request);
+        assertEquals("novo@email.com", entity.getEmail());
+        verify(userRepository).save(entity);
     }
 
     @Test
     @DisplayName("Deve lançar DomainException ao atualizar com email já em uso")
     void update_ShouldThrowDomainException_WhenEmailTaken() {
-        UserEntity entity = buildEntity("1", "antigo@email.com", UserRole.ATTENDANT, true);
-        UserRequest request = buildRequest("ocupado@email.com");
+        User entity = buildEntity("1", "antigo@email.com", UserRole.ATTENDANT, true);
+        User changes = buildChanges("ocupado@email.com");
 
         when(userRepository.findById("1")).thenReturn(Optional.of(entity));
         when(userRepository.existsByEmail("ocupado@email.com")).thenReturn(true);
 
-        assertThrows(DomainException.class, () -> userService.update("1", request));
+        assertThrows(UserBusinessException.class, () -> userService.update("1", changes));
         verify(userRepository, never()).save(any());
     }
 
     @Test
     @DisplayName("Não deve verificar duplicidade ao manter o mesmo email")
     void update_ShouldNotCheckDuplicate_WhenEmailUnchanged() {
-        UserEntity entity = buildEntity("1", "mesmo@email.com", UserRole.ATTENDANT, true);
-        UserRequest request = buildRequest("mesmo@email.com");
-        UserResponse response = buildResponse("1", "mesmo@email.com");
+        User entity = buildEntity("1", "mesmo@email.com", UserRole.ATTENDANT, true);
+        User changes = buildChanges("mesmo@email.com");
 
         when(userRepository.findById("1")).thenReturn(Optional.of(entity));
-        doNothing().when(userMapper).updateEntity(entity, request);
         when(userRepository.save(entity)).thenReturn(entity);
-        when(userMapper.toResponse(entity)).thenReturn(response);
 
-        userService.update("1", request);
+        userService.update("1", changes);
 
         verify(userRepository, never()).existsByEmail(any());
     }
@@ -286,7 +258,7 @@ class UserServiceTest {
     @Test
     @DisplayName("Deve desativar usuário ao invés de deletar fisicamente")
     void delete_ShouldDeactivateUser() {
-        UserEntity entity = buildEntity("1", "joao@email.com", UserRole.ATTENDANT, true);
+        User entity = buildEntity("1", "joao@email.com", UserRole.ATTENDANT, true);
         when(userRepository.findById("1")).thenReturn(Optional.of(entity));
 
         userService.delete("1");
@@ -300,7 +272,7 @@ class UserServiceTest {
     void delete_ShouldThrowNotFoundException() {
         when(userRepository.findById("inexistente")).thenReturn(Optional.empty());
 
-        assertThrows(NotFoundException.class, () -> userService.delete("inexistente"));
+        assertThrows(UserNotFoundException.class, () -> userService.delete("inexistente"));
         verify(userRepository, never()).save(any());
     }
 }

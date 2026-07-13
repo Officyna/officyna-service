@@ -1,9 +1,8 @@
 package br.com.officyna.infrastructure.auth;
 
-import br.com.officyna.administrative.user.domain.UserEntity;
-import br.com.officyna.administrative.user.domain.UserRole;
-import br.com.officyna.administrative.user.repository.UserRepository;
-import br.com.officyna.infrastructure.exception.NotFoundException;
+import br.com.officyna.administrative.user.domain.entity.User;
+import br.com.officyna.administrative.user.domain.entity.UserRole;
+import br.com.officyna.administrative.user.domain.repository.UserRepository;
 import br.com.officyna.infrastructure.security.JwtService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -16,9 +15,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.List;
@@ -32,7 +29,6 @@ import static org.mockito.Mockito.*;
 class AuthServiceTest {
 
     @Mock private AuthenticationManager authenticationManager;
-    @Mock private UserDetailsService userDetailsService;
     @Mock private UserRepository userRepository;
     @Mock private JwtService jwtService;
 
@@ -44,15 +40,19 @@ class AuthServiceTest {
         ReflectionTestUtils.setField(authService, "expiration", 86_400_000L);
     }
 
-    private UserEntity buildEntity(String email, UserRole role) {
-        return UserEntity.builder()
+    private User buildEntity(String email, UserRole role) {
+        return User.builder()
                 .id("user-1").name("João Silva").email(email)
                 .password("encoded").userRole(role).active(true)
                 .build();
     }
 
     private UserDetails buildUserDetails(String email) {
-        return new User(email, "encoded", List.of(new SimpleGrantedAuthority("ROLE_ADMIN")));
+        return new org.springframework.security.core.userdetails.User(email, "encoded", List.of(new SimpleGrantedAuthority("ROLE_ADMIN")));
+    }
+
+    private UsernamePasswordAuthenticationToken buildAuthentication(UserDetails userDetails) {
+        return new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
     }
 
     // ─── login ────────────────────────────────────────────────────────────────
@@ -63,11 +63,10 @@ class AuthServiceTest {
         LoginRequest request = new LoginRequest("JOAO@EMAIL.COM", "senha123");
         String normalizedEmail = "joao@email.com";
         UserDetails userDetails = buildUserDetails(normalizedEmail);
-        UserEntity entity = buildEntity(normalizedEmail, UserRole.ADMIN);
+        User entity = buildEntity(normalizedEmail, UserRole.ADMIN);
 
         when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
-                .thenReturn(null);
-        when(userDetailsService.loadUserByUsername(normalizedEmail)).thenReturn(userDetails);
+                .thenReturn(buildAuthentication(userDetails));
         when(userRepository.findByEmail(normalizedEmail)).thenReturn(Optional.of(entity));
         when(jwtService.generateToken(userDetails)).thenReturn("jwt-token-aqui");
 
@@ -89,8 +88,7 @@ class AuthServiceTest {
         String normalizedEmail = "joao@email.com";
         UserDetails userDetails = buildUserDetails(normalizedEmail);
 
-        when(authenticationManager.authenticate(any())).thenReturn(null);
-        when(userDetailsService.loadUserByUsername(normalizedEmail)).thenReturn(userDetails);
+        when(authenticationManager.authenticate(any())).thenReturn(buildAuthentication(userDetails));
         when(userRepository.findByEmail(normalizedEmail)).thenReturn(Optional.of(buildEntity(normalizedEmail, UserRole.ADMIN)));
         when(jwtService.generateToken(userDetails)).thenReturn("token");
 
@@ -116,16 +114,15 @@ class AuthServiceTest {
     }
 
     @Test
-    @DisplayName("Deve lançar NotFoundException quando usuário não existe no repositório")
-    void login_ShouldThrowNotFoundException_WhenUserNotFoundInRepository() {
+    @DisplayName("Deve lançar IllegalStateException quando usuário autenticado não existe no repositório")
+    void login_ShouldThrowIllegalState_WhenUserNotFoundInRepository() {
         LoginRequest request = new LoginRequest("joao@email.com", "senha123");
         UserDetails userDetails = buildUserDetails("joao@email.com");
 
-        when(authenticationManager.authenticate(any())).thenReturn(null);
-        when(userDetailsService.loadUserByUsername("joao@email.com")).thenReturn(userDetails);
+        when(authenticationManager.authenticate(any())).thenReturn(buildAuthentication(userDetails));
         when(userRepository.findByEmail("joao@email.com")).thenReturn(Optional.empty());
 
-        assertThrows(NotFoundException.class, () -> authService.login(request));
+        assertThrows(IllegalStateException.class, () -> authService.login(request));
         verify(jwtService, never()).generateToken(any());
     }
 }

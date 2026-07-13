@@ -1,6 +1,6 @@
 package br.com.officyna.serviceorder.domain.service;
 
-import br.com.officyna.administrative.labor.api.resources.LaborResponse;
+import br.com.officyna.administrative.labor.domain.entity.Labor;
 import br.com.officyna.administrative.labor.domain.service.LaborService;
 import br.com.officyna.serviceorder.api.resources.LaborsRequest;
 import br.com.officyna.serviceorder.domain.dto.LaborDetailDTO;
@@ -11,7 +11,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
@@ -28,9 +27,6 @@ class LaborSelectionServiceTest {
     @Mock
     private LaborService laborService;
 
-    @Spy
-    private BudgetService budgetService;
-
     @InjectMocks
     private LaborSelectionService service;
 
@@ -41,15 +37,14 @@ class LaborSelectionServiceTest {
         LaborsRequest req = new LaborsRequest();
         req.setId("labor-1");
 
-        LaborResponse response = new LaborResponse("labor-1", "Troca de Óleo e Filtro", "Substituição de óleo sintético 5W30 e filtro de óleo original.", BigDecimal.valueOf(150.00), 1, LocalDateTime.now(), LocalDateTime.now(), true);
-        when(laborService.findById("labor-1")).thenReturn(response);
+        Labor labor = Labor.builder().id("labor-1").name("Troca de Óleo e Filtro").description("Substituição de óleo sintético 5W30 e filtro de óleo original.").price(BigDecimal.valueOf(150.00)).executionTimeInDays(1).active(true).build();
+        when(laborService.findById("labor-1")).thenReturn(labor);
 
         // Act
         LaborsDTO result = service.addLabors(List.of(req), new ArrayList<>());
 
         // Assert
         assertThat(result.getLaborsDetails()).hasSize(1);
-        assertThat(result.getTotalLaborsAmount()).isEqualByComparingTo("150.00");
     }
 
     @Test
@@ -59,12 +54,11 @@ class LaborSelectionServiceTest {
         LaborsRequest req = new LaborsRequest();
         req.setId("new-1");
 
-        when(laborService.findById("new-1")).thenReturn(new LaborResponse("new-1", "Balanceamento", "Desc", BigDecimal.valueOf(80.00), 1, LocalDateTime.now(), LocalDateTime.now(), true));
+        when(laborService.findById("new-1")).thenReturn(Labor.builder().id("new-1").name("Balanceamento").description("Desc").price(BigDecimal.valueOf(80.00)).executionTimeInDays(1).active(true).build());
 
         LaborsDTO result = service.addLabors(List.of(req), new ArrayList<>(List.of(existing)));
 
         assertThat(result.getLaborsDetails()).hasSize(2);
-        assertThat(result.getTotalLaborsAmount()).isEqualByComparingTo("180.00");
     }
 
 

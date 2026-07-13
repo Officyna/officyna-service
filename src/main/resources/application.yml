@@ -10,6 +10,7 @@ server:
 jwt:
   secret: ${JWT_SECRET:officyna-secret-key-change-in-production-min-256bits}
   #3600000=1hr, 28800000=8hrs, 86400000=24hrs
+
   expiration: ${JWT_EXPIRATION:86400000}
 
 springdoc:
@@ -18,6 +19,10 @@ springdoc:
   swagger-ui:
     path: /swagger-ui.html
     operationsSorter: alpha
+
+database:
+  seed:
+    enabled: false
 
 management:
   endpoints:
@@ -32,4 +37,3 @@ logging:
   level:
     br.com.officyna: INFO
     org.springframework.security: INFO
-

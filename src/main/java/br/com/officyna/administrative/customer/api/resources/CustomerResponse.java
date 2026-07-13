@@ -1,7 +1,7 @@
 package br.com.officyna.administrative.customer.api.resources;
 
 
-import br.com.officyna.administrative.customer.domain.CustomerType;
+import br.com.officyna.administrative.customer.domain.entity.CustomerType;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.time.LocalDateTime;

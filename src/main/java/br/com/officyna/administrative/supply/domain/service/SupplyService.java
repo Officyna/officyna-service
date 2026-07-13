@@ -1,71 +1,66 @@
 package br.com.officyna.administrative.supply.domain.service;
 
-import br.com.officyna.administrative.supply.api.resources.SupplyRequest;
-import br.com.officyna.administrative.supply.api.resources.SupplyResponse;
-import br.com.officyna.administrative.supply.domain.SupplyEntity;
-import br.com.officyna.administrative.supply.domain.SupplyType;
-import br.com.officyna.administrative.supply.domain.mapper.SupplyMapper;
-import br.com.officyna.administrative.supply.repository.SupplyRepository;
-import br.com.officyna.infrastructure.exception.DomainException;
-import br.com.officyna.infrastructure.exception.NotFoundException;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-
+import br.com.officyna.administrative.supply.domain.entity.Supply;
+import br.com.officyna.administrative.supply.domain.entity.SupplyType;
+import br.com.officyna.administrative.supply.domain.repository.SupplyRepository;
+import br.com.officyna.administrative.supply.domain.exception.SupplyBusinessException;
+import br.com.officyna.administrative.supply.domain.exception.SupplyNotFoundException;
 import java.util.List;
 
-@Service
-@RequiredArgsConstructor
 public class SupplyService {
 
-    private final SupplyRepository supplyRepository;
-    private final SupplyMapper supplyMapper;
+    private final SupplyRepository repository;
 
-    public List<SupplyResponse> findAll() {
-        return supplyRepository.findByActiveTrue()
-                .stream()
-                .map(supplyMapper::toResponse)
-                .toList();
+    public SupplyService(SupplyRepository repository) {
+        this.repository = repository;
     }
 
-    public List<SupplyResponse> findByType(SupplyType type) {
-        return supplyRepository.findByActiveTrueAndType(type)
-                .stream()
-                .map(supplyMapper::toResponse)
-                .toList();
+    public List<Supply> findAll() {
+        return repository.findByActiveTrue();
     }
 
-    public SupplyResponse findById(String id) {
-        return supplyMapper.toResponse(findEntityById(id));
+    public List<Supply> findByType(SupplyType type) {
+        return repository.findByActiveTrueAndType(type);
     }
 
-    public SupplyResponse create(SupplyRequest request) {
-        if (supplyRepository.existsByName(request.name())) {
-            throw new DomainException("Supply already registered with name: " + request.name());
+    public Supply findById(String id) {
+        return findEntityById(id);
+    }
+
+    public Supply create(Supply supply) {
+        if (repository.existsByName(supply.getName())) {
+            throw new SupplyBusinessException("Supply already registered with name: " + supply.getName());
         }
-        SupplyEntity entity = supplyMapper.toEntity(request);
-        return supplyMapper.toResponse(supplyRepository.save(entity));
+        return repository.save(supply);
     }
 
-    public SupplyResponse update(String id, SupplyRequest request) {
-        SupplyEntity entity = findEntityById(id);
+    public Supply update(String id, Supply changes) {
+        Supply entity = findEntityById(id);
 
-        boolean nameChanged = !entity.getName().equals(request.name());
-        if (nameChanged && supplyRepository.existsByName(request.name())) {
-            throw new DomainException("Supply already registered with name: " + request.name());
+        boolean nameChanged = !entity.getName().equals(changes.getName());
+        if (nameChanged && repository.existsByName(changes.getName())) {
+            throw new SupplyBusinessException("Supply already registered with name: " + changes.getName());
         }
 
-        supplyMapper.updateEntity(entity, request);
-        return supplyMapper.toResponse(supplyRepository.save(entity));
+        entity.setName(changes.getName());
+        entity.setDescription(changes.getDescription());
+        entity.setType(changes.getType());
+        entity.setPurchasePrice(changes.getPurchasePrice());
+        entity.setSalePrice(changes.getSalePrice());
+        entity.setStockQuantity(changes.getStockQuantity());
+        entity.setMinimumQuantity(changes.getMinimumQuantity());
+        entity.setReservedQuantity(changes.getReservedQuantity());
+        return repository.save(entity);
     }
 
     public void delete(String id) {
-        SupplyEntity entity = findEntityById(id);
+        Supply entity = findEntityById(id);
         entity.setActive(false);
-        supplyRepository.save(entity);
+        repository.save(entity);
     }
 
-    public SupplyEntity findEntityById(String id) {
-        return supplyRepository.findById(id)
-                .orElseThrow(() -> NotFoundException.of("Supply", id));
+    public Supply findEntityById(String id) {
+        return repository.findById(id)
+                .orElseThrow(() -> SupplyNotFoundException.of(id));
     }
 }

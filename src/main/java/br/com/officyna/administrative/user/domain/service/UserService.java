@@ -1,60 +1,52 @@
 package br.com.officyna.administrative.user.domain.service;
 
-import br.com.officyna.administrative.user.api.resources.UserRequest;
-import br.com.officyna.administrative.user.api.resources.UserResponse;
-import br.com.officyna.administrative.user.domain.UserEntity;
-import br.com.officyna.administrative.user.domain.mapper.UserMapper;
-import br.com.officyna.administrative.user.repository.UserRepository;
-import br.com.officyna.infrastructure.exception.DomainException;
-import br.com.officyna.infrastructure.exception.NotFoundException;
-import lombok.RequiredArgsConstructor;
+import br.com.officyna.administrative.user.domain.entity.User;
+import br.com.officyna.administrative.user.domain.repository.UserRepository;
+import br.com.officyna.administrative.user.domain.exception.UserBusinessException;
+import br.com.officyna.administrative.user.domain.exception.UserNotFoundException;
 import org.jspecify.annotations.NonNull;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
 
-@Service
-@RequiredArgsConstructor
 public class UserService {
 
-    private final UserRepository userRepository;
-    private final UserMapper userMapper;
+    private final UserRepository repository;
     private final PasswordEncoder passwordEncoder;
 
-    public List<UserResponse> findAll() {
-        return userRepository.findByActiveTrue()
-                .stream()
-                .map(userMapper::toResponse)
-                .toList();
+    public UserService(UserRepository repository, PasswordEncoder passwordEncoder) {
+        this.repository = repository;
+        this.passwordEncoder = passwordEncoder;
     }
 
-    public UserResponse findById(String id) {
-        return userMapper.toResponse(findEntityById(id));
+    public List<User> findAll() {
+        return repository.findByActiveTrue();
     }
 
-    public UserResponse findByEmail(String email) {
-        return userRepository.findByEmail(email)
-                .map(userMapper::toResponse)
-                .orElseThrow(() -> new NotFoundException("Usuário não encontrado com este email: " + email));
+    public User findById(String id) {
+        return findEntityById(id);
     }
 
-    public UserResponse create(UserRequest request) {
+    public User findByEmail(String email) {
+        return repository.findByEmail(email)
+                .orElseThrow(() -> new UserNotFoundException("Usuário não encontrado com este email: " + email));
+    }
+
+    public User create(User user) {
         validateAdminOrManager();
-        Optional<UserEntity> userExist = userRepository.findByEmail(request.email());
+        Optional<User> userExist = repository.findByEmail(user.getEmail());
         if (userExist.isPresent() && Boolean.TRUE.equals(userExist.get().getActive())) {
-            throw new DomainException("Já existe um usuário com este email: " + request.email());
+            throw new UserBusinessException("Já existe um usuário com este email: " + user.getEmail());
         }
-        UserEntity entity = userMapper.toEntity(request);
-        entity.setId(userExist.map(UserEntity::getId).orElse(null));
-        entity.setEmail(normalizeEmail(entity));
-        entity.setPassword(passwordEncoder.encode(request.password()));
-        return userMapper.toResponse(userRepository.save(entity));
+        user.setId(userExist.map(User::getId).orElse(null));
+        user.setEmail(normalizeEmail(user));
+        user.setPassword(passwordEncoder.encode(user.getPassword()));
+        return repository.save(user);
     }
 
     private void validateAdminOrManager() {
@@ -63,34 +55,36 @@ public class UserService {
         boolean hasPermission = auth.getAuthorities().stream()
                 .anyMatch(a -> Objects.equals(a.getAuthority(), "ROLE_ADMIN") || Objects.equals(a.getAuthority(), "ROLE_MANAGER"));
         if (!hasPermission) {
-            throw new DomainException("Apenas ADMIN ou MANAGER podem criar usuários internos.");
+            throw new UserBusinessException("Apenas ADMIN ou MANAGER podem criar usuários internos.");
         }
     }
 
-    private static @NonNull String normalizeEmail(UserEntity entity) {
+    private static @NonNull String normalizeEmail(User entity) {
         return entity.getEmail().toLowerCase(Locale.ROOT).trim();
     }
 
-    public UserResponse update(String id, UserRequest request) {
-        UserEntity entity = findEntityById(id);
+    public User update(String id, User changes) {
+        User entity = findEntityById(id);
 
-        boolean emailChanged = !entity.getEmail().equals(request.email());
-        if (emailChanged && userRepository.existsByEmail(request.email())) {
-            throw new DomainException("Já existe um usário com este email: " + request.email());
+        boolean emailChanged = !entity.getEmail().equals(changes.getEmail());
+        if (emailChanged && repository.existsByEmail(changes.getEmail())) {
+            throw new UserBusinessException("Já existe um usário com este email: " + changes.getEmail());
         }
 
-        userMapper.updateEntity(entity, request);
-        return userMapper.toResponse(userRepository.save(entity));
+        entity.setName(changes.getName());
+        entity.setEmail(changes.getEmail());
+        entity.setUserRole(changes.getUserRole());
+        return repository.save(entity);
     }
 
     public void delete(String id) {
-        UserEntity entity = findEntityById(id);
+        User entity = findEntityById(id);
         entity.setActive(false);
-        userRepository.save(entity);
+        repository.save(entity);
     }
 
-    public UserEntity findEntityById(String id) {
-        return userRepository.findById(id)
-                .orElseThrow(() -> NotFoundException.of("User", id));
+    public User findEntityById(String id) {
+        return repository.findById(id)
+                .orElseThrow(() -> UserNotFoundException.of(id));
     }
 }

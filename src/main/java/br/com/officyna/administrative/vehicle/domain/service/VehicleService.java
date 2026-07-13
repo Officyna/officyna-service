@@ -1,76 +1,72 @@
 package br.com.officyna.administrative.vehicle.domain.service;
 
-import br.com.officyna.administrative.customer.domain.CustomerEntity;
+import br.com.officyna.administrative.customer.domain.entity.Customer;
 import br.com.officyna.administrative.customer.domain.service.CustomerService;
-import br.com.officyna.administrative.vehicle.api.resources.VehicleRequest;
-import br.com.officyna.administrative.vehicle.api.resources.VehicleResponse;
-import br.com.officyna.administrative.vehicle.domain.VehicleEntity;
-import br.com.officyna.administrative.vehicle.domain.mapper.VehicleMapper;
-import br.com.officyna.administrative.vehicle.repository.VehicleRepository;
-import br.com.officyna.infrastructure.exception.DomainException;
-import br.com.officyna.infrastructure.exception.NotFoundException;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-
+import br.com.officyna.administrative.vehicle.domain.entity.Vehicle;
+import br.com.officyna.administrative.vehicle.domain.repository.VehicleRepository;
+import br.com.officyna.administrative.vehicle.domain.exception.VehicleBusinessException;
+import br.com.officyna.administrative.vehicle.domain.exception.VehicleNotFoundException;
 import java.util.List;
 
-@Service
-@RequiredArgsConstructor
 public class VehicleService {
 
-    private final VehicleRepository vehicleRepository;
-    private final VehicleMapper vehicleMapper;
+    private final VehicleRepository repository;
     private final CustomerService customerService;
 
-    public List<VehicleResponse> findAll() {
-        return vehicleRepository.findAll()
-                .stream()
-                .map(vehicleMapper::toResponse)
-                .toList();
+    public VehicleService(VehicleRepository repository, CustomerService customerService) {
+        this.repository = repository;
+        this.customerService = customerService;
     }
 
-    public VehicleResponse findById(String id) {
-        return vehicleMapper.toResponse(findEntityById(id));
+    public List<Vehicle> findAll() {
+        return repository.findAll();
     }
 
-    public List<VehicleResponse> findByCustomer(String customerId) {
-        return vehicleRepository.findByCustomerId(customerId)
-                .stream()
-                .map(vehicleMapper::toResponse)
-                .toList();
+    public Vehicle findById(String id) {
+        return findEntityById(id);
     }
 
-    public VehicleResponse create(VehicleRequest request) {
-        if (vehicleRepository.existsByPlate(request.plate().toUpperCase())) {
-            throw new DomainException("Plate already registered: " + request.plate());
+    public List<Vehicle> findByCustomer(String customerId) {
+        return repository.findByCustomerId(customerId);
+    }
+
+    public Vehicle create(Vehicle vehicle) {
+        if (repository.existsByPlate(vehicle.getPlate())) {
+            throw new VehicleBusinessException("Plate already registered: " + vehicle.getPlate());
         }
-        CustomerEntity customer = customerService.findEntityById(request.customerId());
-        VehicleEntity entity = vehicleMapper.toEntity(request, customer);
-        return vehicleMapper.toResponse(vehicleRepository.save(entity));
+        Customer customer = customerService.findEntityById(vehicle.getCustomerId());
+        vehicle.setCustomerName(customer.getName());
+        return repository.save(vehicle);
     }
 
-    public VehicleResponse update(String id, VehicleRequest request) {
-        VehicleEntity entity = findEntityById(id);
+    public Vehicle update(String id, Vehicle changes) {
+        Vehicle entity = findEntityById(id);
 
-        boolean plateChanged = !entity.getPlate().equals(request.plate().toUpperCase());
-        if (plateChanged && vehicleRepository.existsByPlate(request.plate().toUpperCase())) {
-            throw new DomainException("Plate already registered: " + request.plate());
+        boolean plateChanged = !entity.getPlate().equals(changes.getPlate());
+        if (plateChanged && repository.existsByPlate(changes.getPlate())) {
+            throw new VehicleBusinessException("Plate already registered: " + changes.getPlate());
         }
 
-        CustomerEntity customer = customerService.findEntityById(request.customerId());
-        vehicleMapper.updateEntity(entity, request, customer);
-        return vehicleMapper.toResponse(vehicleRepository.save(entity));
+        Customer customer = customerService.findEntityById(changes.getCustomerId());
+        entity.setCustomerId(customer.getId());
+        entity.setCustomerName(customer.getName());
+        entity.setPlate(changes.getPlate());
+        entity.setBrand(changes.getBrand());
+        entity.setModel(changes.getModel());
+        entity.setYear(changes.getYear());
+        entity.setColor(changes.getColor());
+        return repository.save(entity);
     }
 
     public void delete(String id) {
-        VehicleEntity entity = findEntityById(id);
+        Vehicle entity = findEntityById(id);
         entity.setActive(false);
-        vehicleRepository.save(entity);
+        repository.save(entity);
     }
 
     // Utility method for internal use (e.g. WorkOrderService)
-    public VehicleEntity findEntityById(String id) {
-        return vehicleRepository.findById(id)
-                .orElseThrow(() -> NotFoundException.of("Vehicle", id));
+    public Vehicle findEntityById(String id) {
+        return repository.findById(id)
+                .orElseThrow(() -> VehicleNotFoundException.of(id));
     }
 }

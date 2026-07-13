@@ -1,6 +1,6 @@
 package br.com.officyna.infrastructure.security;
 
-import br.com.officyna.administrative.user.repository.UserRepository;
+import br.com.officyna.administrative.user.domain.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.User;
@@ -15,11 +15,11 @@ import java.util.List;
 @RequiredArgsConstructor
 public class UserDetailsServiceImpl implements UserDetailsService {
 
-    private final UserRepository userRepository;
+    private final UserRepository repository;
 
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
-        return userRepository.findByEmail(email)
+        return repository.findByEmail(email)
                 .map(entity -> new User(
                         entity.getEmail(),
                         entity.getPassword(),
