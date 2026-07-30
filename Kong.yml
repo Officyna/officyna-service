@@ -1,0 +1,17 @@
+_format_version: "3.0"
+services:
+  - name: projeto-officyna
+    url: http://app:8084
+    routes:
+      - name: rota-officyna
+        paths:
+          - /officyna/v1
+        strip_path: true
+      - name: rota-auth
+        paths:
+          - /api/auth
+        strip_path: true
+      - name: rota-actuator
+        paths:
+          - /actuator
+        strip_path: false
