@@ -63,55 +63,16 @@ services:
     networks:
       - officyna-network
 
-  kong-database:
-    container_name: kong-database
-    image: postgres:15-alpine
-    restart: on-failure
-    volumes:
-      - kong_db_data:/var/lib/postgresql/data
-    networks:
-      - officyna-network
-    environment:
-      POSTGRES_USER: kong
-      POSTGRES_DB: kong
-      POSTGRES_PASSWORD: kong
-    healthcheck:
-      test: ["CMD", "pg_isready", "-U", "kong"]
-      interval: 5s
-      timeout: 10s
-      retries: 10
-    ports:
-      - "5432:5432"
-
-  kong-migration:
-    image: kong:latest
-    container_name: kong-migration
-    command: kong migrations bootstrap
-    depends_on:
-      kong-database:
-       condition: service_healthy
-    environment:
-      KONG_DATABASE: postgres
-      KONG_PG_HOST: kong-database
-      KONG_PG_USER: kong
-      KONG_PG_PASSWORD: kong
-      KONG_PG_DATABASE: kong
-    networks:
-      - officyna-network
-    restart: on-failure
-
   kong:
     image: kong:latest
     container_name: kong-gateway
     restart: on-failure
     depends_on:
-      kong-migration:
-       condition: service_started
       app:
        condition: service_healthy
     environment:
-      KONG_DATABASE: postgres
-      KONG_PG_HOST: kong-database
+      KONG_DECLARATIVE_CONFIG: /kong/declarative/kong.yml
+      KONG_DATABASE: off
       KONG_PG_USER: kong
       KONG_PG_PASSWORD: kong
       KONG_PG_DATABASE: kong
@@ -127,6 +88,8 @@ services:
       - "8002:8002"
     networks:
       - officyna-network
+    volumes:
+      - ./kong.yml:/kong/declarative/kong.yml
 
 #  sonarqube:
 #    image: sonarqube:community
@@ -145,7 +108,6 @@ services:
 
 volumes:
   mongo_data:
-  kong_db_data: {}
 #  sonar_data:
 #  sonar_extensions:
 #  sonar_logs:
