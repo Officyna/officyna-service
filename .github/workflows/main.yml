@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - developer
+      - feat/144-infra-aws-kong
   pull_request:
     branches:
       - main
