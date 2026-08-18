@@ -54,7 +54,6 @@ officyna-service/
 ├── .github/
 │   └── workflows/ # Pipelines de CI/CD
 ├── db-seed/ # Scripts para popular o banco de dados inicial
-├── infra/ # Infraestrutura como Código (ex: Terraform)
 ├── k8s/ # Manifestos de orquestração do Kubernetes
 └── src/
     ├── main/
@@ -194,7 +193,12 @@ Inclui os controllers REST, DTOs e Gateways que traduzem dados entre o mundo ext
 Lida com frameworks e drivers, como as configurações do Spring Boot e a persistência real no MongoDB.
 
 ### Infraestrutura Provisionada
-A infraestrutura é provisionada na AWS de forma automatizada, consistindo em:
+A infraestrutura é provisionada na AWS de forma automatizada e segregada em
+repositórios próprios (Terraform + CI/CD):
+[officyna-infra-k8s](https://github.com/Officyna/officyna-infra-k8s) (EKS) e
+[officyna-infra-db](https://github.com/Officyna/officyna-infra-db) (DocumentDB).
+Este repositório consome essa infraestrutura já provisionada — não contém
+mais os arquivos Terraform. Consiste em:
 * **Rede (VPC):** Uma Virtual Private Cloud isolada com subnets públicas para acesso externo e subnets privadas para segurança do banco de dados.
 * **Orquestração (Amazon EKS):** Um cluster Kubernetes gerenciado que executa os nós de trabalho (worker nodes) onde a aplicação é implantada.
 * **Banco de Dados (Amazon DocumentDB/MongoDB):** Um cluster NoSQL compatível com MongoDB, configurado para alta disponibilidade e persistência.
@@ -204,8 +208,7 @@ A infraestrutura é provisionada na AWS de forma automatizada, consistindo em:
 O fluxo de implantação é totalmente automatizado via GitHub Actions:
 * **Integração Contínua (CI):** Ao realizar um push, o pipeline executa o checkout do código, build com Maven e testes automatizados para garantir a qualidade.
 * **Dockerização:** Após os testes, uma nova imagem Docker é gerada e enviada para o GitHub Container Registry (GHCR).
-* **Provisionamento de Infraestrutura:** O pipeline utiliza o Terraform para aplicar as mudanças na infraestrutura da AWS (VPC, EKS, DB).
-* **Entrega Contínua (CD):** Por fim, os manifestos Kubernetes são aplicados no cluster EKS para atualizar a aplicação sem interrupção (Rolling Update).
+* **Entrega Contínua (CD):** Por fim, os manifestos Kubernetes são aplicados no cluster EKS (provisionado pelo repositório [officyna-infra-k8s](https://github.com/Officyna/officyna-infra-k8s)) para atualizar a aplicação sem interrupção (Rolling Update). O endpoint do banco (provisionado pelo [officyna-infra-db](https://github.com/Officyna/officyna-infra-db)) é lido do AWS Systems Manager Parameter Store.
 
 ## 🛡️ Segurança e Qualidade
 - Autenticação JWT: Implementada para proteger todos os endpoints administrativos.
@@ -250,24 +253,9 @@ kubectl apply -f hpa.yaml
 ````
 
 ## Provisionamento da Infraestrutura com Terraform
-Para provisionar os recursos na AWS, utilize os arquivos na pasta `infra/terraform/`:
-- **Inicialização:** Execute para baixar os providers da AWS e configurar o backend remoto (S3).
-````bash 
-terraform init
-````
-- **Validação:** Verifique a sintaxe com 
-````bash 
-terraform validate
-````
-- **Planejamento:** Visualize os recursos que serão criados com
-````bash 
-terraform plan
-````
-- **Aplicação:** Provisione a rede, o banco e o cluster EKS com
-````bash 
-terraform apply -auto-approve
-````
-- **Configuração de Acesso:** Após o provisionamento, utilize o comando (usando os dados do outputs.tf) para conectar seu kubectl ao cluster na nuvem.
-````bash
-aws eks update-kubeconfig
-````
+A infraestrutura (rede, cluster EKS e banco DocumentDB) foi segregada em
+repositórios próprios, cada um com seu Terraform e pipeline de CI/CD:
+- [officyna-infra-k8s](https://github.com/Officyna/officyna-infra-k8s) — cluster Kubernetes (EKS)
+- [officyna-infra-db](https://github.com/Officyna/officyna-infra-db) — banco de dados gerenciado (DocumentDB)
+
+Consulte o README de cada repositório para instruções de `terraform init/plan/apply/destroy`.
