@@ -17,9 +17,8 @@ variable "db_password" {
 }
 
 variable "vpc_id" {
-  description = "ID da VPC existente"
+  description = "ID da VPC utilizada pelo DocumentDB"
   type        = string
-  default     = "vpc-01198adba51551838"
 }
 
 variable "subnet_ids" {
