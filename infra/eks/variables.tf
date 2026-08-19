@@ -26,3 +26,8 @@ variable "instance_type" {
   type        = string
   default = "t3.medium"
 }
+
+variable "vpc_id" {
+  description = "ID da VPC utilizada pelo DocumentDB"
+  type        = string
+}

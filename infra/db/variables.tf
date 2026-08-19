@@ -16,13 +16,14 @@ variable "db_password" {
   sensitive   = true
 }
 
-variable "vpc_id" {
-  description = "ID da VPC utilizada pelo DocumentDB"
-  type        = string
-}
-
 variable "subnet_ids" {
   description = "Lista de IDs das Subnets"
   type        = list(string)
   default     = ["subnet-094a4756371abb5f2", "subnet-0a04000aa0846c777"]
+}
+
+variable "cidr_vpc" {
+  description = "CIDR da VPC"
+  type        = string
+  default = "10.0.0.0/16"
 }

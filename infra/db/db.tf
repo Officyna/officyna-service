@@ -12,7 +12,7 @@ resource "aws_docdb_subnet_group" "default" {
 resource "aws_security_group" "docdb_sg" {
   name        = "officyna-docdb-sg"
   description = "Permite trafego interno na porta 27017 (MongoDB)"
-  vpc_id      = var.vpc_id
+  vpc_id      = aws_vpc.vpc_fiap.id
 
   ingress {
     from_port   = 27017

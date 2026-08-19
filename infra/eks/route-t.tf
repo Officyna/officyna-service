@@ -1,5 +1,5 @@
 resource "aws_route_table" "route_table_public" {
-  vpc_id = aws_vpc.vpc_fiap.id
+  vpc_id = var.vpc_id
 
   # since this is exactly the route AWS will create, the route will be adopted
   route {
