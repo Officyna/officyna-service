@@ -1,7 +1,7 @@
 # 1. Cria um Grupo de Subnets para o Banco de Dados
 resource "aws_docdb_subnet_group" "default" {
   name       = "officyna-docdb-subnet-group"
-  subnet_ids = var.subnet_ids
+  subnet_ids = aws_subnet.subnet_public[*].id
 
   tags = {
     Name = "officyna-docdb-subnets"

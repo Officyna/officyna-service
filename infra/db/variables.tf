@@ -16,12 +16,6 @@ variable "db_password" {
   sensitive   = true
 }
 
-variable "subnet_ids" {
-  description = "Lista de IDs das Subnets"
-  type        = list(string)
-  default     = ["subnet-094a4756371abb5f2", "subnet-0a04000aa0846c777"]
-}
-
 variable "cidr_vpc" {
   description = "CIDR da VPC"
   type        = string
