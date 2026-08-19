@@ -22,20 +22,8 @@ consumers:
     basicauth_credentials:
       - username: user_admin
         password: admin123
-  - username: consumer_admin_jwt
-    custom_id: consumer_admin_jwt_id
-    jwt_secrets:
-      - algorithm: HS256
-        key: user_admin_jwt
-        secret: officyna-secret-key-change-in-production-min-256bits
 plugins:
   - name: basic-auth
     route: authentication-route
     config:
         anonymous: anonymous
-  - name: jwt
-    route: authentication-route
-    config:
-      header_names:
-        - authorization
-      key_claim_name: iss
