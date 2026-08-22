@@ -1,13 +1,19 @@
+data "aws_internet_gateway" "igw_api" {
+  filter {
+    name   = "attachment.vpc-id"
+    values = [var.vpc_id]
+  }
+}
+
 resource "aws_route_table" "route_table_public" {
   vpc_id = var.vpc_id
 
-  # since this is exactly the route AWS will create, the route will be adopted
   route {
     cidr_block = "0.0.0.0/0"
-    gateway_id = aws_internet_gateway.igw_api.id
+    gateway_id = data.aws_internet_gateway.igw_api.id
   }
-  tags = var.tags
 
+  tags = var.tags
 }
 
 resource "aws_route_table_association" "route_association" {

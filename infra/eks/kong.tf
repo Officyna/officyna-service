@@ -141,7 +141,7 @@ resource "kubernetes_deployment" "kong" {
           config_map {
             name = kubernetes_config_map.kong_declarative_config.metadata[0].name
 
-            item {
+            items {
               key  = "kong.yml"
               path = "kong.yml"
             }
