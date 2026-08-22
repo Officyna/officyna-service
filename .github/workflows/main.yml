@@ -139,11 +139,11 @@ jobs:
       - name: Terraform Apply
         run: terraform apply -auto-approve -var="db_password=${{ secrets.DB_PASSWORD }}"
 
-#      - name: Capturar endpoint do DocumentDB
-#        id: docdb
-#        run: |
-#          ENDPOINT=$(terraform output -raw docdb_endpoint)
-#          echo "endpoint=$ENDPOINT" >> $GITHUB_OUTPUT
+      - name: Capturar endpoint do DocumentDB
+        id: docdb
+        run: |
+          ENDPOINT=$(terraform output -raw docdb_endpoint)
+          echo "endpoint=$ENDPOINT" >> $GITHUB_OUTPUT
 
   # ==========================================
   # JOB: Deploy da Infraestrutura (EKS)
