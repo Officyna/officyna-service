@@ -165,7 +165,7 @@ jobs:
     if: github.event_name == 'push'
     defaults:
       run:
-        working-directory: infra/eks
+        working-directory: infra
     steps:
       - name: Checkout do código
         uses: actions/checkout@v4
@@ -185,22 +185,13 @@ jobs:
         run: terraform init
 
       - name: Terraform Plan
-        run: |
-          terraform plan \
-            -var="vpc_id=${{ needs.deploy-db.outputs.vpc_id }}" \
-            -var="cidr_vpc=${{ needs.deploy-db.outputs.vpc_cidr }}" \
-            -var='subnet_ids=${{ needs.deploy-db.outputs.subnet_ids }}'
+        run: terraform plan
 
       - name: Terraform Apply
-        run: |
-          terraform apply -auto-approve \
-            -var="vpc_id=${{ needs.deploy-db.outputs.vpc_id }}" \
-            -var="cidr_vpc=${{ needs.deploy-db.outputs.vpc_cidr }}" \
-            -var='subnet_ids=${{ needs.deploy-db.outputs.subnet_ids }}'
+        run: terraform apply -auto-approve
 
       - name: Obter URL pública do Kong
         id: kong-url
-        working-directory: infra/eks
         run: |
           ENDPOINT=$(terraform output -raw kong_proxy_endpoint 2>/dev/null || echo "pending")
 
@@ -345,7 +336,7 @@ jobs:
     if: always() && needs.deploy-eks.result != 'skipped' && github.event_name == 'push'
     defaults:
       run:
-        working-directory: infra/eks
+        working-directory: infra
 
     steps:
       - name: Checkout do código
@@ -370,11 +361,11 @@ jobs:
 
       - name: Remover recursos do Kubernetes
         run: |
-          kubectl delete -f ../../k8s/hpa.yaml --ignore-not-found=true
-          kubectl delete -f ../../k8s/service.yaml --ignore-not-found=true
-          kubectl delete -f ../../k8s/deployment.yaml --ignore-not-found=true
-          kubectl delete -f ../../k8s/secret.yaml --ignore-not-found=true
-          kubectl delete -f ../../k8s/configmap.yaml --ignore-not-found=true
+          kubectl delete -f k8s/hpa.yaml --ignore-not-found=true
+          kubectl delete -f k8s/service.yaml --ignore-not-found=true
+          kubectl delete -f k8s/deployment.yaml --ignore-not-found=true
+          kubectl delete -f k8s/secret.yaml --ignore-not-found=true
+          kubectl delete -f k8s/configmap.yaml --ignore-not-found=true
 
       - name: Aguardar remoção do LoadBalancer
         run: |

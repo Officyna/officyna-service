@@ -17,7 +17,8 @@ resource "aws_route_table" "route_table_public" {
 }
 
 resource "aws_route_table_association" "route_association" {
-  count          = length(var.subnet_ids)
-  subnet_id      = var.subnet_ids[count.index]
+  count = length(var.subnet_ids) > 0 ? length(var.subnet_ids) : length(aws_subnet.subnet_public)
+
+  subnet_id      = length(var.subnet_ids) > 0 ? var.subnet_ids[count.index] : aws_subnet.subnet_public[count.index].id
   route_table_id = aws_route_table.route_table_public.id
 }
