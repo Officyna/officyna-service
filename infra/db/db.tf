@@ -1,7 +1,7 @@
 # 1. Cria um Grupo de Subnets para o Banco de Dados
 resource "aws_docdb_subnet_group" "default" {
   name       = "officyna-docdb-subnet-group"
-  subnet_ids = aws_subnet.subnet_public[*].id
+  subnet_ids = aws_subnet.subnet_private[*].id
 
   tags = {
     Name = "officyna-docdb-subnets"
@@ -18,7 +18,7 @@ resource "aws_security_group" "docdb_sg" {
     from_port   = 27017
     to_port     = 27017
     protocol    = "tcp"
-    cidr_blocks = ["10.0.0.0/16"]
+      cidr_blocks = [aws_vpc.vpc_fiap.cidr_block]
   }
 
   egress {
