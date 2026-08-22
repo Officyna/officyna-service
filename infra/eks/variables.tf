@@ -31,9 +31,3 @@ variable "vpc_id" {
   description = "ID da VPC utilizada pelo DocumentDB"
   type        = string
 }
-
-variable "assume_role_arn" {
-  description = "ARN da role a ser assumida (opcional)"
-  type        = string
-  default     = ""
-}

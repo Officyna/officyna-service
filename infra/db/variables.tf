@@ -21,9 +21,3 @@ variable "cidr_vpc" {
   type        = string
   default = "10.0.0.0/16"
 }
-
-variable "assume_role_arn" {
-  description = "ARN da role a ser assumida (opcional)"
-  type        = string
-  default     = ""
-}
