@@ -6,13 +6,13 @@ variable "aws_region" {
 variable "project_name" {
   description = "Nome do projeto"
   type        = string
-  default = "officyna-service"
+  default     = "officyna-service"
 }
 
 variable "cidr_vpc" {
   description = "CIDR da VPC"
   type        = string
-  default = "10.0.0.0/16"
+  default     = "10.0.0.0/16"
 }
 
 variable "tags" {
@@ -24,7 +24,7 @@ variable "tags" {
 variable "instance_type" {
   description = "Tamanho e família padrão da instância EC2 do node"
   type        = string
-  default = "t3.medium"
+  default     = "t3.medium"
 }
 
 variable "vpc_id" {

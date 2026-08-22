@@ -19,5 +19,5 @@ variable "db_password" {
 variable "cidr_vpc" {
   description = "CIDR da VPC"
   type        = string
-  default = "10.0.0.0/16"
+  default     = "10.0.0.0/16"
 }

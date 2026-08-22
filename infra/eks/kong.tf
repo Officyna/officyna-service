@@ -167,17 +167,17 @@ resource "kubernetes_service" "kong_proxy" {
     }
 
     port {
-      name       = "proxy-http"
-      port       = 8000
+      name        = "proxy-http"
+      port        = 8000
       target_port = 8000
-      protocol   = "TCP"
+      protocol    = "TCP"
     }
 
     port {
-      name       = "proxy-ssl"
-      port       = 8443
+      name        = "proxy-ssl"
+      port        = 8443
       target_port = 8444
-      protocol   = "TCP"
+      protocol    = "TCP"
     }
 
     type = var.kong_service_type
@@ -199,17 +199,17 @@ resource "kubernetes_service" "kong_admin" {
     }
 
     port {
-      name       = "admin-http"
-      port       = 8001
+      name        = "admin-http"
+      port        = 8001
       target_port = 8001
-      protocol   = "TCP"
+      protocol    = "TCP"
     }
 
     port {
-      name       = "admin-gui"
-      port       = 8002
+      name        = "admin-gui"
+      port        = 8002
       target_port = 8002
-      protocol   = "TCP"
+      protocol    = "TCP"
     }
 
     # By default keep admin API as ClusterIP unless explicitly requested

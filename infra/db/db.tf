@@ -31,13 +31,13 @@ resource "aws_security_group" "docdb_sg" {
 
 # 3. Cria o Cluster do DocumentDB
 resource "aws_docdb_cluster" "docdb" {
-  cluster_identifier      = "officyna-mongodb-cluster"
-  engine                  = "docdb"
-  master_username         = var.db_username
-  master_password         = var.db_password
-  skip_final_snapshot     = true
-  db_subnet_group_name    = aws_docdb_subnet_group.default.name
-  vpc_security_group_ids  = [aws_security_group.docdb_sg.id]
+  cluster_identifier     = "officyna-mongodb-cluster"
+  engine                 = "docdb"
+  master_username        = var.db_username
+  master_password        = var.db_password
+  skip_final_snapshot    = true
+  db_subnet_group_name   = aws_docdb_subnet_group.default.name
+  vpc_security_group_ids = [aws_security_group.docdb_sg.id]
 }
 
 # 4. Cria a Instância do DocumentDB
