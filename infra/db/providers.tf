@@ -11,7 +11,7 @@ terraform {
   }
 
   backend "s3" {
-    bucket = "officyna-terraform"
+    bucket = "projeto-officyna-soat"
     key    = "docdb/terraform.tfstate"
     region = "us-east-1"
   }
