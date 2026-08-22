@@ -235,7 +235,7 @@ jobs:
           JWT_SECRET: ${{ secrets.JWT_SECRET }}
         run: |
           export MONGODB_URI="mongodb://officynasoatdbuser:${DB_PASSWORD}@${DOCDB_ENDPOINT}:27017/officyna?tls=true&replicaSet=rs0&readPreference=secondaryPreferred&retryWrites=false"
-      
+          
           envsubst < k8s/secret.yaml
 
       - name: Aplicar Secret
@@ -299,10 +299,10 @@ jobs:
           
           echo "===== VARIÁVEIS ====="
           kubectl describe pod $POD
-#
-#  # ==========================================
-#  # JOB: Limpeza Automática (Destruição EKS)
-#  # ==========================================
+  #
+  #  # ==========================================
+  #  # JOB: Limpeza Automática (Destruição EKS)
+  #  # ==========================================
   destroy-eks:
     name: Limpeza Automática (Destruir EKS)
     runs-on: ubuntu-latest
