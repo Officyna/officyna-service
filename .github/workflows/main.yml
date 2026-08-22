@@ -180,9 +180,26 @@ jobs:
       - name: Terraform Apply
         run: terraform apply -auto-approve
 
+      - name: Obter URL pública do Kong
+        id: kong-url
+        working-directory: infra/eks
+        run: |
+          ENDPOINT=$(terraform output -raw kong_proxy_endpoint 2>/dev/null || echo "pending")
+
+          if [ "$ENDPOINT" = "pending" ] || [ -z "$ENDPOINT" ]; then
+            echo "Kong ainda não possui endpoint público."
+            echo "kong_url=http://pending" >> $GITHUB_OUTPUT
+          else
+            echo "KONG_PROXY_ENDPOINT=$ENDPOINT"
+            echo "kong_url=http://$ENDPOINT:8000" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Exibir URL do Kong
+        run: |
+          echo "URL do Kong: ${{ steps.kong-url.outputs.kong_url }}"
+
   # ==========================================
-  # JOB: Deploy Aplicacao (Kubernetes)
-  # ==========================================
+  # JOB: Deploy Aplicacao (Kubernetes)  # ==========================================
   deploy-app:
     name: Deploy no Kubernetes
     runs-on: ubuntu-latest
