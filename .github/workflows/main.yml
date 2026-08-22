@@ -109,6 +109,7 @@ jobs:
       documentdb_endpoint: ${{ steps.docdb.outputs.endpoint }}
       vpc_id: ${{ steps.db-network.outputs.vpc_id }}
       vpc_cidr: ${{ steps.db-network.outputs.vpc_cidr }}
+      subnet_ids: ${{ steps.db-network.outputs.subnet_ids }}
     runs-on: ubuntu-latest
     needs: [docker, build-test]
     if: github.event_name == 'push'
@@ -147,10 +148,12 @@ jobs:
           ENDPOINT=$(terraform output -raw docdb_endpoint)
           VPC_ID=$(terraform output -raw vpc_id)
           VPC_CIDR=$(terraform output -raw vpc_cidr)
+          SUBNET_IDS=$(terraform output -json subnet_ids)
 
           echo "endpoint=$ENDPOINT" >> $GITHUB_OUTPUT
           echo "vpc_id=$VPC_ID" >> $GITHUB_OUTPUT
           echo "vpc_cidr=$VPC_CIDR" >> $GITHUB_OUTPUT
+          echo "subnet_ids=$SUBNET_IDS" >> $GITHUB_OUTPUT
 
   # ==========================================
   # JOB: Deploy da Infraestrutura (EKS)
@@ -185,13 +188,15 @@ jobs:
         run: |
           terraform plan \
             -var="vpc_id=${{ needs.deploy-db.outputs.vpc_id }}" \
-            -var="cidr_vpc=${{ needs.deploy-db.outputs.vpc_cidr }}"
+            -var="cidr_vpc=${{ needs.deploy-db.outputs.vpc_cidr }}" \
+            -var='subnet_ids=${{ needs.deploy-db.outputs.subnet_ids }}'
 
       - name: Terraform Apply
         run: |
           terraform apply -auto-approve \
             -var="vpc_id=${{ needs.deploy-db.outputs.vpc_id }}" \
-            -var="cidr_vpc=${{ needs.deploy-db.outputs.vpc_cidr }}"
+            -var="cidr_vpc=${{ needs.deploy-db.outputs.vpc_cidr }}" \
+            -var='subnet_ids=${{ needs.deploy-db.outputs.subnet_ids }}'
 
       - name: Obter URL pública do Kong
         id: kong-url

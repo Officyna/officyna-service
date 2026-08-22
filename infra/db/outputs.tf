@@ -15,3 +15,8 @@ output "vpc_cidr" {
 output "vpc_id" {
   value = aws_vpc.vpc_fiap.id
 }
+
+output "subnet_ids" {
+  description = "Lista de subnets públicas criadas na VPC do banco"
+  value       = aws_subnet.subnet_public[*].id
+}

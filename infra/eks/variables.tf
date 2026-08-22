@@ -31,3 +31,9 @@ variable "vpc_id" {
   description = "ID da VPC utilizada pelo DocumentDB"
   type        = string
 }
+
+variable "subnet_ids" {
+  description = "IDs das subnets do cluster. Se vazio, o módulo cria subnets na VPC informada."
+  type        = list(string)
+  default     = []
+}
