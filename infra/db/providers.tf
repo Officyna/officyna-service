@@ -9,6 +9,12 @@ terraform {
       version = "~> 2.30"
     }
   }
+
+  backend "s3" {
+    bucket = "projeto-officyna-soat"
+    key    = "docdb/terraform.tfstate"
+    region = "us-east-1"
+  }
 }
 
 provider "aws" {
