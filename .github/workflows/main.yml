@@ -165,7 +165,7 @@ jobs:
     if: github.event_name == 'push'
     defaults:
       run:
-        working-directory: infra
+        working-directory: infra/eks
     steps:
       - name: Checkout do código
         uses: actions/checkout@v4
