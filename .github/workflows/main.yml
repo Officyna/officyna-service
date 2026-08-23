@@ -247,6 +247,11 @@ jobs:
       - name: Atualizar kube config
         run: aws eks update-kubeconfig --name eks-officyna-service --region us-east-1
 
+      - name: Aguardar nós prontos
+        run: |
+          echo "Aguardando nós prontos..."
+          kubectl wait --for=condition=Ready nodes --all --timeout=600s || true
+
       - name: Instalar metrics-server (necessário para o HPA)
         run: |
           kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
@@ -255,6 +260,13 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y gettext-base
+
+      - name: Aplicar Kong (manifests)
+        run: |
+          kubectl apply -f k8s/kong-declarative-config.yaml
+          kubectl apply -f k8s/kong-deployment.yaml
+          kubectl apply -f k8s/kong-service-proxy.yaml
+          kubectl apply -f k8s/kong-service-admin.yaml || true
 
       - name: Aplicar configmap
         run: |

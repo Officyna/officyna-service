@@ -1,3 +1,4 @@
+/*
 # Terraform-managed Kubernetes resources to deploy Kong in DB-less (declarative) mode
 
 resource "kubernetes_namespace" "officyna" {
@@ -216,3 +217,4 @@ resource "kubernetes_service" "kong_admin" {
     type = var.kong_admin_expose ? var.kong_service_type : "ClusterIP"
   }
 }
+*/
