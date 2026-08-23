@@ -205,12 +205,27 @@ jobs:
             -var="vpc_id=$VPC_ID" \
             -var="subnet_ids=$SUBNET_IDS"
 
-      - name: Obter URL pública do Kong
+      - name: Obter URL pública do Kong (via kubectl)
         id: kong-url
         run: |
-          ENDPOINT=$(terraform output -raw kong_proxy_endpoint 2>/dev/null || echo "pending")
+          # Atualiza kubeconfig para o cluster criado
+          aws eks update-kubeconfig --name eks-officyna-service --region ${{ secrets.AWS_REGION }} || true
 
-          if [ "$ENDPOINT" = "pending" ] || [ -z "$ENDPOINT" ]; then
+          # Tentar obter hostname ou IP do LoadBalancer do Service kong-proxy
+          ENDPOINT=""
+          for i in $(seq 1 30); do
+            ENDPOINT=$(kubectl get svc kong-proxy -n officyna -o jsonpath='{.status.loadBalancer.ingress[0].hostname}' 2>/dev/null || true)
+            if [ -z "$ENDPOINT" ]; then
+              ENDPOINT=$(kubectl get svc kong-proxy -n officyna -o jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/dev/null || true)
+            fi
+            if [ -n "$ENDPOINT" ]; then
+              break
+            fi
+            echo "Waiting for kong-proxy ingress... (attempt $i)"
+            sleep 10
+          done
+
+          if [ -z "$ENDPOINT" ]; then
             echo "Kong ainda não possui endpoint público."
             echo "kong_url=http://pending" >> $GITHUB_OUTPUT
           else
