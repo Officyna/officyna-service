@@ -278,6 +278,7 @@ jobs:
 
       - name: Aplicar Kong (manifests)
         run: |
+          kubectl create namespace officyna --dry-run=client -o yaml | kubectl apply -f -
           kubectl apply -f k8s/kong-declarative-config.yaml
           kubectl apply -f k8s/kong-deployment.yaml
           kubectl apply -f k8s/kong-service-proxy.yaml
