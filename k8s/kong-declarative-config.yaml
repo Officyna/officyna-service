@@ -7,40 +7,35 @@ metadata:
   namespace: officyna
 data:
   kong.yml: |
-  _format_version: "3.0"
-#     1. Configuração do Serviço Alvo (A tua aplicação Spring Boot)
-  services:
-      - name: OfficynaGatewayService
-#         No K8s, apontamos para o nome do Service e a sua respectiva porta
-        url: http://officyna-service:80
-        read_timeout: 50000
-        connect_timeout: 50000
-        write_timeout: 5000
-
-#         2. Configuração das Rotas
-        routes:
-          - name: authentication-route
-            paths:
-              - /officyna/security
-            strip_path: true
-          - name: general-route
-            paths:
-              - /officyna
-            strip_path: true
-
-#     3. Configuração dos Consumidores (Utilizadores do Gateway)
-  consumers:
-      - custom_id: consumer_admin_id
-        username: consumer_admin
-        tags:
-          - admin_user
-        basicauth_credentials:
-          - username: user_admin
-            password: admin123
-
-#     4. Configuração dos Plugins de Segurança
-  plugins:
-      - name: basic-auth
-        route: authentication-route
-        config:
-            anonymous: anonymous
+    _format_version: "3.0"
+    services:
+        - name: OfficynaGatewayService
+          url: http://officyna-service:80
+          read_timeout: 50000
+          connect_timeout: 50000
+          write_timeout: 5000
+  
+          routes:
+            - name: authentication-route
+              paths:
+                - /officyna/security
+              strip_path: true
+            - name: general-route
+              paths:
+                - /officyna
+              strip_path: true
+  
+    consumers:
+        - custom_id: consumer_admin_id
+          username: consumer_admin
+          tags:
+            - admin_user
+          basicauth_credentials:
+            - username: user_admin
+              password: admin123
+  
+    plugins:
+        - name: basic-auth
+          route: authentication-route
+          config:
+              anonymous: anonymous
