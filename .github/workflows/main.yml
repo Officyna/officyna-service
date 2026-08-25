@@ -423,7 +423,7 @@ jobs:
         run: terraform init
 
       - name: Terraform Destroy
-        run: terraform destroy -auto-approve
+        run: terraform destroy -auto-approve -var="db_password=${{ secrets.DB_PASSWORD }}"
 
   # ==========================================
   # JOB: Limpeza Automática (Destruição)
