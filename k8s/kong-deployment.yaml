@@ -4,6 +4,7 @@ metadata:
   name: kong
   labels:
     app.kubernetes.io/name: kong
+
 spec:
   replicas: 1
   selector:
