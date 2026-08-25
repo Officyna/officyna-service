@@ -131,7 +131,15 @@ public class CustomerServiceOrderService {
                         item.setSituationDate(now);
                     });
 
+            ServiceOrderStatus previousStatus = entity.getStatus();
+
             entity.setStatus(ServiceOrderStatus.APROVADA);
+
+            serviceOrderService.logStatusChange(
+                    entity,
+                    previousStatus,
+                    ServiceOrderStatus.APROVADA
+            );
 
             log.info(
                     "Service order {} approved after labor situation update",

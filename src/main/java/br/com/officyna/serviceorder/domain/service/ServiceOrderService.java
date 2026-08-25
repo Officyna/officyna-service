@@ -160,9 +160,10 @@ public class ServiceOrderService {
         ServiceOrder saved = this.save(entity);
 
         log.info(
-                "Service order created successfully. Id: {}, Number: {}",
+                "Service order created. event=SERVICE_ORDER_CREATED, serviceOrderId={}, serviceOrderNumber={}, status={}",
                 saved.getId(),
-                saved.getServiceOrderNumber()
+                saved.getServiceOrderNumber(),
+                saved.getStatus()
         );
 
         return saved;
@@ -339,7 +340,15 @@ public class ServiceOrderService {
 
         ServiceOrder entity = this.findEntityById(id);
 
+        ServiceOrderStatus previousStatus = entity.getStatus();
+
         entity.setStatus(status);
+
+        logStatusChange(
+                entity,
+                previousStatus,
+                status
+        );
 
         if (status.equals(ServiceOrderStatus.FINALIZADA)
                 && stockService != null) {
@@ -429,11 +438,14 @@ public class ServiceOrderService {
 
         if (entity.getStatus().equals(ServiceOrderStatus.APROVADA)) {
 
+            ServiceOrderStatus previousStatus = entity.getStatus();
+
             entity.setStatus(ServiceOrderStatus.EM_EXECUCAO);
 
-            log.debug(
-                    "Service order status changed to EM_EXECUCAO. Service order id: {}",
-                    id
+            logStatusChange(
+                    entity,
+                    previousStatus,
+                    ServiceOrderStatus.EM_EXECUCAO
             );
 
             if (stockService != null) {
@@ -568,7 +580,15 @@ public class ServiceOrderService {
 
         ServiceOrder serviceOrder = this.findEntityById(id);
 
+        ServiceOrderStatus previousStatus = serviceOrder.getStatus();
+
         serviceOrder.setStatus(
+                ServiceOrderStatus.AGUARDANDO_APROVACAO
+        );
+
+        logStatusChange(
+                serviceOrder,
+                previousStatus,
                 ServiceOrderStatus.AGUARDANDO_APROVACAO
         );
 
@@ -634,5 +654,94 @@ public class ServiceOrderService {
                 "Service order validation completed successfully. Id: {}",
                 entity.getId()
         );
+    }
+
+    public void logStatusChange(
+            ServiceOrder entity,
+            ServiceOrderStatus previousStatus,
+            ServiceOrderStatus newStatus) {
+
+        log.info(
+                "Service order status changed. event=SERVICE_ORDER_STATUS_CHANGED, " +
+                        "serviceOrderId={}, previousStatus={}, status={}",
+                entity.getId(),
+                previousStatus,
+                newStatus
+        );
+
+        LocalDateTime statusStartDate = getStatusStartDate(
+                entity,
+                previousStatus
+        );
+
+        LocalDateTime statusEndDate = getStatusStartDate(
+                entity,
+                newStatus
+        );
+
+        if (statusStartDate != null && statusEndDate != null) {
+
+            long durationInSeconds =
+                    java.time.Duration.between(
+                            statusStartDate,
+                            statusEndDate
+                    ).getSeconds();
+
+            double durationInMinutes =
+                    durationInSeconds / 60.0;
+
+            log.info(
+                    "Service order status duration. " +
+                            "event=SERVICE_ORDER_STATUS_DURATION, " +
+                            "serviceOrderId={}, " +
+                            "status={}, " +
+                            "startDate={}, " +
+                            "endDate={}, " +
+                            "durationInSeconds={}, " +
+                            "durationInMinutes={}",
+                    entity.getId(),
+                    previousStatus,
+                    statusStartDate,
+                    statusEndDate,
+                    durationInSeconds,
+                    durationInMinutes
+            );
+        }
+    }
+
+    private LocalDateTime getStatusStartDate(
+            ServiceOrder entity,
+            ServiceOrderStatus status) {
+
+        if (status == null) {
+            return null;
+        }
+
+        return switch (status) {
+
+            case RECEBIDA ->
+                    entity.getRegistrationDate();
+
+            case EM_DIAGNOSTICO ->
+                    entity.getDiagnosisStartDate();
+
+            case AGUARDANDO_APROVACAO ->
+                    entity.getClientSendDate();
+
+            case APROVADA ->
+                    entity.getApprovalDate();
+
+            case EM_EXECUCAO ->
+                    entity.getExecutionStartDate();
+
+            case FINALIZADA ->
+                    entity.getFinalizationDate();
+
+            case ENTREGUE ->
+                    entity.getDeliveryDate();
+
+            case RECUSADA ->
+                    entity.getRefuseDate();
+        };
     }
 }
