@@ -205,40 +205,9 @@ jobs:
             -var="vpc_id=$VPC_ID" \
             -var="subnet_ids=$SUBNET_IDS"
 
-      - name: Obter URL pública do Kong (via kubectl)
-        id: kong-url
-        run: |
-          # Atualiza kubeconfig para o cluster criado
-          aws eks update-kubeconfig --name eks-officyna-service --region ${{ secrets.AWS_REGION }} || true
-
-          # Tentar obter hostname ou IP do LoadBalancer do Service kong-proxy
-          ENDPOINT=""
-          for i in $(seq 1 30); do
-            ENDPOINT=$(kubectl get svc kong-proxy -n officyna -o jsonpath='{.status.loadBalancer.ingress[0].hostname}' 2>/dev/null || true)
-            if [ -z "$ENDPOINT" ]; then
-              ENDPOINT=$(kubectl get svc kong-proxy -n officyna -o jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/dev/null || true)
-            fi
-            if [ -n "$ENDPOINT" ]; then
-              break
-            fi
-            echo "Waiting for kong-proxy ingress... (attempt $i)"
-            sleep 10
-          done
-
-          if [ -z "$ENDPOINT" ]; then
-            echo "Kong ainda não possui endpoint público."
-            echo "kong_url=http://pending" >> $GITHUB_OUTPUT
-          else
-            echo "KONG_PROXY_ENDPOINT=$ENDPOINT"
-            echo "kong_url=http://$ENDPOINT:8000" >> $GITHUB_OUTPUT
-          fi
-
-      - name: Exibir URL do Kong
-        run: |
-          echo "URL do Kong: ${{ steps.kong-url.outputs.kong_url }}"
-
   # ==========================================
-  # JOB: Deploy Aplicacao (Kubernetes)  # ==========================================
+  # JOB: Deploy Aplicacao (Kubernetes)
+  # ==========================================
   deploy-app:
     name: Deploy no Kubernetes
     runs-on: ubuntu-latest
@@ -339,6 +308,41 @@ jobs:
       - name: Logs da aplicação
         run: |
           kubectl logs deployment/officyna-service
+
+      - name: Obter e Publicar URLs Públicas da Aplicação
+        run: |
+          echo "Buscando endpoint público do Kong Gateway..."
+          ENDPOINT=""
+          for i in $(seq 1 30); do
+            ENDPOINT=$(kubectl get svc kong-proxy -n officyna -o jsonpath='{.status.loadBalancer.ingress[0].hostname}' 2>/dev/null || true)
+            if [ -z "$ENDPOINT" ]; then
+              ENDPOINT=$(kubectl get svc kong-proxy -n officyna -o jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/dev/null || true)
+            fi
+            if [ -n "$ENDPOINT" ]; then
+              break
+            fi
+            echo "Aguardando Load Balancer da AWS responder... (tentativa $i de 30)"
+            sleep 10
+          done
+
+          if [ -z "$ENDPOINT" ]; then
+            echo "⚠️ Não foi possível obter o Load Balancer a tempo."
+            echo "### ⚠️ Deploy Concluído, mas o Load Balancer ainda está em provisionamento na AWS" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "=================================================="
+            echo "🎉 GATEWAY URL: http://$ENDPOINT:8000/officyna"
+            echo "📚 SWAGGER UI:  http://$ENDPOINT:8000/officyna/swagger-ui/index.html"
+            echo "❤️  HEALTHCHECK: http://$ENDPOINT:8000/officyna/actuator/health"
+            echo "=================================================="
+
+            echo "## 🚀 Deploy Concluído com Sucesso!" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "| Recurso | URL Pública |" >> $GITHUB_STEP_SUMMARY
+            echo "| :--- | :--- |" >> $GITHUB_STEP_SUMMARY
+            echo "| 🌐 **API Gateway (Kong)** | \`http://$ENDPOINT:8000/officyna\` |" >> $GITHUB_STEP_SUMMARY
+            echo "| 📚 **Swagger UI** | [Abrir Swagger](http://$ENDPOINT:8000/officyna/swagger-ui/index.html) |" >> $GITHUB_STEP_SUMMARY
+            echo "| ❤️ **Health Check** | [Ver Status](http://$ENDPOINT:8000/officyna/actuator/health) |" >> $GITHUB_STEP_SUMMARY
+          fi
 
       - name: Diagnóstico em caso de falha
         if: failure()
