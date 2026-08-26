@@ -291,6 +291,7 @@ jobs:
             --docker-server=ghcr.io \
             --docker-username=${{ secrets.GHCR_USERNAME }} \
             --docker-password=${{ secrets.GHCR_PAT }} \
+            --namespace=officyna \
             --dry-run=client -o yaml | kubectl apply -f -
 
       - name: Aplicar Deployment, Service e HPA
@@ -302,12 +303,12 @@ jobs:
 
       - name: Aguardar rollout da aplicação
         run: |
-          kubectl rollout status deployment/officyna-service --timeout=300s
-          kubectl get pods,svc,hpa 
+          kubectl rollout status deployment/officyna-service -n officyna --timeout=300s
+          kubectl get pods,svc,hpa -n officyna
 
       - name: Logs da aplicação
         run: |
-          kubectl logs deployment/officyna-service
+          kubectl logs deployment/officyna-service -n officyna
 
       - name: Obter e Publicar URLs Públicas da Aplicação
         run: |
@@ -348,27 +349,27 @@ jobs:
         if: failure()
         run: |
           echo "===== PODS ====="
-          kubectl get pods -o wide
-          
+          kubectl get pods -n officyna -o wide
+
           echo "===== DESCRIBE POD ====="
-          kubectl describe pod -l app.kubernetes.io/name=officyna
-          
+          kubectl describe pod -n officyna -l app.kubernetes.io/name=officyna
+
           echo "===== EVENTS ====="
-          kubectl get events --sort-by=.metadata.creationTimestamp
+          kubectl get events -n officyna --sort-by=.metadata.creationTimestamp
 
       - name: Logs do Pod
         if: failure()
         run: |
-          POD=$(kubectl get pods -l app.kubernetes.io/name=officyna -o jsonpath='{.items[0].metadata.name}')
-          
+          POD=$(kubectl get pods -n officyna -l app.kubernetes.io/name=officyna -o jsonpath='{.items[0].metadata.name}')
+
           echo "===== POD ====="
           echo "$POD"
-          
+
           echo "===== LOGS ATUAIS ====="
-          kubectl logs $POD || true
-          
+          kubectl logs $POD -n officyna || true
+
           echo "===== LOGS ANTERIORES ====="
-          kubectl logs $POD --previous || true
-          
+          kubectl logs $POD -n officyna --previous || true
+
           echo "===== VARIÁVEIS ====="
-          kubectl describe pod $POD
+          kubectl describe pod $POD -n officyna

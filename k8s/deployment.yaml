@@ -5,6 +5,7 @@ metadata:
   labels:
     app.kubernetes.io/name: officyna
     app.kubernetes.io/component: api
+  namespace: officyna
 spec:
   replicas: 1
   selector:
