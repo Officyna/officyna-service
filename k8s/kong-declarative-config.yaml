@@ -37,5 +37,3 @@ data:
     plugins:
         - name: basic-auth
           route: authentication-route
-          config:
-              anonymous: anonymous
