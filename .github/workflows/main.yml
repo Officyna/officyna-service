@@ -259,7 +259,7 @@ jobs:
 
       - name: Verificar URI gerada
         env:
-          DOCDB_ENDPOINT: ${{ needs.deploy-db.outputs.documentdb_endpoint }}
+          DOCDB_ENDPOINT: ${{ secrets.DOCDB_ENDPOINT }}
           DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
         run: |
           export MONGODB_URI="mongodb://officynasoatdbuser:${DB_PASSWORD}@${DOCDB_ENDPOINT}:27017/officyna?tls=true&replicaSet=rs0&readPreference=secondaryPreferred&retryWrites=false"
@@ -268,7 +268,7 @@ jobs:
 
       - name: Mostrar secret gerado
         env:
-          DOCDB_ENDPOINT: ${{ needs.deploy-db.outputs.documentdb_endpoint }}
+          DOCDB_ENDPOINT: ${{ secrets.DOCDB_ENDPOINT }}
           DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
           JWT_SECRET: ${{ secrets.JWT_SECRET }}
         run: |
@@ -278,9 +278,10 @@ jobs:
 
       - name: Aplicar Secret
         env:
-          DOCDB_ENDPOINT: ${{ needs.deploy-db.outputs.documentdb_endpoint }}
+          DOCDB_ENDPOINT: ${{ secrets.DOCDB_ENDPOINT }}
           DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
           JWT_SECRET: ${{ secrets.JWT_SECRET }}
+
         run: |
           export MONGODB_URI="mongodb://officynasoatdbuser:${DB_PASSWORD}@${DOCDB_ENDPOINT}:27017/officyna?tls=true&replicaSet=rs0&readPreference=secondaryPreferred&retryWrites=false"
           envsubst < k8s/secret.yaml | kubectl apply -f -
