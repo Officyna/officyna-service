@@ -11,7 +11,7 @@ terraform {
   }
 
   backend "s3" {
-    bucket = "officyna-terraform-state"
+    bucket = "projeto-officyna-soat"
     key    = "eks/terraform.tfstate"
     region = "us-east-1"
   }
@@ -19,4 +19,14 @@ terraform {
 
 provider "aws" {
   region = var.aws_region
+}
+
+data "aws_eks_cluster_auth" "cluster" {
+  name = aws_eks_cluster.cluster.name
+}
+
+provider "kubernetes" {
+  host                   = aws_eks_cluster.cluster.endpoint
+  cluster_ca_certificate = base64decode(aws_eks_cluster.cluster.certificate_authority[0].data)
+  token                  = data.aws_eks_cluster_auth.cluster.token
 }

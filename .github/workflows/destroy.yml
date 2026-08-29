@@ -1,0 +1,118 @@
+name: Destroy Infrastructure (manual)
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: 'Digite "destroy" para confirmar a destruição da infraestrutura AWS (Kubernetes + EKS + DocumentDB)'
+        required: true
+        default: ''
+
+jobs:
+  # ==========================================
+  # JOB: Remover Kubernetes e Destruir EKS
+  # ==========================================
+  destroy-eks:
+    name: Destruir EKS (Terraform)
+    runs-on: ubuntu-latest
+    if: ${{ github.event.inputs.confirm == 'destroy' }}
+    steps:
+      - name: Checkout do código
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_wrapper: false
+
+      - name: Configurar Credenciais AWS
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Atualizar kubeconfig
+        run: |
+          aws eks update-kubeconfig \
+            --name eks-officyna-service \
+            --region ${{ secrets.AWS_REGION }} || \
+          echo "Cluster EKS não encontrado (talvez já destruído); seguindo mesmo assim."
+
+      - name: Remover recursos do Kubernetes
+        run: |
+          kubectl delete -f k8s/hpa.yaml --ignore-not-found=true || true
+          kubectl delete -f k8s/service.yaml --ignore-not-found=true || true
+          kubectl delete -f k8s/deployment.yaml --ignore-not-found=true || true
+          kubectl delete -f k8s/secret.yaml --ignore-not-found=true || true
+          kubectl delete -f k8s/configmap.yaml --ignore-not-found=true || true
+          kubectl delete -f k8s/kong-service-proxy.yaml --ignore-not-found=true || true
+          kubectl delete -f k8s/kong-service-admin.yaml --ignore-not-found=true || true
+          kubectl delete -f k8s/kong-deployment.yaml --ignore-not-found=true || true
+          kubectl delete -f k8s/kong-declarative-config.yaml --ignore-not-found=true || true
+
+      - name: Aguardar remoção do LoadBalancer
+        run: |
+          echo "Aguardando a AWS remover o LoadBalancer..."
+          sleep 180
+
+      - name: Terraform Init (infra/db)
+        working-directory: infra/db
+        run: terraform init
+
+      - name: Obter rede da VPC (outputs do DocumentDB)
+        id: db-network
+        working-directory: infra/db
+        run: |
+          VPC_ID=$(terraform output -raw vpc_id)
+          SUBNET_IDS=$(terraform output -json subnet_ids | jq -c .)
+
+          echo "vpc_id=$VPC_ID" >> $GITHUB_OUTPUT
+          echo "subnet_ids=$SUBNET_IDS" >> $GITHUB_OUTPUT
+
+      - name: Terraform Init (infra/eks)
+        working-directory: infra/eks
+        run: terraform init
+
+      - name: Terraform Destroy (EKS)
+        working-directory: infra/eks
+        env:
+          VPC_ID: ${{ steps.db-network.outputs.vpc_id }}
+          SUBNET_IDS: ${{ steps.db-network.outputs.subnet_ids }}
+        run: |
+          terraform destroy -auto-approve \
+            -var="vpc_id=$VPC_ID" \
+            -var="subnet_ids=$SUBNET_IDS"
+
+  # ==========================================
+  # JOB: Destruir Banco de Dados
+  # ==========================================
+  destroy-db:
+    name: Destruir Banco de Dados (Terraform)
+    runs-on: ubuntu-latest
+    needs: destroy-eks
+    if: ${{ github.event.inputs.confirm == 'destroy' }}
+    defaults:
+      run:
+        working-directory: infra/db
+    steps:
+      - name: Checkout do código
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_wrapper: false
+
+      - name: Configurar Credenciais AWS
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Terraform Init
+        run: terraform init
+
+      - name: Terraform Destroy
+        run: terraform destroy -auto-approve -var="db_password=${{ secrets.DB_PASSWORD }}"

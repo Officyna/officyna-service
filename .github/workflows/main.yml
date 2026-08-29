@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - developer
+      - feat/144-infra-aws-kong
   pull_request:
     branches:
       - main
@@ -105,7 +106,10 @@ jobs:
   deploy-db:
     name: Provisionar Banco de Dados (Terraform)
     outputs:
-      documentdb_endpoint: ${{ steps.docdb.outputs.endpoint }}
+      documentdb_endpoint: ${{ steps.db-network.outputs.endpoint }}
+      vpc_id: ${{ steps.db-network.outputs.vpc_id }}
+      vpc_cidr: ${{ steps.db-network.outputs.vpc_cidr }}
+      subnet_ids: ${{ steps.db-network.outputs.subnet_ids }}
     runs-on: ubuntu-latest
     needs: [docker, build-test]
     if: github.event_name == 'push'
@@ -122,11 +126,12 @@ jobs:
           terraform_wrapper: false
 
       - name: Configurar Credenciais AWS
-        uses: aws-actions/configure-aws-credentials@v2
+        uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: us-east-1
+#          aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
+          aws-region: ${{ secrets.AWS_REGION }}
 
       - name: Terraform Init
         run: terraform init
@@ -137,11 +142,18 @@ jobs:
       - name: Terraform Apply
         run: terraform apply -auto-approve -var="db_password=${{ secrets.DB_PASSWORD }}"
 
-      - name: Capturar endpoint do DocumentDB
-        id: docdb
+      - name: Capturar endpoint e rede do DocumentDB
+        id: db-network
         run: |
           ENDPOINT=$(terraform output -raw docdb_endpoint)
+          VPC_ID=$(terraform output -raw vpc_id)
+          VPC_CIDR=$(terraform output -raw vpc_cidr)
+          SUBNET_IDS=$(terraform output -json subnet_ids | jq -c .)
+
           echo "endpoint=$ENDPOINT" >> $GITHUB_OUTPUT
+          echo "vpc_id=$VPC_ID" >> $GITHUB_OUTPUT
+          echo "vpc_cidr=$VPC_CIDR" >> $GITHUB_OUTPUT
+          echo "subnet_ids=$SUBNET_IDS" >> $GITHUB_OUTPUT
 
   # ==========================================
   # JOB: Deploy da Infraestrutura (EKS)
@@ -149,11 +161,12 @@ jobs:
   deploy-eks:
     name: Provisionar EKS (Terraform)
     runs-on: ubuntu-latest
-    needs: [docker, build-test, deploy-db]
+    needs: [ docker, build-test, deploy-db ]
     if: github.event_name == 'push'
     defaults:
       run:
         working-directory: infra/eks
+
     steps:
       - name: Checkout do código
         uses: actions/checkout@v4
@@ -162,20 +175,35 @@ jobs:
         uses: hashicorp/setup-terraform@v2
 
       - name: Configurar Credenciais AWS
-        uses: aws-actions/configure-aws-credentials@v2
+        uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: us-east-1
+          aws-region: ${{ secrets.AWS_REGION }}
 
       - name: Terraform Init
         run: terraform init
 
       - name: Terraform Plan
-        run: terraform plan
+        env:
+          VPC_ID: ${{ needs.deploy-db.outputs.vpc_id }}
+          SUBNET_IDS: ${{ needs.deploy-db.outputs.subnet_ids }}
+        run: |
+          echo "VPC_ID=$VPC_ID"
+          echo "SUBNET_IDS=$SUBNET_IDS"
+
+          terraform plan \
+            -var="vpc_id=$VPC_ID" \
+            -var="subnet_ids=$SUBNET_IDS"
 
       - name: Terraform Apply
-        run: terraform apply -auto-approve
+        env:
+          VPC_ID: ${{ needs.deploy-db.outputs.vpc_id }}
+          SUBNET_IDS: ${{ needs.deploy-db.outputs.subnet_ids }}
+        run: |
+          terraform apply -auto-approve \
+            -var="vpc_id=$VPC_ID" \
+            -var="subnet_ids=$SUBNET_IDS"
 
   # ==========================================
   # JOB: Deploy Aplicacao (Kubernetes)
@@ -193,14 +221,20 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Configurar Credenciais AWS
-        uses: aws-actions/configure-aws-credentials@v2
+        uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: us-east-1
+#          aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
+          aws-region: ${{ secrets.AWS_REGION }}
 
       - name: Atualizar kube config
         run: aws eks update-kubeconfig --name eks-officyna-service --region us-east-1
+
+      - name: Aguardar nós prontos
+        run: |
+          echo "Aguardando nós prontos..."
+          kubectl wait --for=condition=Ready nodes --all --timeout=600s || true
 
       - name: Instalar metrics-server (necessário para o HPA)
         run: |
@@ -211,13 +245,21 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y gettext-base
 
+      - name: Aplicar Kong (manifests)
+        run: |
+          kubectl create namespace officyna --dry-run=client -o yaml | kubectl apply -f -
+          kubectl apply -f k8s/kong-declarative-config.yaml
+          kubectl apply -f k8s/kong-deployment.yaml
+          kubectl apply -f k8s/kong-service-proxy.yaml
+          kubectl apply -f k8s/kong-service-admin.yaml || true
+
       - name: Aplicar configmap
         run: |
           kubectl apply -f k8s/configmap.yaml
 
       - name: Verificar URI gerada
         env:
-          DOCDB_ENDPOINT: ${{ needs.deploy-db.outputs.documentdb_endpoint }}
+          DOCDB_ENDPOINT: ${{ secrets.DOCDB_ENDPOINT }}
           DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
         run: |
           export MONGODB_URI="mongodb://officynasoatdbuser:${DB_PASSWORD}@${DOCDB_ENDPOINT}:27017/officyna?tls=true&replicaSet=rs0&readPreference=secondaryPreferred&retryWrites=false"
@@ -226,19 +268,20 @@ jobs:
 
       - name: Mostrar secret gerado
         env:
-          DOCDB_ENDPOINT: ${{ needs.deploy-db.outputs.documentdb_endpoint }}
+          DOCDB_ENDPOINT: ${{ secrets.DOCDB_ENDPOINT }}
           DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
           JWT_SECRET: ${{ secrets.JWT_SECRET }}
         run: |
           export MONGODB_URI="mongodb://officynasoatdbuser:${DB_PASSWORD}@${DOCDB_ENDPOINT}:27017/officyna?tls=true&replicaSet=rs0&readPreference=secondaryPreferred&retryWrites=false"
-      
+          
           envsubst < k8s/secret.yaml
 
       - name: Aplicar Secret
         env:
-          DOCDB_ENDPOINT: ${{ needs.deploy-db.outputs.documentdb_endpoint }}
+          DOCDB_ENDPOINT: ${{ secrets.DOCDB_ENDPOINT }}
           DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
           JWT_SECRET: ${{ secrets.JWT_SECRET }}
+
         run: |
           export MONGODB_URI="mongodb://officynasoatdbuser:${DB_PASSWORD}@${DOCDB_ENDPOINT}:27017/officyna?tls=true&replicaSet=rs0&readPreference=secondaryPreferred&retryWrites=false"
           envsubst < k8s/secret.yaml | kubectl apply -f -
@@ -249,6 +292,7 @@ jobs:
             --docker-server=ghcr.io \
             --docker-username=${{ secrets.GHCR_USERNAME }} \
             --docker-password=${{ secrets.GHCR_PAT }} \
+            --namespace=officyna \
             --dry-run=client -o yaml | kubectl apply -f -
 
       - name: Aplicar Deployment, Service e HPA
@@ -260,120 +304,73 @@ jobs:
 
       - name: Aguardar rollout da aplicação
         run: |
-          kubectl rollout status deployment/officyna-service --timeout=300s
-          kubectl get pods,svc,hpa 
+          kubectl rollout status deployment/officyna-service -n officyna --timeout=300s
+          kubectl get pods,svc,hpa -n officyna
 
       - name: Logs da aplicação
         run: |
-          kubectl logs deployment/officyna-service
+          kubectl logs deployment/officyna-service -n officyna
+
+      - name: Obter e Publicar URLs Públicas da Aplicação
+        run: |
+          echo "Buscando endpoint público do Kong Gateway..."
+          ENDPOINT=""
+          for i in $(seq 1 30); do
+            ENDPOINT=$(kubectl get svc kong-proxy -n officyna -o jsonpath='{.status.loadBalancer.ingress[0].hostname}' 2>/dev/null || true)
+            if [ -z "$ENDPOINT" ]; then
+              ENDPOINT=$(kubectl get svc kong-proxy -n officyna -o jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/dev/null || true)
+            fi
+            if [ -n "$ENDPOINT" ]; then
+              break
+            fi
+            echo "Aguardando Load Balancer da AWS responder... (tentativa $i de 30)"
+            sleep 10
+          done
+
+          if [ -z "$ENDPOINT" ]; then
+            echo "⚠️ Não foi possível obter o Load Balancer a tempo."
+            echo "### ⚠️ Deploy Concluído, mas o Load Balancer ainda está em provisionamento na AWS" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "=================================================="
+            echo "🎉 GATEWAY URL: http://$ENDPOINT:8000/officyna"
+            echo "📚 SWAGGER UI:  http://$ENDPOINT:8000/officyna/swagger-ui/index.html"
+            echo "❤️  HEALTHCHECK: http://$ENDPOINT:8000/officyna/actuator/health"
+            echo "=================================================="
+
+            echo "## 🚀 Deploy Concluído com Sucesso!" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "| Recurso | URL Pública |" >> $GITHUB_STEP_SUMMARY
+            echo "| :--- | :--- |" >> $GITHUB_STEP_SUMMARY
+            echo "| 🌐 **API Gateway (Kong)** | \`http://$ENDPOINT:8000/officyna\` |" >> $GITHUB_STEP_SUMMARY
+            echo "| 📚 **Swagger UI** | [Abrir Swagger](http://$ENDPOINT:8000/officyna/swagger-ui/index.html) |" >> $GITHUB_STEP_SUMMARY
+            echo "| ❤️ **Health Check** | [Ver Status](http://$ENDPOINT:8000/officyna/actuator/health) |" >> $GITHUB_STEP_SUMMARY
+          fi
 
       - name: Diagnóstico em caso de falha
         if: failure()
         run: |
           echo "===== PODS ====="
-          kubectl get pods -o wide
-          
+          kubectl get pods -n officyna -o wide
+
           echo "===== DESCRIBE POD ====="
-          kubectl describe pod -l app.kubernetes.io/name=officyna
-          
+          kubectl describe pod -n officyna -l app.kubernetes.io/name=officyna
+
           echo "===== EVENTS ====="
-          kubectl get events --sort-by=.metadata.creationTimestamp
+          kubectl get events -n officyna --sort-by=.metadata.creationTimestamp
 
       - name: Logs do Pod
         if: failure()
         run: |
-          POD=$(kubectl get pods -l app.kubernetes.io/name=officyna -o jsonpath='{.items[0].metadata.name}')
-          
+          POD=$(kubectl get pods -n officyna -l app.kubernetes.io/name=officyna -o jsonpath='{.items[0].metadata.name}')
+
           echo "===== POD ====="
           echo "$POD"
-          
+
           echo "===== LOGS ATUAIS ====="
-          kubectl logs $POD || true
-          
+          kubectl logs $POD -n officyna || true
+
           echo "===== LOGS ANTERIORES ====="
-          kubectl logs $POD --previous || true
-          
+          kubectl logs $POD -n officyna --previous || true
+
           echo "===== VARIÁVEIS ====="
-          kubectl describe pod $POD
-#
-#  # ==========================================
-#  # JOB: Limpeza Automática (Destruição EKS)
-#  # ==========================================
-  destroy-eks:
-    name: Limpeza Automática (Destruir EKS)
-    runs-on: ubuntu-latest
-    needs: [ deploy-eks, deploy-app ]
-    if: always() && needs.deploy-eks.result != 'skipped' && github.event_name == 'push'
-    defaults:
-      run:
-        working-directory: infra/eks
-
-    steps:
-      - name: Checkout do código
-        uses: actions/checkout@v4
-
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v2
-
-      - name: Configurar Credenciais AWS
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: us-east-1
-
-      - name: Atualizar kubeconfig
-        run: |
-          aws eks update-kubeconfig \
-            --name eks-officyna-service \
-            --region us-east-1
-
-      - name: Remover recursos do Kubernetes
-        run: |
-          kubectl delete -f ../../k8s/hpa.yaml --ignore-not-found=true
-          kubectl delete -f ../../k8s/service.yaml --ignore-not-found=true
-          kubectl delete -f ../../k8s/deployment.yaml --ignore-not-found=true
-          kubectl delete -f ../../k8s/secret.yaml --ignore-not-found=true
-          kubectl delete -f ../../k8s/configmap.yaml --ignore-not-found=true
-
-      - name: Aguardar remoção do LoadBalancer
-        run: |
-          echo "Aguardando a AWS remover o LoadBalancer..."
-          sleep 180
-
-      - name: Terraform Init
-        run: terraform init
-
-      - name: Terraform Destroy
-        run: terraform destroy -auto-approve
-
-  # ==========================================
-  # JOB: Limpeza Automática (Destruição)
-  # ==========================================
-  destroy-db:
-    name: Limpeza Automática (Destruir Banco)
-    runs-on: ubuntu-latest
-    needs: [deploy-db, deploy-app, destroy-eks]
-    if: always() && needs.deploy-db.result != 'skipped' && github.event_name == 'push'
-    defaults:
-      run:
-        working-directory: infra/db
-    steps:
-      - name: Checkout do código
-        uses: actions/checkout@v4
-
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v2
-
-      - name: Configurar Credenciais da AWS
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: us-east-1
-
-      - name: Terraform Init
-        run: terraform init
-
-      - name: Terraform Destroy
-        run: terraform destroy -auto-approve -var="db_password=${{ secrets.DB_PASSWORD }}"
+          kubectl describe pod $POD -n officyna

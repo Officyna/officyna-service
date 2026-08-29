@@ -1,0 +1,39 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: kong-declarative-config
+  labels:
+    app.kubernetes.io/name: kong
+  namespace: officyna
+data:
+  kong.yml: |
+    _format_version: "3.0"
+    services:
+        - name: OfficynaGatewayService
+          url: http://officyna-service:80
+          read_timeout: 50000
+          connect_timeout: 50000
+          write_timeout: 5000
+  
+          routes:
+            - name: authentication-route
+              paths:
+                - /officyna/security
+              strip_path: true
+            - name: general-route
+              paths:
+                - /officyna
+              strip_path: true
+  
+    consumers:
+        - custom_id: consumer_admin_id
+          username: consumer_admin
+          tags:
+            - admin_user
+          basicauth_credentials:
+            - username: user_admin
+              password: admin123
+  
+    plugins:
+        - name: basic-auth
+          route: authentication-route

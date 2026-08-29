@@ -1,7 +1,7 @@
 # 1. Cria um Grupo de Subnets para o Banco de Dados
 resource "aws_docdb_subnet_group" "default" {
   name       = "officyna-docdb-subnet-group"
-  subnet_ids = var.subnet_ids
+  subnet_ids = aws_subnet.subnet_public[*].id
 
   tags = {
     Name = "officyna-docdb-subnets"
@@ -12,7 +12,7 @@ resource "aws_docdb_subnet_group" "default" {
 resource "aws_security_group" "docdb_sg" {
   name        = "officyna-docdb-sg"
   description = "Permite trafego interno na porta 27017 (MongoDB)"
-  vpc_id      = var.vpc_id
+  vpc_id      = aws_vpc.vpc_fiap.id
 
   ingress {
     from_port   = 27017
@@ -31,13 +31,13 @@ resource "aws_security_group" "docdb_sg" {
 
 # 3. Cria o Cluster do DocumentDB
 resource "aws_docdb_cluster" "docdb" {
-  cluster_identifier      = "officyna-mongodb-cluster"
-  engine                  = "docdb"
-  master_username         = var.db_username
-  master_password         = var.db_password
-  skip_final_snapshot     = true
-  db_subnet_group_name    = aws_docdb_subnet_group.default.name
-  vpc_security_group_ids  = [aws_security_group.docdb_sg.id]
+  cluster_identifier     = "officyna-mongodb-cluster"
+  engine                 = "docdb"
+  master_username        = var.db_username
+  master_password        = var.db_password
+  skip_final_snapshot    = true
+  db_subnet_group_name   = aws_docdb_subnet_group.default.name
+  vpc_security_group_ids = [aws_security_group.docdb_sg.id]
 }
 
 # 4. Cria a Instância do DocumentDB
