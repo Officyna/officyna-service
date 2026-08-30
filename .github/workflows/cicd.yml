@@ -1,0 +1,65 @@
+name: CI/CD Pipeline (consolidado)
+
+on:
+  push:
+    branches:
+      - main
+      - developer
+  pull_request:
+    branches:
+      - main
+      - developer
+  workflow_dispatch:
+    inputs:
+      action:
+        description: "O que executar"
+        required: true
+        type: choice
+        options:
+          - apply
+          - destroy
+        default: apply
+      confirm:
+        description: 'Para destroy, digite "destroy" para confirmar'
+        required: false
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-test:
+    name: Build e Testes
+    if: github.event_name == 'push' || github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout do código
+        uses: actions/checkout@v4
+
+  docker:
+    name: Build e Push da Imagem Docker
+    needs: build-test
+    if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'apply')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout do código
+        uses: actions/checkout@v4
+
+  deploy-app:
+    name: Deploy no Kubernetes
+    needs: [docker]
+    if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'apply')
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Checkout do código
+        uses: actions/checkout@v4
+
+  destroy-app:
+    name: Remover aplicação e Kong do cluster
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'destroy' && github.event.inputs.confirm == 'destroy'
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Checkout do código
+        uses: actions/checkout@v4
