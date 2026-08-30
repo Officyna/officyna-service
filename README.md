@@ -54,8 +54,7 @@ officyna-service/
 ├── .github/
 │   └── workflows/ # Pipelines de CI/CD
 ├── db-seed/ # Scripts para popular o banco de dados inicial
-├── infra/ # Infraestrutura como Código (ex: Terraform)
-├── k8s/ # Manifestos de orquestração do Kubernetes
+├── k8s/ # Manifestos de orquestração do Kubernetes (aplicação + Kong)
 └── src/
     ├── main/
     │   ├── java/
@@ -194,18 +193,25 @@ Inclui os controllers REST, DTOs e Gateways que traduzem dados entre o mundo ext
 Lida com frameworks e drivers, como as configurações do Spring Boot e a persistência real no MongoDB.
 
 ### Infraestrutura Provisionada
-A infraestrutura é provisionada na AWS de forma automatizada, consistindo em:
-* **Rede (VPC):** Uma Virtual Private Cloud isolada com subnets públicas para acesso externo e subnets privadas para segurança do banco de dados.
-* **Orquestração (Amazon EKS):** Um cluster Kubernetes gerenciado que executa os nós de trabalho (worker nodes) onde a aplicação é implantada.
-* **Banco de Dados (Amazon DocumentDB/MongoDB):** Um cluster NoSQL compatível com MongoDB, configurado para alta disponibilidade e persistência.
+A infraestrutura de nuvem foi segregada em repositórios próprios com Terraform e CI/CD dedicados, conforme os requisitos do Tech Challenge:
+* [officyna-infra-db](https://github.com/Officyna/officyna-infra-db) — VPC, subnets e o cluster Amazon DocumentDB (compatível com MongoDB).
+* [officyna-infra-k8s](https://github.com/Officyna/officyna-infra-k8s) — cluster Amazon EKS e node group, usando a VPC/subnets publicadas pelo repositório do banco via AWS Systems Manager Parameter Store.
 * **Persistência:** Uso de volumes EBS (Elastic Block Store) via Persistent Volume Claims (PVC) para garantir que os dados das ordens de serviço sobrevivam a reinicializações de containers.
+
+Este repositório (`officyna-service`) não contém mais Terraform — apenas os manifestos Kubernetes (`k8s/`) da aplicação e do Kong (API Gateway), aplicados via `kubectl` no próprio pipeline.
 
 ## Fluxo de Deploy
 O fluxo de implantação é totalmente automatizado via GitHub Actions:
 * **Integração Contínua (CI):** Ao realizar um push, o pipeline executa o checkout do código, build com Maven e testes automatizados para garantir a qualidade.
 * **Dockerização:** Após os testes, uma nova imagem Docker é gerada e enviada para o GitHub Container Registry (GHCR).
-* **Provisionamento de Infraestrutura:** O pipeline utiliza o Terraform para aplicar as mudanças na infraestrutura da AWS (VPC, EKS, DB).
-* **Entrega Contínua (CD):** Por fim, os manifestos Kubernetes são aplicados no cluster EKS para atualizar a aplicação sem interrupção (Rolling Update).
+* **Pré-requisito de infraestrutura:** o cluster EKS (`officyna-infra-k8s`) e o DocumentDB (`officyna-infra-db`) precisam já estar no ar — o endpoint do banco é lido em tempo de deploy via AWS Systems Manager Parameter Store (`/officyna/db/endpoint`), publicado pelo pipeline do `officyna-infra-db`.
+* **Entrega Contínua (CD):** Os manifestos Kubernetes (aplicação + Kong) são aplicados no cluster EKS para atualizar a aplicação sem interrupção (Rolling Update).
+
+### Ordem para destruir a infraestrutura (evitar custo na AWS)
+Como cada camada agora vive em um repositório com estado Terraform próprio, a ordem de destruição importa (o EKS depende da VPC/subnets criadas pelo DocumentDB):
+1. **officyna-service** → workflow `Destroy Infrastructure (manual)`: remove a aplicação e o Kong do cluster (`kubectl delete`).
+2. **officyna-infra-k8s** → workflow manual `action: destroy`: destrói o cluster EKS.
+3. **officyna-infra-db** → workflow manual `action: destroy`: destrói o DocumentDB e a VPC/subnets.
 
 ## 🛡️ Segurança e Qualidade
 - Autenticação JWT: Implementada para proteger todos os endpoints administrativos.
@@ -250,24 +256,11 @@ kubectl apply -f hpa.yaml
 ````
 
 ## Provisionamento da Infraestrutura com Terraform
-Para provisionar os recursos na AWS, utilize os arquivos na pasta `infra/terraform/`:
-- **Inicialização:** Execute para baixar os providers da AWS e configurar o backend remoto (S3).
-````bash 
-terraform init
-````
-- **Validação:** Verifique a sintaxe com 
-````bash 
-terraform validate
-````
-- **Planejamento:** Visualize os recursos que serão criados com
-````bash 
-terraform plan
-````
-- **Aplicação:** Provisione a rede, o banco e o cluster EKS com
-````bash 
-terraform apply -auto-approve
-````
-- **Configuração de Acesso:** Após o provisionamento, utilize o comando (usando os dados do outputs.tf) para conectar seu kubectl ao cluster na nuvem.
+A rede, o banco de dados e o cluster EKS são provisionados via Terraform nos repositórios dedicados — veja as instruções de `terraform init/plan/apply` em cada um:
+- [officyna-infra-db](https://github.com/Officyna/officyna-infra-db) — VPC, subnets e DocumentDB.
+- [officyna-infra-k8s](https://github.com/Officyna/officyna-infra-k8s) — cluster EKS e node group.
+
+Após o provisionamento, conecte seu `kubectl` ao cluster na nuvem:
 ````bash
-aws eks update-kubeconfig
+aws eks update-kubeconfig --name eks-officyna-service --region us-east-1
 ````

@@ -5,7 +5,7 @@ on:
     branches:
       - main
       - developer
-      - feat/144-infra-aws-kong
+      - feat/153-pipeline-aplicacao-principal
   pull_request:
     branches:
       - main
@@ -101,117 +101,12 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
 
   # ==========================================
-  # JOB: Deploy da Infraestrutura (Banco)
-  # ==========================================
-  deploy-db:
-    name: Provisionar Banco de Dados (Terraform)
-    outputs:
-      documentdb_endpoint: ${{ steps.db-network.outputs.endpoint }}
-      vpc_id: ${{ steps.db-network.outputs.vpc_id }}
-      vpc_cidr: ${{ steps.db-network.outputs.vpc_cidr }}
-      subnet_ids: ${{ steps.db-network.outputs.subnet_ids }}
-    runs-on: ubuntu-latest
-    needs: [docker, build-test]
-    if: github.event_name == 'push'
-    defaults:
-      run:
-        working-directory: infra/db
-    steps:
-      - name: Checkout do código
-        uses: actions/checkout@v4
-
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v2
-        with:
-          terraform_wrapper: false
-
-      - name: Configurar Credenciais AWS
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-#          aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
-          aws-region: ${{ secrets.AWS_REGION }}
-
-      - name: Terraform Init
-        run: terraform init
-
-      - name: Terraform Plan
-        run: terraform plan -var="db_password=${{ secrets.DB_PASSWORD }}"
-
-      - name: Terraform Apply
-        run: terraform apply -auto-approve -var="db_password=${{ secrets.DB_PASSWORD }}"
-
-      - name: Capturar endpoint e rede do DocumentDB
-        id: db-network
-        run: |
-          ENDPOINT=$(terraform output -raw docdb_endpoint)
-          VPC_ID=$(terraform output -raw vpc_id)
-          VPC_CIDR=$(terraform output -raw vpc_cidr)
-          SUBNET_IDS=$(terraform output -json subnet_ids | jq -c .)
-
-          echo "endpoint=$ENDPOINT" >> $GITHUB_OUTPUT
-          echo "vpc_id=$VPC_ID" >> $GITHUB_OUTPUT
-          echo "vpc_cidr=$VPC_CIDR" >> $GITHUB_OUTPUT
-          echo "subnet_ids=$SUBNET_IDS" >> $GITHUB_OUTPUT
-
-  # ==========================================
-  # JOB: Deploy da Infraestrutura (EKS)
-  # ==========================================
-  deploy-eks:
-    name: Provisionar EKS (Terraform)
-    runs-on: ubuntu-latest
-    needs: [ docker, build-test, deploy-db ]
-    if: github.event_name == 'push'
-    defaults:
-      run:
-        working-directory: infra/eks
-
-    steps:
-      - name: Checkout do código
-        uses: actions/checkout@v4
-
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v2
-
-      - name: Configurar Credenciais AWS
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ secrets.AWS_REGION }}
-
-      - name: Terraform Init
-        run: terraform init
-
-      - name: Terraform Plan
-        env:
-          VPC_ID: ${{ needs.deploy-db.outputs.vpc_id }}
-          SUBNET_IDS: ${{ needs.deploy-db.outputs.subnet_ids }}
-        run: |
-          echo "VPC_ID=$VPC_ID"
-          echo "SUBNET_IDS=$SUBNET_IDS"
-
-          terraform plan \
-            -var="vpc_id=$VPC_ID" \
-            -var="subnet_ids=$SUBNET_IDS"
-
-      - name: Terraform Apply
-        env:
-          VPC_ID: ${{ needs.deploy-db.outputs.vpc_id }}
-          SUBNET_IDS: ${{ needs.deploy-db.outputs.subnet_ids }}
-        run: |
-          terraform apply -auto-approve \
-            -var="vpc_id=$VPC_ID" \
-            -var="subnet_ids=$SUBNET_IDS"
-
-  # ==========================================
   # JOB: Deploy Aplicacao (Kubernetes)
   # ==========================================
   deploy-app:
     name: Deploy no Kubernetes
     runs-on: ubuntu-latest
-    needs: [docker, deploy-db, deploy-eks]
+    needs: [docker]
     if: github.event_name == 'push'
     permissions:
       contents: read
@@ -227,6 +122,12 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 #          aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
           aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Ler endpoint do banco (SSM Parameter Store)
+        id: docdb
+        run: |
+          ENDPOINT=$(aws ssm get-parameter --name "/officyna/db/endpoint" --query "Parameter.Value" --output text)
+          echo "endpoint=$ENDPOINT" >> "$GITHUB_OUTPUT"
 
       - name: Atualizar kube config
         run: aws eks update-kubeconfig --name eks-officyna-service --region us-east-1
@@ -259,26 +160,26 @@ jobs:
 
       - name: Verificar URI gerada
         env:
-          DOCDB_ENDPOINT: ${{ secrets.DOCDB_ENDPOINT }}
+          DOCDB_ENDPOINT: ${{ steps.docdb.outputs.endpoint }}
           DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
         run: |
           export MONGODB_URI="mongodb://officynasoatdbuser:${DB_PASSWORD}@${DOCDB_ENDPOINT}:27017/officyna?tls=true&replicaSet=rs0&readPreference=secondaryPreferred&retryWrites=false"
-          
+
           echo "$MONGODB_URI"
 
       - name: Mostrar secret gerado
         env:
-          DOCDB_ENDPOINT: ${{ secrets.DOCDB_ENDPOINT }}
+          DOCDB_ENDPOINT: ${{ steps.docdb.outputs.endpoint }}
           DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
           JWT_SECRET: ${{ secrets.JWT_SECRET }}
         run: |
           export MONGODB_URI="mongodb://officynasoatdbuser:${DB_PASSWORD}@${DOCDB_ENDPOINT}:27017/officyna?tls=true&replicaSet=rs0&readPreference=secondaryPreferred&retryWrites=false"
-          
+
           envsubst < k8s/secret.yaml
 
       - name: Aplicar Secret
         env:
-          DOCDB_ENDPOINT: ${{ secrets.DOCDB_ENDPOINT }}
+          DOCDB_ENDPOINT: ${{ steps.docdb.outputs.endpoint }}
           DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
           JWT_SECRET: ${{ secrets.JWT_SECRET }}
 
