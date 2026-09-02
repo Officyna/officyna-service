@@ -19,57 +19,153 @@ import java.util.stream.Collectors;
 public class CustomerServiceOrderService {
 
     private final ServiceOrderRepository repository;
-
     private final CustomerAndMecnichalService customerService;
-
     private final ServiceOrderService serviceOrderService;
 
-    public CustomerServiceOrderService(ServiceOrderRepository repository,
-                                       CustomerAndMecnichalService customerService,
-                                       ServiceOrderService serviceOrderService) {
+    public CustomerServiceOrderService(
+            ServiceOrderRepository repository,
+            CustomerAndMecnichalService customerService,
+            ServiceOrderService serviceOrderService) {
         this.repository = repository;
         this.customerService = customerService;
         this.serviceOrderService = serviceOrderService;
     }
 
-    public List<ServiceOrder> findByCustomerDocument(String document, ServiceOrderStatus status) {
-        log.info("Iniciando consulta de ordens de serviço para o documento: {} com status: {}", document, status != null ? status : "TODOS");
+    public List<ServiceOrder> findByCustomerDocument(
+            String document,
+            ServiceOrderStatus status) {
+
+        log.info(
+                "Starting service order search for customer document: {} with status: {}",
+                document,
+                status != null ? status : "ALL"
+        );
 
         Customer customer = customerService.getCustomerByDocument(document);
-        log.debug("Cliente identificado para o documento {}: ID {}", document, customer.getId());
 
-        List<ServiceOrder> entityList = repository.findByCustomerId(customer.getId());
-        log.debug("Total de ordens encontradas no banco para o cliente {}: {}", customer.getId(), entityList.size());
+        log.debug(
+                "Customer identified for document {}: id={}",
+                document,
+                customer.getId()
+        );
+
+        List<ServiceOrder> entityList =
+                repository.findByCustomerId(customer.getId());
+
+        log.debug(
+                "Total service orders found for customer {}: {}",
+                customer.getId(),
+                entityList.size()
+        );
 
         List<ServiceOrder> result = (status == null)
                 ? entityList
-                : entityList.stream().filter(item -> item.getStatus().equals(status)).toList();
+                : entityList.stream()
+                  .filter(item -> item.getStatus().equals(status))
+                  .toList();
 
-        log.info("Consulta finalizada. Retornando {} ordens de serviço para o documento: {}", result.size(), document);
+        log.info(
+                "Service order search completed. Returning {} orders for customer document: {}",
+                result.size(),
+                document
+        );
+
         return result;
     }
 
-    public ServiceOrder updateLaborSituation(String serviceOrderId, List<ModifySituationRequest> request) {
+    public ServiceOrder updateLaborSituation(
+            String serviceOrderId,
+            List<ModifySituationRequest> request) {
+
+        log.info(
+                "Updating labor situation for service order: {}",
+                serviceOrderId
+        );
+
         ServiceOrder entity = repository.findById(serviceOrderId)
-                .orElseThrow(() -> ServiceOrderNotFoundException.of(serviceOrderId));
-        if(entity.getStatus().equals(ServiceOrderStatus.AGUARDANDO_APROVACAO)) {
+                .orElseThrow(() -> {
+                    log.warn(
+                            "Service order not found for labor situation update: {}",
+                            serviceOrderId
+                    );
+                    return ServiceOrderNotFoundException.of(serviceOrderId);
+                });
+
+        log.debug(
+                "Service order {} found with current status: {}",
+                serviceOrderId,
+                entity.getStatus()
+        );
+
+        if (entity.getStatus().equals(ServiceOrderStatus.AGUARDANDO_APROVACAO)) {
+
             LocalDateTime now = LocalDateTime.now();
-            Map<String, LaborSituation> laborsToUpdateMap = request.stream()
-                    .collect(Collectors.toMap(
-                            ModifySituationRequest::laborId,
-                            ModifySituationRequest::situation
-                    ));
+
+            Map<String, LaborSituation> laborsToUpdateMap =
+                    request.stream()
+                            .collect(Collectors.toMap(
+                                    ModifySituationRequest::laborId,
+                                    ModifySituationRequest::situation
+                            ));
+
+            log.debug(
+                    "Updating {} labor situations for service order: {}",
+                    laborsToUpdateMap.size(),
+                    serviceOrderId
+            );
+
             entity.getLabors().getLaborsDetails().stream()
                     .filter(item -> laborsToUpdateMap.containsKey(item.getLaborId()))
                     .forEach(item -> {
-                        LaborSituation newSituation = laborsToUpdateMap.get(item.getLaborId());
+                        LaborSituation newSituation =
+                                laborsToUpdateMap.get(item.getLaborId());
+
+                        log.debug(
+                                "Updating labor {} situation from {} to {}",
+                                item.getLaborId(),
+                                item.getSituation(),
+                                newSituation
+                        );
+
                         item.setSituation(newSituation);
                         item.setSituationDate(now);
                     });
+
+            ServiceOrderStatus previousStatus = entity.getStatus();
+
             entity.setStatus(ServiceOrderStatus.APROVADA);
+
+            serviceOrderService.logStatusChange(
+                    entity,
+                    previousStatus,
+                    ServiceOrderStatus.APROVADA
+            );
+
+            log.info(
+                    "Service order {} approved after labor situation update",
+                    serviceOrderId
+            );
+
         } else {
-            throw new ServiceOrderBusinessException("Só é possivel atualizar a situação de um serviço para O.S AGUARDANDO APROVAÇÃO");
+
+            log.warn(
+                    "Cannot update labor situation for service order {}. Current status: {}",
+                    serviceOrderId,
+                    entity.getStatus()
+            );
+
+            throw new ServiceOrderBusinessException(
+                    "Só é possivel atualizar a situação de um serviço para O.S AGUARDANDO APROVAÇÃO"
+            );
         }
-        return serviceOrderService.save(entity);
+
+        ServiceOrder saved = serviceOrderService.save(entity);
+
+        log.info(
+                "Labor situation update completed for service order: {}",
+                serviceOrderId
+        );
+
+        return saved;
     }
 }
