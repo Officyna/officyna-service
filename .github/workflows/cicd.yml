@@ -27,34 +27,275 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  IMAGE_NAME: ghcr.io/officyna/officyna-service
+  JAVA_VERSION: "21"
+
 jobs:
   build-test:
     name: Build e Testes
-    if: github.event_name == 'push' || github.event_name == 'pull_request'
+    if: github.event_name == 'push' || github.event_name == 'pull_request' || (github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'apply')
     runs-on: ubuntu-latest
+    env:
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
     steps:
       - name: Checkout do código
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Configurar JDK ${{ env.JAVA_VERSION }} (Temurin)
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ env.JAVA_VERSION }}
+          cache: maven
+
+      - name: Compilar e executar testes (mvn verify)
+        run: mvn --batch-mode --update-snapshots verify
+
+      - name: Análise de qualidade (SonarCloud)
+        if: ${{ env.SONAR_TOKEN != '' }}
+        run: |
+          mvn --batch-mode sonar:sonar \
+            -Dsonar.host.url=https://sonarcloud.io \
+            -Dsonar.organization=officyna \
+            -Dsonar.projectKey=officyna-service
+
+      - name: Publicar relatório de testes
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-reports
+          path: |
+            target/surefire-reports/
+            target/failsafe-reports/
+          if-no-files-found: ignore
 
   docker:
     name: Build e Push da Imagem Docker
     needs: build-test
     if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'apply')
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      image_tag: ${{ steps.meta.outputs.version }}
     steps:
       - name: Checkout do código
         uses: actions/checkout@v4
 
+      - name: Login no GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Definir tags e metadados da imagem
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.IMAGE_NAME }}
+          tags: |
+            type=sha
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=ref,event=branch
+
+      - name: Build e push da imagem
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+
+  # ==========================================
+  # JOB: Deploy Aplicacao (Kubernetes)
+  # ==========================================
   deploy-app:
     name: Deploy no Kubernetes
     needs: [docker]
     if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'apply')
     runs-on: ubuntu-latest
     environment: production
+    permissions:
+      contents: read
+      packages: read
     steps:
       - name: Checkout do código
         uses: actions/checkout@v4
 
+      - name: Configurar Credenciais AWS
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+#          aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Ler endpoint do banco (SSM Parameter Store)
+        id: docdb
+        run: |
+          ENDPOINT=$(aws ssm get-parameter --name "/officyna/db/endpoint" --query "Parameter.Value" --output text)
+          echo "endpoint=$ENDPOINT" >> "$GITHUB_OUTPUT"
+
+      - name: Atualizar kube config
+        run: aws eks update-kubeconfig --name eks-officyna-service --region us-east-1
+
+      - name: Aguardar nós prontos
+        run: |
+          echo "Aguardando nós prontos..."
+          kubectl wait --for=condition=Ready nodes --all --timeout=600s || true
+
+      - name: Instalar metrics-server (necessário para o HPA)
+        run: |
+          kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
+
+      - name: Instalar envsubst
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gettext-base
+
+      - name: Aplicar Kong (manifests)
+        run: |
+          kubectl create namespace officyna --dry-run=client -o yaml | kubectl apply -f -
+          kubectl apply -f k8s/kong-declarative-config.yaml
+          kubectl apply -f k8s/kong-deployment.yaml
+          kubectl apply -f k8s/kong-service-proxy.yaml
+          kubectl apply -f k8s/kong-service-admin.yaml || true
+
+      - name: Aplicar configmap
+        run: |
+          kubectl apply -f k8s/configmap.yaml
+
+      - name: Verificar URI gerada
+        env:
+          DOCDB_ENDPOINT: ${{ steps.docdb.outputs.endpoint }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+        run: |
+          export MONGODB_URI="mongodb://officynasoatdbuser:${DB_PASSWORD}@${DOCDB_ENDPOINT}:27017/officyna?tls=true&replicaSet=rs0&readPreference=secondaryPreferred&retryWrites=false"
+
+          echo "$MONGODB_URI"
+
+      - name: Mostrar secret gerado
+        env:
+          DOCDB_ENDPOINT: ${{ steps.docdb.outputs.endpoint }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+        run: |
+          export MONGODB_URI="mongodb://officynasoatdbuser:${DB_PASSWORD}@${DOCDB_ENDPOINT}:27017/officyna?tls=true&replicaSet=rs0&readPreference=secondaryPreferred&retryWrites=false"
+
+          envsubst < k8s/secret.yaml
+
+      - name: Aplicar Secret
+        env:
+          DOCDB_ENDPOINT: ${{ steps.docdb.outputs.endpoint }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+
+        run: |
+          export MONGODB_URI="mongodb://officynasoatdbuser:${DB_PASSWORD}@${DOCDB_ENDPOINT}:27017/officyna?tls=true&replicaSet=rs0&readPreference=secondaryPreferred&retryWrites=false"
+          envsubst < k8s/secret.yaml | kubectl apply -f -
+
+      - name: Criar imagePullSecret
+        run: |
+          kubectl create secret docker-registry ghcr-secret \
+            --docker-server=ghcr.io \
+            --docker-username=${{ secrets.GHCR_USERNAME }} \
+            --docker-password=${{ secrets.GHCR_PAT }} \
+            --namespace=officyna \
+            --dry-run=client -o yaml | kubectl apply -f -
+
+      - name: Aplicar Deployment, Service e HPA
+        run: |
+          sed -i "s|image: ${IMAGE_NAME}:latest|image: ${IMAGE_NAME}:${{ needs.docker.outputs.image_tag }}|" k8s/deployment.yaml
+          kubectl apply -f k8s/deployment.yaml
+          kubectl apply -f k8s/service.yaml
+          kubectl apply -f k8s/hpa.yaml
+
+      - name: Aguardar rollout da aplicação
+        run: |
+          kubectl rollout status deployment/officyna-service -n officyna --timeout=300s
+          kubectl get pods,svc,hpa -n officyna
+
+      - name: Logs da aplicação
+        run: |
+          kubectl logs deployment/officyna-service -n officyna
+
+      - name: Obter e Publicar URLs Públicas da Aplicação
+        run: |
+          echo "Buscando endpoint público do Kong Gateway..."
+          ENDPOINT=""
+          for i in $(seq 1 30); do
+            ENDPOINT=$(kubectl get svc kong-proxy -n officyna -o jsonpath='{.status.loadBalancer.ingress[0].hostname}' 2>/dev/null || true)
+            if [ -z "$ENDPOINT" ]; then
+              ENDPOINT=$(kubectl get svc kong-proxy -n officyna -o jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/dev/null || true)
+            fi
+            if [ -n "$ENDPOINT" ]; then
+              break
+            fi
+            echo "Aguardando Load Balancer da AWS responder... (tentativa $i de 30)"
+            sleep 10
+          done
+
+          if [ -z "$ENDPOINT" ]; then
+            echo "⚠️ Não foi possível obter o Load Balancer a tempo."
+            echo "### ⚠️ Deploy Concluído, mas o Load Balancer ainda está em provisionamento na AWS" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "=================================================="
+            echo "🎉 GATEWAY URL: http://$ENDPOINT:8000/officyna"
+            echo "📚 SWAGGER UI:  http://$ENDPOINT:8000/officyna/swagger-ui/index.html"
+            echo "❤️  HEALTHCHECK: http://$ENDPOINT:8000/officyna/actuator/health"
+            echo "=================================================="
+
+            echo "## 🚀 Deploy Concluído com Sucesso!" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "| Recurso | URL Pública |" >> $GITHUB_STEP_SUMMARY
+            echo "| :--- | :--- |" >> $GITHUB_STEP_SUMMARY
+            echo "| 🌐 **API Gateway (Kong)** | \`http://$ENDPOINT:8000/officyna\` |" >> $GITHUB_STEP_SUMMARY
+            echo "| 📚 **Swagger UI** | [Abrir Swagger](http://$ENDPOINT:8000/officyna/swagger-ui/index.html) |" >> $GITHUB_STEP_SUMMARY
+            echo "| ❤️ **Health Check** | [Ver Status](http://$ENDPOINT:8000/officyna/actuator/health) |" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Diagnóstico em caso de falha
+        if: failure()
+        run: |
+          echo "===== PODS ====="
+          kubectl get pods -n officyna -o wide
+
+          echo "===== DESCRIBE POD ====="
+          kubectl describe pod -n officyna -l app.kubernetes.io/name=officyna
+
+          echo "===== EVENTS ====="
+          kubectl get events -n officyna --sort-by=.metadata.creationTimestamp
+
+      - name: Logs do Pod
+        if: failure()
+        run: |
+          POD=$(kubectl get pods -n officyna -l app.kubernetes.io/name=officyna -o jsonpath='{.items[0].metadata.name}')
+
+          echo "===== POD ====="
+          echo "$POD"
+
+          echo "===== LOGS ATUAIS ====="
+          kubectl logs $POD -n officyna || true
+
+          echo "===== LOGS ANTERIORES ====="
+          kubectl logs $POD -n officyna --previous || true
+
+          echo "===== VARIÁVEIS ====="
+          kubectl describe pod $POD -n officyna
+
+  # ==========================================
+  # JOB: Remover recursos do Kubernetes (App + Kong)
+  # ==========================================
+  # Terraform do EKS e do DocumentDB agora vive nos repos officyna-infra-k8s e
+  # officyna-infra-db. Depois deste job, rode o "destroy" (workflow_dispatch)
+  # em officyna-infra-k8s e só então em officyna-infra-db (o EKS precisa ser
+  # destruído antes da VPC/subnets criadas pelo DocumentDB).
   destroy-app:
     name: Remover aplicação e Kong do cluster
     if: github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'destroy' && github.event.inputs.confirm == 'destroy'
@@ -63,3 +304,34 @@ jobs:
     steps:
       - name: Checkout do código
         uses: actions/checkout@v4
+
+      - name: Configurar Credenciais AWS
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Atualizar kubeconfig
+        run: |
+          aws eks update-kubeconfig \
+            --name eks-officyna-service \
+            --region ${{ secrets.AWS_REGION }} || \
+          echo "Cluster EKS não encontrado (talvez já destruído); seguindo mesmo assim."
+
+      - name: Remover recursos do Kubernetes
+        run: |
+          kubectl delete -f k8s/hpa.yaml --ignore-not-found=true || true
+          kubectl delete -f k8s/service.yaml --ignore-not-found=true || true
+          kubectl delete -f k8s/deployment.yaml --ignore-not-found=true || true
+          kubectl delete -f k8s/secret.yaml --ignore-not-found=true || true
+          kubectl delete -f k8s/configmap.yaml --ignore-not-found=true || true
+          kubectl delete -f k8s/kong-service-proxy.yaml --ignore-not-found=true || true
+          kubectl delete -f k8s/kong-service-admin.yaml --ignore-not-found=true || true
+          kubectl delete -f k8s/kong-deployment.yaml --ignore-not-found=true || true
+          kubectl delete -f k8s/kong-declarative-config.yaml --ignore-not-found=true || true
+
+      - name: Aguardar remoção do LoadBalancer
+        run: |
+          echo "Aguardando a AWS remover o LoadBalancer..."
+          sleep 180
