@@ -5,6 +5,7 @@ import br.com.officyna.infrastructure.persistence.mongodb.repository.LaborMonito
 import br.com.officyna.monitoring.domain.entity.LaborMonitoring;
 import br.com.officyna.monitoring.domain.repository.LaborMonitoringRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -17,6 +18,7 @@ import java.util.Optional;
  */
 @Component
 @RequiredArgsConstructor
+@Slf4j
 public class LaborMonitoringRepositoryGateway implements LaborMonitoringRepository {
 
     private final LaborMonitoringMongoRepository mongoRepository;
@@ -24,37 +26,93 @@ public class LaborMonitoringRepositoryGateway implements LaborMonitoringReposito
 
     @Override
     public LaborMonitoring save(LaborMonitoring entity) {
-        var document = mapper.toDocument(entity);
-        var saved = mongoRepository.save(document);
-        return mapper.toEntity(saved);
+        try {
+            var document = mapper.toDocument(entity);
+            var saved = mongoRepository.save(document);
+
+            return mapper.toEntity(saved);
+
+        } catch (Exception e) {
+            log.error(
+                    "MongoDB operation failed operation=save repository=LaborMonitoringRepositoryGateway",
+                    e
+            );
+            throw e;
+        }
     }
 
     @Override
     public Optional<LaborMonitoring> findById(String id) {
-        return mongoRepository.findById(id).map(mapper::toEntity);
+        try {
+            return mongoRepository.findById(id)
+                    .map(mapper::toEntity);
+
+        } catch (Exception e) {
+            log.error(
+                    "MongoDB operation failed operation=findById repository=LaborMonitoringRepositoryGateway",
+                    e
+            );
+            throw e;
+        }
     }
 
     @Override
     public List<LaborMonitoring> findAll() {
-        return mongoRepository.findAll()
-                .stream()
-                .map(mapper::toEntity)
-                .toList();
+        try {
+            return mongoRepository.findAll()
+                    .stream()
+                    .map(mapper::toEntity)
+                    .toList();
+
+        } catch (Exception e) {
+            log.error(
+                    "MongoDB operation failed operation=findAll repository=LaborMonitoringRepositoryGateway",
+                    e
+            );
+            throw e;
+        }
     }
 
     @Override
     public void deleteById(String id) {
-        mongoRepository.deleteById(id);
+        try {
+            mongoRepository.deleteById(id);
+
+        } catch (Exception e) {
+            log.error(
+                    "MongoDB operation failed operation=deleteById repository=LaborMonitoringRepositoryGateway",
+                    e
+            );
+            throw e;
+        }
     }
 
     @Override
     public boolean existsById(String id) {
-        return mongoRepository.existsById(id);
+        try {
+            return mongoRepository.existsById(id);
+
+        } catch (Exception e) {
+            log.error(
+                    "MongoDB operation failed operation=existsById repository=LaborMonitoringRepositoryGateway",
+                    e
+            );
+            throw e;
+        }
     }
 
     @Override
     public Optional<LaborMonitoring> findByLaborId(String laborId) {
-        return mongoRepository.findByLaborId(laborId).map(mapper::toEntity);
+        try {
+            return mongoRepository.findByLaborId(laborId)
+                    .map(mapper::toEntity);
+
+        } catch (Exception e) {
+            log.error(
+                    "MongoDB operation failed operation=findByLaborId repository=LaborMonitoringRepositoryGateway",
+                    e
+            );
+            throw e;
+        }
     }
 }
-
