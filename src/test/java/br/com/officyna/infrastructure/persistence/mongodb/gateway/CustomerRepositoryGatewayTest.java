@@ -239,4 +239,30 @@ class CustomerRepositoryGatewayTest {
         verify(mongoRepository, times(1)).findByActiveTrue();
         verify(mapper, never()).toEntity(any(CustomerDocument.class));
     }
+
+    @Test
+    @DisplayName("Should find a customer by email when it exists")
+    void findByEmail_found() {
+        when(mongoRepository.findByEmail("test@example.com")).thenReturn(Optional.of(customerDocument));
+        when(mapper.toEntity(any(CustomerDocument.class))).thenReturn(customer);
+
+        Optional<Customer> foundCustomer = gateway.findByEmail("test@example.com");
+
+        assertTrue(foundCustomer.isPresent());
+        assertEquals(customer.getEmail(), foundCustomer.get().getEmail());
+        verify(mongoRepository, times(1)).findByEmail("test@example.com");
+        verify(mapper, times(1)).toEntity(customerDocument);
+    }
+
+    @Test
+    @DisplayName("Should return empty when customer not found by email")
+    void findByEmail_notFound() {
+        when(mongoRepository.findByEmail("notfound@example.com")).thenReturn(Optional.empty());
+
+        Optional<Customer> foundCustomer = gateway.findByEmail("notfound@example.com");
+
+        assertFalse(foundCustomer.isPresent());
+        verify(mongoRepository, times(1)).findByEmail("notfound@example.com");
+        verify(mapper, never()).toEntity(any(CustomerDocument.class));
+    }
 }

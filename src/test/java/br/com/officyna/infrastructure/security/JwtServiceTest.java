@@ -109,4 +109,40 @@ class JwtServiceTest {
             assertEquals("user@email.com", jwtService.extractUsername(token));
         }
     }
+
+    // ─── isLambdaToken ────────────────────────────────────────────────────────
+
+    @Test
+    @DisplayName("Deve identificar token interno como não sendo da Lambda")
+    void isLambdaToken_ShouldReturnFalse_ForInternalUserToken() {
+        UserDetails user = buildUserDetails("admin@officyna.com", "ADMIN");
+        String token = jwtService.generateToken(user);
+
+        assertFalse(jwtService.isLambdaToken(token));
+    }
+
+    @Test
+    @DisplayName("Deve identificar token com issuer da Lambda como sendo da Lambda")
+    void isLambdaToken_ShouldReturnTrue_WhenIssuerIsOfficynaAuth() {
+        String lambdaToken = io.jsonwebtoken.Jwts.builder()
+                .subject("contato@campanholi.com")
+                .issuer("officyna-auth")
+                .claim("roles", "CUSTOMER")
+                .claim("type", "CUSTOMER")
+                .claim("customerId", "67be5c48b29f9e31d451a92e")
+                .signWith(io.jsonwebtoken.security.Keys.hmacShaKeyFor(
+                        io.jsonwebtoken.io.Decoders.BASE64.decode(
+                                java.util.Base64.getEncoder().encodeToString(TEST_SECRET.getBytes())
+                        )
+                ))
+                .compact();
+
+        assertTrue(jwtService.isLambdaToken(lambdaToken));
+    }
+
+    @Test
+    @DisplayName("Deve retornar false para token inválido ou malformado")
+    void isLambdaToken_ShouldReturnFalse_ForMalformedToken() {
+        assertFalse(jwtService.isLambdaToken("token.invalido.aqui"));
+    }
 }

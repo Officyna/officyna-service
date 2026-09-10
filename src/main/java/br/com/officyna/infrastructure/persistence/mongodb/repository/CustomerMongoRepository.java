@@ -17,6 +17,8 @@ public interface CustomerMongoRepository extends MongoRepository<CustomerDocumen
 
     Optional<CustomerDocument> findByDocument(String document);
 
+    Optional<CustomerDocument> findByEmail(String email);
+
     boolean existsByDocument(String document);
 
     List<CustomerDocument> findByActiveTrue();

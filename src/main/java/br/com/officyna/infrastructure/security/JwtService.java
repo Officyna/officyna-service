@@ -113,34 +113,45 @@ public class JwtService {
     }
 
 
-    private <T> T extractClaim(
-            String token,
-            Function<Claims, T> claimsResolver
-    ) {
-
+    public Claims extractAllClaims(String token) {
         try {
+            log.debug("Parsing JWT token claims");
 
-            log.debug("Parsing JWT token");
-
-
-            Claims claims = Jwts.parser()
+            return Jwts.parser()
                     .verifyWith(getSigningKey())
                     .build()
                     .parseSignedClaims(token)
                     .getPayload();
 
-
-            log.debug("JWT claims extracted successfully");
-
-
-            return claimsResolver.apply(claims);
-
-
         } catch (Exception e) {
-
             log.error("Error parsing JWT token: {}", e.getMessage());
-
             throw e;
+        }
+    }
+
+    public <T> T extractClaim(
+            String token,
+            Function<Claims, T> claimsResolver
+    ) {
+        Claims claims = extractAllClaims(token);
+        return claimsResolver.apply(claims);
+    }
+
+    public boolean isLambdaToken(String token) {
+        try {
+            Claims claims = extractAllClaims(token);
+            String issuer = claims.getIssuer();
+            String type = claims.get("type", String.class);
+            String roles = claims.get("roles", String.class);
+            String customerId = claims.get("customerId", String.class);
+
+            return "officyna-auth".equalsIgnoreCase(issuer)
+                    || "CUSTOMER".equalsIgnoreCase(type)
+                    || (roles != null && roles.contains("CUSTOMER"))
+                    || customerId != null;
+        } catch (Exception e) {
+            log.warn("Error inspecting JWT token claims: {}", e.getMessage());
+            return false;
         }
     }
 
