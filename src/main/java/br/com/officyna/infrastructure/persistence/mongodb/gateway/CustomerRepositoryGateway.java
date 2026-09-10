@@ -117,6 +117,21 @@ public class CustomerRepositoryGateway implements CustomerRepository {
     }
 
     @Override
+    public Optional<Customer> findByEmail(String email) {
+        try {
+            return mongoRepository.findByEmail(email)
+                    .map(mapper::toEntity);
+
+        } catch (Exception e) {
+            log.error(
+                    "MongoDB operation failed operation=findByEmail repository=CustomerRepositoryGateway",
+                    e
+            );
+            throw e;
+        }
+    }
+
+    @Override
     public boolean existsByDocument(String document) {
         try {
             return mongoRepository.existsByDocument(document);
