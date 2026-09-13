@@ -74,27 +74,105 @@ Seguindo as diretrizes da Fase 3, o projeto é segregado em **4 repositórios se
 * **Banco de Dados Gerenciado (DocumentDB):** Persistência relacional gerenciada, garantindo alta disponibilidade, backup automatizado e performance.
 * **Terraform:** Provisionamento declarativo de toda a infraestrutura (IaC).
 
-### Estrutura do Código da Aplicação (`officyna-service`)
-A aplicação principal segue a **Clean Architecture** e princípios de Domain-Driven Design (DDD):
+
+## 📁 Estrutura do Código dos Repositórios
+
+Abaixo estão apresentadas as estruturas de pastas exatas dos **4 repositórios** que compõem a solução da Fase 3 do Tech Challenge:
+
+### 1. Repositório da Aplicação Principal (`officyna-service`)
 
 ```bash
 officyna-service/
 ├── .github/
-│   └── workflows/          # Pipelines de CI/CD (Build, Test, Push Docker, Deploy K8s)
-├── db-seed/                # Scripts de migração e dados iniciais
-├── infra/                  # Módulos Terraform de suporte
-├── k8s/                    # Manifestos de Kubernetes (Deployment, Service, HPA, ConfigMap)
-└── src/
-    ├── main/
-    │   ├── java/
-    │   │   └── br/com/officyna/
-    │   │       ├── administrative/ # Agregados: Customer, Vehicle, Labor, Supply, User
-    │   │       ├── serviceorder/   # Módulo de Ordem de Serviço (Ciclo de vida e regras de negócio)
-    │   │       ├── inventory/      # Módulo de Controle de Estoque
-    │   │       ├── monitoring/     # Módulo de Coleta de Métricas
-    │   │       └── infrastructure/ # Adaptadores de Entrada/Saída, DB, Segurança e Configurações
-    └── test/               # Cobertura de testes unitários, de integração e arquitetura (> 80%)
+│   └── workflows/              # Pipelines de CI/CD (Build, Test, Push ECR/Docker, Deploy K8s)
+├── db-seed/                    # Scripts de migração e dados iniciais do banco
+├── k8s/                        # Manifestos de Kubernetes (Deployment, Service, HPA, ConfigMap)
+├── newrelic/                   # Configurações de instrumentação e métricas do New Relic
+├── src/                        # Código fonte Java Spring Boot em Clean Architecture / DDD
+│   ├── main/
+│   │   ├── java/
+│   │   │   └── br/com/officyna/
+│   │   │       ├── administrative/ # Agregados: Customer, Vehicle, Labor, Supply, User
+│   │   │       ├── inventory/      # Módulo de Controle de Estoque
+│   │   │       ├── monitoring/     # Módulo de Coleta de Métricas e SLA
+│   │   │       ├── serviceorder/   # Módulo de Ordem de Serviço (Ciclo de vida e regras de negócio)
+│   │   │       └── infrastructure/ # Adaptadores de Entrada/Saída, DB, Segurança e Kong
+│   │   └── resources/          # Configurações da aplicação (application.yml, propriedades)
+│   └── test/                   # Cobertura de testes unitários, integração e arquitetura (> 80%)
+├── .gitignore                  # Arquivos e pastas ignorados pelo Git
+├── Dockerfile                  # Empacotamento multi-stage da aplicação em container Docker
+├── Kong.yml                    # Configuração declarativa de rotas e plugins do Kong API Gateway
+├── README.md                   # Documentação principal da aplicação
+├── docker-compose.yml          # Setup para execução e testes em ambiente local
+├── img_1.png                   # Diagrama visual de arquitetura para a documentação
+├── img_2.png                   # Diagrama visual de arquitetura para a documentação
+├── mvnw                        # Script Wrapper do Maven (Linux/macOS)
+├── mvnw.cmd                    # Script Wrapper do Maven (Windows)
+├── owasp-suppressions.xml      # Supressões e regras de segurança OWASP Dependency Check
+└── pom.xml                     # Gerenciador de dependências e plugins Maven
 ```
+
+### 2. Repositório de Infraestrutura do Banco de Dados (`officyna-infra-db`)
+
+```bash
+officyna-infra-db/
+├── .github/
+│   └── workflows/              # Pipeline de CI/CD para validação e apply do Terraform
+├── .gitignore                  # Arquivos e pastas ignorados pelo Git (.terraform, *.tfstate)
+├── README.md                   # Documentação da infraestrutura do banco de dados
+├── db.tf                       # Provisionamento da instância/cluster do Banco Gerenciado (RDS/DocumentDB)
+├── network.tf                  # Regras de rede, Security Groups e roteamento de banco
+├── outputs.tf                  # Saídas expostas pelo Terraform (Endpoints, Connection Strings, IDs)
+├── providers.tf                # Configuração do provedor AWS e backend remoto S3
+├── subnet.tf                   # Alocação de Subnets privadas para isolamento do banco
+├── variables.tf                # Definição de variáveis de ambiente e parâmetros
+└── vpc.tf                      # Recursos de VPC dedicados ou compartilhados para o banco
+```
+
+### 3. Repositório de Infraestrutura Kubernetes (`officyna-infra-k8s`)
+
+```bash
+officyna-infra-k8s/
+├── .github/
+│   └── workflows/              # Pipeline de CI/CD para validação e deploy da infraestrutura EKS
+├── .gitignore                  # Arquivos e pastas ignorados pelo Git (.terraform, secrets)
+├── README.md                   # Documentação da infraestrutura do EKS
+├── data.tf                     # Consultas Data Sources do Terraform para leitura de recursos AWS
+├── eks-cluster.tf              # Provisionamento do Cluster AWS EKS (Control Plane)
+├── eks-node.tf                 # Configuração dos Node Groups e instâncias EC2 do EKS
+├── iam-role.tf                 # Roles e Políticas IAM para o cluster EKS e ServiceAccounts
+├── newrelic.tf                 # Integração e instrumentação do agente New Relic no Cluster Kubernetes
+├── providers.tf                # Configuração dos provedores AWS, Helm e Kubernetes no Terraform
+├── subnet.tf                   # Subnets dedicadas aos nós de trabalho do EKS
+└── variables.tf                # Definição de variáveis de entrada da infraestrutura K8s
+```
+
+### 4. Repositório da Function Serverless / Autenticação (`officyna-auth-lambda`)
+
+```bash
+officyna-auth-lambda/
+├── .github/
+│   └── workflows/              # Pipeline de CI/CD (Testes Jest, Build, Deploy da Lambda)
+├── certs/                      # Certificados e chaves públicas/privadas para assinatura JWT
+├── docs/                       # Documentação técnica e especificações da função serverless
+├── src/                        # Código fonte TypeScript/Node.js da Function Serverless
+│   ├── handlers/               # Handlers de eventos do API Gateway / Lambda Authorizer
+│   ├── services/               # Validação de CPF, consulta ao banco e geração de JWT
+│   └── utils/                  # Utilitários de formatação e segurança
+├── terraform/                  # Código Terraform para provisionar a Lambda, API Gateway e IAM
+├── tests/                      # Testes unitários e de integração (Jest)
+├── .dockerignore               # Arquivos ignorados na criação da imagem Docker da Lambda
+├── .env.example                # Modelo de arquivo de variáveis de ambiente
+├── .gitignore                  # Arquivos e pastas ignorados pelo Git
+├── Dockerfile                  # Imagem container da Lambda (para runtime customizado ou ECR)
+├── README.md                   # Documentação da função serverless de autenticação
+├── jest.config.js              # Configurações do framework de testes Jest
+├── package-lock.json           # Travamento de versões exatas das dependências Node
+├── package.json                # Manifesto de dependências e scripts do Node.js
+└── tsconfig.json               # Configurações do compilador TypeScript
+```
+
+---
 
 ### 🛡️ Segurança e Qualidade
 * **Autenticação JWT Serverless:** Rotas sensíveis protegidas com validação prévia de token assinado.
