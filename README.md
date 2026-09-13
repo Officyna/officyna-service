@@ -207,6 +207,8 @@ A documentação detalhada da arquitetura inclui:
    * Justificativa formal da escolha do Banco Relacional e ajustes de normalização.
    * Diagramas Entidade-Relacionamento (ER) com especificação de chaves e relacionamentos.
 
+ ### Documentação se encontra no link do PDF da entrega do projeto ❗
+
 ---
 
 ## 📊 Monitoramento e Observabilidade
