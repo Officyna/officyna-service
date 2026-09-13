@@ -9,7 +9,7 @@ Este projeto representa a evolução da solução desenvolvida para o Tech Chall
 ## 📋 Sumário
 * [Objetivo do Projeto](#-objetivo-do-projeto)
 * [Funcionalidades Implementadas](#-funcionalidades-implementadas)
-* [Estrutura de Repositórios e CI/CD](#-estrutura-de-repositorios-e-ci/cd)
+* [Estrutura de Repositórios e CI/CD](#-estrutura-de-repositórios-e-cicd)
 * [Arquitetura Técnica & Segurança](#-arquitetura-técnica-&-segurança)
 * [Documentação Arquitetural](#-documentação-arquitetural)
 * [Monitoramento e Observabilidade](#-monitoramento-e-observabilidade)
