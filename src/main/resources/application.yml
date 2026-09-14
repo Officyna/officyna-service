@@ -5,7 +5,7 @@ spring:
     uri: ${MONGODB_URI:mongodb://localhost:27017/officyna}
 
 server:
-  port: 8080
+  port: 8084
 
 jwt:
   secret: ${JWT_SECRET:officyna-secret-key-change-in-production-min-256bits}

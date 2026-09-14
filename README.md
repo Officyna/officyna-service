@@ -1,273 +1,285 @@
 # 🛠️ Officyna - Sistema Integrado de Gestão de Oficina Mecânica
-Este projeto representa o MVP (Produto Mínimo Viável) desenvolvido para o Tech Challenge da Fase 1. A solução visa digitalizar a jornada de atendimento de uma oficina mecânica, substituindo processos manuais por um fluxo automatizado e seguro.
+
+> **Tech Challenge - Fase 3: Operação Corporativa, Serverless e Escalabilidade Cloud**
+
+Este projeto representa a evolução da solução desenvolvida para o Tech Challenge. Na Fase 3, o sistema passa a operar em nível corporativo, com foco em segurança, alta disponibilidade, observabilidade e escalabilidade serverless em ambiente de nuvem.
+
+---
 
 ## 📋 Sumário
+* [Objetivo do Projeto](#-objetivo-do-projeto)
+* [Funcionalidades Implementadas](#-funcionalidades-implementadas)
+* [Estrutura de Repositórios e CI/CD](#-estrutura-de-repositórios-e-cicd)
+* [Arquitetura Técnica & Segurança](#-arquitetura-técnica-&-segurança)
+* [Documentação Arquitetural](#-documentação-arquitetural)
+* [Monitoramento e Observabilidade](#-monitoramento-e-observabilidade)
+* [Instruções de Execução e Deploy](#-instruções-de-execução-e-deploy)
 
-* [Objetivo do Projeto](#objetivo-do-projeto)
-* [Funcionalidades Implementadas](#funcionalidades-implementadas)
-* [Arquitetura Técnica](#arquitetura-técnica)
-* [Segurança e Qualidade](#segurança-e-qualidade)
-* [Instruções de Execução](#instruções-de-execução)
 
-# 🎯 Objetivo do Projeto
-O projeto `Officyna` é um sistema integrado de gestão para oficinas mecânicas de automóveis que visa:
-* Digitalizar o atendimento;
-* Substitur processos manuais por fluxos automatizados e seguros;
+---
 
-Nesta segunda fase, os objetivos principais são modernizar a infraestrutura e a arquitetura do software, garantindo que o sistema seja escalável, resiliente e siga as melhores práticas de mercado
-Para isso, o foco está na implementação da Clean Architecture para organizar a lógica de negócio, na Dockerização para empacotamento em containers, e no uso de Kubernetes para orquestração em nuvem
-Além disso, a fase foca na automação total via Infraestrutura como Código (IaC) com Terraform e pipelines de CI/CD para garantir agilidade e confiabilidade na entrega do software
+## 🎯 Objetivo do Projeto
+O projeto **Officyna** é um sistema integrado de gestão para oficinas mecânicas de automóveis que visa digitalizar o atendimento e substituir processos manuais por fluxos automatizados e seguros.
+
+Na **Fase 3**, os objetivos centrais são:
+* **Escalabilidade e Segurança em Nuvem:** Garantir a expansão da oficina para múltiplas unidades e alta concorrência de clientes.
+* **Autenticação Serverless e API Gateway:** Proteger rotas sensíveis da aplicação utilizando AWS API Gateway e Function Serverless (AWS Lambda) para validação de CPF e emissão de tokens JWT.
+* **Banco de Dados Gerenciado:** Transição e melhoria da modelagem relacional em banco de dados gerenciado em nuvem (ex: PostgreSQL / MySQL).
+* **Segregação de Repositórios:** Divisão da aplicação em 4 repositórios independentes com governança rigorosa de código e pipelines CI/CD automatizados.
+* **Observabilidade Corporativa:** Implementação de monitoramento em tempo real com Datadog/New Relic, métricas de K8s, logs estruturados em JSON e dashboards operacionais.
+
+---
 
 ## ✨ Funcionalidades Implementadas
-### 1. Gestão de Ordens de Serviço (OS)
-   Abertura de OS: Identificação por CPF/CNPJ e cadastro detalhado do veículo.
 
-- Orçamento Automático: Cálculo automático de valores baseado em serviços (labors) e peças (supplies) adicionados.
+### 1. Autenticação e Autorização Serverless
+* **Validação de CPF:** Function Serverless que valida o CPF do cliente e consulta seu status na base de dados.
+* **Geração de JWT:** Emissão de tokens JWT válidos para consumo seguro das APIs protegidas através do API Gateway.
+* **Proteção de Endpoints:** Proteção de rotas sensíveis com autorizador customizado no API Gateway.
 
-- Status da OS: Ciclo de vida completo com os status: Recebida, Em diagnóstico, Aguardando aprovação, Em execução, Finalizada e Entregue.
+### 2. Gestão de Ordens de Serviço (OS)
+* **Abertura de OS:** Identificação por CPF/CNPJ e cadastro detalhado do veículo.
+* **Orçamento Automático:** Cálculo automático de valores baseado em mão de obra (*labors*) e peças (*supplies*).
+* **Ciclo de Vida de Status:** Recebida, Em diagnóstico, Aguardando aprovação, Em execução, Finalizada e Entregue.
+* **Consulta via API:** Endpoint público/protegido para acompanhamento do status da OS pelo cliente.
 
-- Acompanhamento via API: Endpoint dedicado para consulta do cliente através do documento (CPF/CNPJ).
+### 3. Telemetria e Métricas Operacionais
+* **Monitoramento de SLA:** Cálculo de tempo médio de execução por status (Diagnóstico, Execução e Finalização).
+* **Acompanhamento de OS:** Dashboard com volume diário de ordens e taxas de erro em integrações.
 
-### 2. Gestão Administrativa (CRUDs)
-   O sistema provê interfaces REST para o gerenciamento de:
+---
 
-- Clientes: Cadastro completo com validação de documentos.
+## 🗂️ Estrutura de Repositórios e CI/CD
 
-- Veículos: Vínculo com clientes e validação de placas.
+Seguindo as diretrizes da Fase 3, o projeto é segregado em **4 repositórios separados**, cada um com seu pipeline de CI/CD automatizado via **GitHub Actions** (ou GitLab CI) com deploy automático em nuvem:
 
-- Serviços: Listagem de mão de obra disponível.
+1. `officyna-lambda`: Código da Function Serverless para validação de CPF e geração de token JWT.
+2. `officyna-infra-k8s`: Código Terraform para provisionamento do Cluster Kubernetes (EKS).
+3. `officyna-infra-db`: Código Terraform para provisionamento e configuração do Banco de Dados Gerenciado.
+4. `officyna-service`: Aplicação principal (microsserviços/back-end) executada no cluster Kubernetes e API Gateway.
 
-- Peças e Insumos: Controle de inventário com alerta de estoque baixo.
+### Regras de Governança de Código:
+* **Branches `main` protegidas:** Commits diretos são bloqueados.
+* **Pull Requests (PR):** Merge obrigatório via PR com aprovação e execução de checks de CI.
+* **Deploy Automatizado:** CD configurado para ambientes de Homologação e Produção.
 
-### 3. Monitoramento
-   Tempo Médio de Execução: Serviço especializado que calcula e monitora a performance da oficina por tipo de serviço.
+---
 
-# 🏗️ Arquitetura Técnica
-![img_2.png](img_2.png)
+## 🏗️ Arquitetura Técnica & Segurança
 
-## Componentes da Aplicação
-A aplicação é construída como um back-end monolítico organizado seguindo os princípios da Clean Architecture, dividindo-se em camadas de API, Domínio (DDD) e Infraestrutura .
+### Componentes de Infraestrutura na Nuvem
+* **API Gateway (Kong):** Ponto de entrada único para roteamento de requisições e integração com o autorizador serverless.
+* **Function Serverless (AWS Lambda):** Função executada sob demanda para autenticação via CPF e geração de JWT.
+* **Cluster Kubernetes (Amazon EKS):** Orquestração dos pods da aplicação com suporte a escalabilidade automática (HPA).
+* **Banco de Dados Gerenciado (DocumentDB):** Persistência relacional gerenciada, garantindo alta disponibilidade, backup automatizado e performance.
+* **Terraform:** Provisionamento declarativo de toda a infraestrutura (IaC).
+
+
+## 📁 Estrutura do Código dos Repositórios
+
+Abaixo estão apresentadas as estruturas de pastas exatas dos **4 repositórios** que compõem a solução da Fase 3 do Tech Challenge:
+
+### 1. Repositório da Aplicação Principal (`officyna-service`)
 
 ```bash
 officyna-service/
-├officyna-service/ # Raiz do microsserviço
 ├── .github/
-│   └── workflows/ # Pipelines de CI/CD
-├── db-seed/ # Scripts para popular o banco de dados inicial
-├── infra/ # Infraestrutura como Código (ex: Terraform)
-├── k8s/ # Manifestos de orquestração do Kubernetes
-└── src/
-    ├── main/
-    │   ├── java/
-    │   │   └── br/
-    │   │       └── com/
-    │   │           └── officyna/
-    │   │               ├── administrative/ # Módulo Administrativo (Bounded Context / Vertical Slice)
-    │   │               │   ├── customer/ # Agregado/Subdomínio de Cliente
-    │   │               │   │   ├── api/ # Camada de Entrada/Apresentação (Primary Adapters)
-    │   │               │   │   │   ├── controller/ # Endpoints REST
-    │   │               │   │   │   ├── handler/ # Tratamento de eventos/exceções da API
-    │   │               │   │   │   └── resources/ # Payloads, DTOs de Request/Response
-    │   │               │   │   └── domain/ # Núcleo da Regra de Negócio (Core / Domain Layer)
-    │   │               │   │       ├── controller/ # Interfaces/Ports de entrada (Casos de Uso)
-    │   │               │   │       ├── entity/ # Entidades de Domínio
-    │   │               │   │       ├── exception/ # Exceções específicas de negócio
-    │   │               │   │       ├── mapper/ # Conversores entre DTOs e Entidades
-    │   │               │   │       ├── presenter/ # Formatação de dados de saída
-    │   │               │   │       ├── repository/ # Interfaces/Ports de saída para persistência
-    │   │               │   │       ├── service/ # Serviços de Domínio / Implementação de Casos de Uso
-    │   │               │   │       └── validation/ # Regras de validação de negócio
-    │   │               │   ├── labor/ # Agregado/Subdomínio de Mão de Obra
-    │   │               │   │   ├── api/
-    │   │               │   │   │   ├── controller/
-    │   │               │   │   │   ├── handler/
-    │   │               │   │   │   └── resources/
-    │   │               │   │   └── domain/
-    │   │               │   │       ├── controller/
-    │   │               │   │       ├── entity/
-    │   │               │   │       ├── exception/
-    │   │               │   │       ├── mapper/
-    │   │               │   │       ├── presenter/
-    │   │               │   │       ├── repository/
-    │   │               │   │       └── service/
-    │   │               │   ├── supply/ # Agregado/Subdomínio de Suprimentos
-    │   │               │   │   ├── api/
-    │   │               │   │   │   ├── controller/
-    │   │               │   │   │   ├── handler/
-    │   │               │   │   │   └── resources/
-    │   │               │   │   └── domain/
-    │   │               │   │       ├── controller/
-    │   │               │   │       ├── entity/
-    │   │               │   │       ├── exception/
-    │   │               │   │       ├── mapper/
-    │   │               │   │       ├── presenter/
-    │   │               │   │       ├── repository/
-    │   │               │   │       └── service/
-    │   │               │   ├── user/ # Agregado/Subdomínio de Usuários
-    │   │               │   │   ├── api/
-    │   │               │   │   │   ├── controller/
-    │   │               │   │   │   ├── handler/
-    │   │               │   │   │   └── resources/
-    │   │               │   │   └── domain/
-    │   │               │   │       ├── controller/
-    │   │               │   │       ├── entity/
-    │   │               │   │       ├── exception/
-    │   │               │   │       ├── mapper/
-    │   │               │   │       ├── presenter/
-    │   │               │   │       ├── repository/
-    │   │               │   │       └── service/
-    │   │               │   └── vehicle/ # Agregado/Subdomínio de Veículos
-    │   │               │       ├── api/
-    │   │               │       │   ├── controller/
-    │   │               │       │   ├── handler/
-    │   │               │       │   └── resources/
-    │   │               │       └── domain/
-    │   │               │           ├── controller/
-    │   │               │           ├── entity/
-    │   │               │           ├── exception/
-    │   │               │           ├── mapper/
-    │   │               │           ├── presenter/
-    │   │               │           ├── repository/
-    │   │               │           └── service/
-    │   │               ├── infrastructure/ # Camada de Infraestrutura Transversal (Secondary Adapters / Frameworks)
-    │   │               │   ├── auth/ # Implementações de Autenticação
-    │   │               │   ├── config/ # Configurações gerais do Spring Boot (Beans, etc.)
-    │   │               │   ├── converter/ # Conversores globais da aplicação
-    │   │               │   ├── exception/ # Tratamento de exceções globais da infra
-    │   │               │   ├── persistence/ # Implementações dos Repositories do Domínio
-    │   │               │   │   ├── component/ # Componentes utilitários de banco
-    │   │               │   │   ├── config/ # Configuração do banco de dados
-    │   │               │   ├── mapper/ # Conversores Infra <-> Domínio
-    │   │               │   └── mongodb/ # Adaptador específico do MongoDB
-    │   │               │       ├── gateway/ # Implementação concreta das interfaces do domínio
-    │   │               │       ├── model/ # Documentos/Entidades do MongoDB (@Document)
-    │   │               │       └── repository/ # Interfaces do Spring Data MongoDB
-    │   │               │   └── security/ # Configurações de Segurança (Spring Security)
-    │   │               ├── inventory/ # Módulo de Estoque
-    │   │               │   ├── api/
-    │   │               │   │   ├── controller/
-    │   │               │   │   └── resources/
-    │   │               │   ├── domain/
-    │   │               │   │   ├── mapper/
-    │   │               │   │   └── service/
-    │   │               │   └── repository/ # Repositório fora da infra transversal (Abordagem mais acoplada neste módulo)
-    │   │               ├── monitoring/ # Módulo de Monitoramento / Telemetria
-    │   │               │   ├── api/
-    │   │               │   │   ├── controller/
-    │   │               │   │   └── resources/
-    │   │               │   └── domain/
-    │   │               │       ├── controller/
-    │   │               │       ├── entity/
-    │   │               │       ├── presenter/
-    │   │               │       ├── repository/
-    │   │               │       └── service/
-    │   │               ├── seed/ # Modulo para cadastrar dados básicos durante o deploy
-    │   │               └── serviceorder/ # Módulo de Ordem de Serviço
-    │   │                   ├── api/
-    │   │                   │   ├── controller/
-    │   │                   │   ├── handler/
-    │   │                   │   └── resources/
-    │   │                   └── domain/
-    │   │                       ├── controller/
-    │   │                       ├── dto/ # Transferência de dados interna do domínio
-    │   │                       ├── entity/
-    │   │                       ├── enums/ # Enumerações de negócio (ex: Status da OS)
-    │   │                       ├── exception/
-    │   │                       ├── mapper/
-    │   │                       ├── presenter/
-    │   │                       ├── repository/
-    │   │                       └── service/
-    │   └── resources/ # Arquivos de configuração (application.yml), properties e recursos estáticos
-    └── test/ # Diretório base para testes (Unitários, Integração, Arquitetura)
-````
+│   └── workflows/              # Pipelines de CI/CD (Build, Test, Push ECR/Docker, Deploy K8s)
+├── db-seed/                    # Scripts de migração e dados iniciais do banco
+├── k8s/                        # Manifestos de Kubernetes (Deployment, Service, HPA, ConfigMap)
+├── newrelic/                   # Configurações de instrumentação e métricas do New Relic
+├── src/                        # Código fonte Java Spring Boot em Clean Architecture / DDD
+│   ├── main/
+│   │   ├── java/
+│   │   │   └── br/com/officyna/
+│   │   │       ├── administrative/ # Agregados: Customer, Vehicle, Labor, Supply, User
+│   │   │       ├── inventory/      # Módulo de Controle de Estoque
+│   │   │       ├── monitoring/     # Módulo de Coleta de Métricas e SLA
+│   │   │       ├── serviceorder/   # Módulo de Ordem de Serviço (Ciclo de vida e regras de negócio)
+│   │   │       └── infrastructure/ # Adaptadores de Entrada/Saída, DB, Segurança e Kong
+│   │   └── resources/          # Configurações da aplicação (application.yml, propriedades)
+│   └── test/                   # Cobertura de testes unitários, integração e arquitetura (> 80%)
+├── .gitignore                  # Arquivos e pastas ignorados pelo Git
+├── Dockerfile                  # Empacotamento multi-stage da aplicação em container Docker
+├── Kong.yml                    # Configuração declarativa de rotas e plugins do Kong API Gateway
+├── README.md                   # Documentação principal da aplicação
+├── docker-compose.yml          # Setup para execução e testes em ambiente local
+├── img_1.png                   # Diagrama visual de arquitetura para a documentação
+├── img_2.png                   # Diagrama visual de arquitetura para a documentação
+├── mvnw                        # Script Wrapper do Maven (Linux/macOS)
+├── mvnw.cmd                    # Script Wrapper do Maven (Windows)
+├── owasp-suppressions.xml      # Supressões e regras de segurança OWASP Dependency Check
+└── pom.xml                     # Gerenciador de dependências e plugins Maven
+```
 
-### Camada de Domínio: 
-Contém as entidades puras (como Customer e ServiceOrder) e as interfaces de repositório, isolando as regras de negócio de detalhes técnicos.
+### 2. Repositório de Infraestrutura do Banco de Dados (`officyna-infra-db`)
 
-### Camada de Aplicação/Casos de Uso: 
-Implementa as funcionalidades do software, como a abertura e o cálculo de orçamentos de ordens de serviço.
+```bash
+officyna-infra-db/
+├── .github/
+│   └── workflows/              # Pipeline de CI/CD para validação e apply do Terraform
+├── .gitignore                  # Arquivos e pastas ignorados pelo Git (.terraform, *.tfstate)
+├── README.md                   # Documentação da infraestrutura do banco de dados
+├── db.tf                       # Provisionamento da instância/cluster do Banco Gerenciado (RDS/DocumentDB)
+├── network.tf                  # Regras de rede, Security Groups e roteamento de banco
+├── outputs.tf                  # Saídas expostas pelo Terraform (Endpoints, Connection Strings, IDs)
+├── providers.tf                # Configuração do provedor AWS e backend remoto S3
+├── subnet.tf                   # Alocação de Subnets privadas para isolamento do banco
+├── variables.tf                # Definição de variáveis de ambiente e parâmetros
+└── vpc.tf                      # Recursos de VPC dedicados ou compartilhados para o banco
+```
 
-### Camada de Adaptadores (Interface Adapters): 
-Inclui os controllers REST, DTOs e Gateways que traduzem dados entre o mundo exterior e o núcleo da aplicação.
+### 3. Repositório de Infraestrutura Kubernetes (`officyna-infra-k8s`)
 
-### Camada de Infraestrutura: 
-Lida com frameworks e drivers, como as configurações do Spring Boot e a persistência real no MongoDB.
+```bash
+officyna-infra-k8s/
+├── .github/
+│   └── workflows/              # Pipeline de CI/CD para validação e deploy da infraestrutura EKS
+├── .gitignore                  # Arquivos e pastas ignorados pelo Git (.terraform, secrets)
+├── README.md                   # Documentação da infraestrutura do EKS
+├── data.tf                     # Consultas Data Sources do Terraform para leitura de recursos AWS
+├── eks-cluster.tf              # Provisionamento do Cluster AWS EKS (Control Plane)
+├── eks-node.tf                 # Configuração dos Node Groups e instâncias EC2 do EKS
+├── iam-role.tf                 # Roles e Políticas IAM para o cluster EKS e ServiceAccounts
+├── newrelic.tf                 # Integração e instrumentação do agente New Relic no Cluster Kubernetes
+├── providers.tf                # Configuração dos provedores AWS, Helm e Kubernetes no Terraform
+├── subnet.tf                   # Subnets dedicadas aos nós de trabalho do EKS
+└── variables.tf                # Definição de variáveis de entrada da infraestrutura K8s
+```
 
-### Infraestrutura Provisionada
-A infraestrutura é provisionada na AWS de forma automatizada, consistindo em:
-* **Rede (VPC):** Uma Virtual Private Cloud isolada com subnets públicas para acesso externo e subnets privadas para segurança do banco de dados.
-* **Orquestração (Amazon EKS):** Um cluster Kubernetes gerenciado que executa os nós de trabalho (worker nodes) onde a aplicação é implantada.
-* **Banco de Dados (Amazon DocumentDB/MongoDB):** Um cluster NoSQL compatível com MongoDB, configurado para alta disponibilidade e persistência.
-* **Persistência:** Uso de volumes EBS (Elastic Block Store) via Persistent Volume Claims (PVC) para garantir que os dados das ordens de serviço sobrevivam a reinicializações de containers.
+### 4. Repositório da Function Serverless / Autenticação (`officyna-auth-lambda`)
 
-## Fluxo de Deploy
-O fluxo de implantação é totalmente automatizado via GitHub Actions:
-* **Integração Contínua (CI):** Ao realizar um push, o pipeline executa o checkout do código, build com Maven e testes automatizados para garantir a qualidade.
-* **Dockerização:** Após os testes, uma nova imagem Docker é gerada e enviada para o GitHub Container Registry (GHCR).
-* **Provisionamento de Infraestrutura:** O pipeline utiliza o Terraform para aplicar as mudanças na infraestrutura da AWS (VPC, EKS, DB).
-* **Entrega Contínua (CD):** Por fim, os manifestos Kubernetes são aplicados no cluster EKS para atualizar a aplicação sem interrupção (Rolling Update).
+```bash
+officyna-auth-lambda/
+├── .github/
+│   └── workflows/              # Pipeline de CI/CD (Testes Jest, Build, Deploy da Lambda)
+├── certs/                      # Certificados e chaves públicas/privadas para assinatura JWT
+├── docs/                       # Documentação técnica e especificações da função serverless
+├── src/                        # Código fonte TypeScript/Node.js da Function Serverless
+│   ├── handlers/               # Handlers de eventos do API Gateway / Lambda Authorizer
+│   ├── services/               # Validação de CPF, consulta ao banco e geração de JWT
+│   └── utils/                  # Utilitários de formatação e segurança
+├── terraform/                  # Código Terraform para provisionar a Lambda, API Gateway e IAM
+├── tests/                      # Testes unitários e de integração (Jest)
+├── .dockerignore               # Arquivos ignorados na criação da imagem Docker da Lambda
+├── .env.example                # Modelo de arquivo de variáveis de ambiente
+├── .gitignore                  # Arquivos e pastas ignorados pelo Git
+├── Dockerfile                  # Imagem container da Lambda (para runtime customizado ou ECR)
+├── README.md                   # Documentação da função serverless de autenticação
+├── jest.config.js              # Configurações do framework de testes Jest
+├── package-lock.json           # Travamento de versões exatas das dependências Node
+├── package.json                # Manifesto de dependências e scripts do Node.js
+└── tsconfig.json               # Configurações do compilador TypeScript
+```
 
-## 🛡️ Segurança e Qualidade
-- Autenticação JWT: Implementada para proteger todos os endpoints administrativos.
+---
 
-- Validação de Dados: Classes utilitárias para validação rigorosa de CPF, CNPJ (Modulo 11) e placas de veículos.
+### 🛡️ Segurança e Qualidade
+* **Autenticação JWT Serverless:** Rotas sensíveis protegidas com validação prévia de token assinado.
+* **Validação Rigorosa:** Modulo 11 para CPF/CNPJ e validação de formatos de placa.
+* **Qualidade de Código:** Cobertura de testes automatizados superior a 80% nos módulos de domínio.
 
-- Testes Automatizados: O projeto exige cobertura mínima de 80% nos domínios críticos (OS, Orçamentos, Estoque e Segurança).
+ ```json
+{
+  "sub": "admin@officyna.com",
+  "roles": "ADMIN",
+  "iat": 1789173737,
+  "exp": 1789260137
+}
+```
 
-# 🚀 Instruções de Execução
-## local
-O projeto está configurado para uma execução local simples via Docker.
-- Build da Aplicação: O Dockerfile deve ser utilizado para gerar a imagem da aplicação.
-- Orquestração: O arquivo docker-compose.yml sobe a aplicação e a instância do MongoDB.
-- Comando de inicialização:
+---
 
-````bash
+## 📐 Documentação Arquitetural
+
+A documentação detalhada da arquitetura inclui:
+
+1. **Diagrama de Componentes:** Mapeamento da visão de nuvem (API Gateway, Lambda Auth, Kubernetes EKS, RDS/Banco Gerenciado e Observabilidade).
+2. **Diagrama de Sequência:** Fluxo detalhado passo a passo da Autenticação via CPF (Lambda -> DB -> JWT) e da Abertura/Processamento de Ordem de Serviço.
+3. **RFCs (Request for Comments):**
+   * *RFC-001:* Escolha da Nuvem (AWS) e Estratégia de Provisionamento com Terraform.
+   * *RFC-002:* Escolha do Banco de Dados Gerenciado Relacional.
+   * *RFC-003:* Arquitetura Serverless para Autenticação via CPF.
+4. **ADRs (Architecture Decision Records):**
+   * *ADR-001:* Utilização de API Gateway integrado a Lambda Authorizer.
+   * *ADR-002:* Adopção de Horizontal Pod Autoscaler (HPA) baseado em CPU/Memória.
+5. **Modelagem de Banco de Dados:**
+   * Justificativa formal da escolha do Banco Relacional e ajustes de normalização.
+   * Diagramas Entidade-Relacionamento (ER) com especificação de chaves e relacionamentos.
+
+ ### Documentação se encontra no link do PDF da entrega do projeto ❗
+
+---
+
+## 📊 Monitoramento e Observabilidade
+
+Integração nativa com plataformas corporativas de observabilidade (**New Relic**):
+
+### Métricas e Telemetria:
+* **APIs:** Latência de requisições, taxa de erro e throughput.
+* **Kubernetes:** Consumo de CPU, memória, estado dos Pods, healthchecks e uptime.
+* **Alertas:** Notificações automáticas em tempo real para falhas no processamento de ordens de serviço.
+* **Logs Estruturados:** Emissão de logs em formato JSON contendo `correlation-id` para rastreabilidade distribuída de requisições.
+
+### Dashboards Operacionais Expostos:
+* **Volume Diário de OS:** Total de ordens de serviço criadas por dia.
+* **Tempo Médio de Execução por Status:** Acompanhamento dos tempos em Diagnóstico, Execução e Finalização.
+* **Integrabilidade & Falhas:** Painel de monitoramento de erros em integrações e serviços externos.
+
+---
+
+## 🚀 Instruções de Execução e Deploy
+
+### 1. Execução Local (Ambiente de Desenvolvimento)
+```bash
+# Executar a aplicação e banco de dados localmente via Docker Compose
 docker-compose up -d --build
-````
+```
 
-## Acesso à Documentação
-* Após subir o ambiente local, acesse o Swagger em: http://localhost:8080/swagger-ui.html
-* Após realziar o deploy no kubernets: <https://{dns-elb}.us-east-1.elb.amazonaws.com/swagger-ui/index.html>
+### 2. Provisionamento com Terraform (IaC)
+```bash
+# Navegar até a pasta do repositório de infraestrutura
+cd infra/terraform
 
-## Deploy em Kubernetes
-![img_1.png](img_1.png)
-A implantação no cluster utiliza manifestos YAML localizados na pasta `/k8s`:
-* **Aplicação:** Implante os pods e a estratégia de replicação com kubectl 
-````bash 
-kubectl apply -f deployment.yaml
-````
-* **Configurações:** Aplique as variáveis de ambiente e segredos com 
-````bash 
-kubectl apply -f configmap.yaml
-````
-* **Exposição:** Exponha a API internamente ou via Load Balancer com 
-````bash 
-kubectl apply -f service.yaml
-````
-* **Escalabilidade:** Ative o escalonamento automático baseado em uso de CPU/Memória com
-````bash 
-kubectl apply -f hpa.yaml
-````
-
-## Provisionamento da Infraestrutura com Terraform
-Para provisionar os recursos na AWS, utilize os arquivos na pasta `infra/terraform/`:
-- **Inicialização:** Execute para baixar os providers da AWS e configurar o backend remoto (S3).
-````bash 
 terraform init
-````
-- **Validação:** Verifique a sintaxe com 
-````bash 
 terraform validate
-````
-- **Planejamento:** Visualize os recursos que serão criados com
-````bash 
 terraform plan
-````
-- **Aplicação:** Provisione a rede, o banco e o cluster EKS com
-````bash 
 terraform apply -auto-approve
-````
-- **Configuração de Acesso:** Após o provisionamento, utilize o comando (usando os dados do outputs.tf) para conectar seu kubectl ao cluster na nuvem.
-````bash
-aws eks update-kubeconfig
-````
+
+# Configurar o acesso ao cluster Kubernetes
+aws eks update-kubeconfig --name officyna-cluster --region us-east-1
+```
+
+### 3. Implantação no Kubernetes
+```bash
+# Aplicar manifestos no cluster EKS
+kubectl apply -f k8s/configmap.yaml
+kubectl apply -f k8s/service.yaml
+kubectl apply -f k8s/deployment.yaml
+kubectl apply -f k8s/hpa.yaml
+```
+
+### 4. Acesso à Documentação da API
+* **Swagger UI Local:** `http://localhost:8080/swagger-ui.html`
+* **Swagger UI no K8s:** `https://{dns-elb}.us-east-1.elb.amazonaws.com/swagger-ui/index.html`
+
+---
+
+## 🔗 Entregáveis e Links do Projeto
+
+### Repositórios Git (Organização em 4 Repositórios):
+* [Repositório 1 - Lambda Serverless (Auth)](https://github.com/Officyna/officyna-lambda)
+* [Repositório 2 - Infraestrutura Kubernetes (Terraform)](https://github.com/Officyna/officyna-infra-k8s)
+* [Repositório 3 - Infraestrutura Banco Gerenciado (Terraform)](https://github.com/Officyna/officyna-infra-db)
+* [Repositório 4 - Aplicação Principal](https://github.com/Officyna/officyna-service)
+
+> **Permissão:** Confirmado o acesso do usuário `soat-architecture` como colaborador em todos os 4 repositórios.
+
+### Vídeo de Demonstração (YouTube / Vimeo):
+* 🎥 **Link do Vídeo (máx 15 min):** [Assistir Demonstração da Fase 3 no YouTube](https://youtube.com)
+* **Conteúdo demonstrado no vídeo:**
+  1. Autenticação com CPF via Function Serverless.
+  2. Execução da pipeline de CI/CD e deploy automatizado.
+  3. Consumo das APIs protegidas via API Gateway.
+  4. Dashboard de monitoramento com análise em tempo real (Datadog/New Relic).
+  5. Rastreamento de logs estruturados e traces de requisições.

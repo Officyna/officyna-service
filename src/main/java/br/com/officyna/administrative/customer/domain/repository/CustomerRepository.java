@@ -11,6 +11,7 @@ import java.util.Optional;
  */
 public interface CustomerRepository{
     Optional<Customer> findByDocument(String document);
+    Optional<Customer> findByEmail(String email);
     boolean existsByDocument(String document);
     List<Customer> findByActiveTrue();
     Customer save(Customer entity);

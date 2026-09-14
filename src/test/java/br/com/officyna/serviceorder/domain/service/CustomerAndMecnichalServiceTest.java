@@ -71,6 +71,23 @@ class CustomerAndMecnichalServiceTest {
     }
 
     @Test
+    @DisplayName("Deve buscar cliente por documento e retornar a entidade")
+    void getCustomerByDocument_ShouldReturnCustomer() {
+        String document = "342.155.890-12";
+        Customer customer = Customer.builder()
+                .id("1")
+                .name("Ricardo Almeida")
+                .document(document)
+                .build();
+
+        when(customerService.findByDocument(document)).thenReturn(customer);
+
+        Customer result = service.getCustomerByDocument(document);
+
+        assertThat(result).isSameAs(customer);
+    }
+
+    @Test
     @DisplayName("Deve buscar mecânico e mapear para DTO corretamente")
     void getMechanic_ShouldReturnMechanicDTO() {
         String id = "mech-1";

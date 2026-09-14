@@ -3,8 +3,8 @@ package br.com.officyna.infrastructure.persistence.mongodb.gateway;
 import br.com.officyna.administrative.user.domain.entity.User;
 import br.com.officyna.administrative.user.domain.repository.UserRepository;
 import br.com.officyna.infrastructure.persistence.mapper.UserEntityDocumentMapper;
+import br.com.officyna.infrastructure.persistence.mongodb.model.UserDocument;
 import br.com.officyna.infrastructure.persistence.mongodb.repository.UserMongoRepository;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -16,58 +16,29 @@ import java.util.Optional;
  * Usa MongoRepository para acessar o MongoDB e realiza conversão de dados.
  */
 @Component
-@RequiredArgsConstructor
-public class UserRepositoryGateway implements UserRepository {
+public class UserRepositoryGateway
+        extends AbstractMongoRepositoryGateway<User, UserDocument, UserMongoRepository>
+        implements UserRepository {
 
-    private final UserMongoRepository mongoRepository;
-    private final UserEntityDocumentMapper mapper;
-
-    @Override
-    public User save(User entity) {
-        var document = mapper.toDocument(entity);
-        var saved = mongoRepository.save(document);
-        return mapper.toEntity(saved);
-    }
-
-    @Override
-    public Optional<User> findById(String id) {
-        return mongoRepository.findById(id).map(mapper::toEntity);
-    }
-
-    @Override
-    public List<User> findAll() {
-        return mongoRepository.findAll()
-                .stream()
-                .map(mapper::toEntity)
-                .toList();
-    }
-
-    @Override
-    public void deleteById(String id) {
-        mongoRepository.deleteById(id);
-    }
-
-    @Override
-    public boolean existsById(String id) {
-        return mongoRepository.existsById(id);
+    public UserRepositoryGateway(UserMongoRepository mongoRepository, UserEntityDocumentMapper mapper) {
+        super(mongoRepository, mapper::toDocument, mapper::toEntity);
     }
 
     @Override
     public Optional<User> findByEmail(String email) {
-        return mongoRepository.findByEmail(email).map(mapper::toEntity);
+        return execute("findByEmail", () -> mongoRepository.findByEmail(email).map(toEntity));
     }
 
     @Override
     public boolean existsByEmail(String email) {
-        return mongoRepository.existsByEmail(email);
+        return execute("existsByEmail", () -> mongoRepository.existsByEmail(email));
     }
 
     @Override
     public List<User> findByActiveTrue() {
-        return mongoRepository.findByActiveTrue()
+        return execute("findByActiveTrue", () -> mongoRepository.findByActiveTrue()
                 .stream()
-                .map(mapper::toEntity)
-                .toList();
+                .map(toEntity)
+                .toList());
     }
 }
-

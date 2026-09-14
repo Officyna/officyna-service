@@ -3,8 +3,8 @@ package br.com.officyna.infrastructure.persistence.mongodb.gateway;
 import br.com.officyna.administrative.customer.domain.entity.Customer;
 import br.com.officyna.administrative.customer.domain.repository.CustomerRepository;
 import br.com.officyna.infrastructure.persistence.mapper.CustomerEntityDocumentMapper;
+import br.com.officyna.infrastructure.persistence.mongodb.model.CustomerDocument;
 import br.com.officyna.infrastructure.persistence.mongodb.repository.CustomerMongoRepository;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -16,58 +16,34 @@ import java.util.Optional;
  * Usa MongoRepository para acessar o MongoDB e realiza conversão de dados.
  */
 @Component
-@RequiredArgsConstructor
-public class CustomerRepositoryGateway implements CustomerRepository {
+public class CustomerRepositoryGateway
+        extends AbstractMongoRepositoryGateway<Customer, CustomerDocument, CustomerMongoRepository>
+        implements CustomerRepository {
 
-    private final CustomerMongoRepository mongoRepository;
-    private final CustomerEntityDocumentMapper mapper;
-
-    @Override
-    public Customer save(Customer entity) {
-        var document = mapper.toDocument(entity);
-        var saved = mongoRepository.save(document);
-        return mapper.toEntity(saved);
-    }
-
-    @Override
-    public Optional<Customer> findById(String id) {
-        return mongoRepository.findById(id).map(mapper::toEntity);
-    }
-
-    @Override
-    public List<Customer> findAll() {
-        return mongoRepository.findAll()
-                .stream()
-                .map(mapper::toEntity)
-                .toList();
-    }
-
-    @Override
-    public void deleteById(String id) {
-        mongoRepository.deleteById(id);
-    }
-
-    @Override
-    public boolean existsById(String id) {
-        return mongoRepository.existsById(id);
+    public CustomerRepositoryGateway(CustomerMongoRepository mongoRepository, CustomerEntityDocumentMapper mapper) {
+        super(mongoRepository, mapper::toDocument, mapper::toEntity);
     }
 
     @Override
     public Optional<Customer> findByDocument(String document) {
-        return mongoRepository.findByDocument(document).map(mapper::toEntity);
+        return execute("findByDocument", () -> mongoRepository.findByDocument(document).map(toEntity));
+    }
+
+    @Override
+    public Optional<Customer> findByEmail(String email) {
+        return execute("findByEmail", () -> mongoRepository.findByEmail(email).map(toEntity));
     }
 
     @Override
     public boolean existsByDocument(String document) {
-        return mongoRepository.existsByDocument(document);
+        return execute("existsByDocument", () -> mongoRepository.existsByDocument(document));
     }
 
     @Override
     public List<Customer> findByActiveTrue() {
-        return mongoRepository.findByActiveTrue()
+        return execute("findByActiveTrue", () -> mongoRepository.findByActiveTrue()
                 .stream()
-                .map(mapper::toEntity)
-                .toList();
+                .map(toEntity)
+                .toList());
     }
 }
-

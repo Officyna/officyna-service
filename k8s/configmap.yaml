@@ -4,6 +4,7 @@ metadata:
   name: officyna-configmap
   labels:
     app.kubernetes.io/name: officyna
+  namespace: officyna
 data:
   SPRING_PROFILES_ACTIVE: "default"
   SERVER_PORT: "8080"

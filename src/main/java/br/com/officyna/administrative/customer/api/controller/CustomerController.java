@@ -6,6 +6,8 @@ import br.com.officyna.administrative.customer.api.resources.CustomerRequest;
 import br.com.officyna.administrative.customer.api.resources.CustomerResponse;
 import br.com.officyna.administrative.customer.domain.controller.CustomerControllerAdapter;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
@@ -16,6 +18,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class CustomerController implements CustomerApi {
 
+    private static final Logger logger = LoggerFactory.getLogger(CustomerController.class);
     private final CustomerControllerAdapter customerControllerAdapter;
 
     @Override
@@ -30,7 +33,12 @@ public class CustomerController implements CustomerApi {
 
     @Override
     public ResponseEntity<CustomerResponse> findByDocument(String document) {
-        return ResponseEntity.ok(customerControllerAdapter.findByDocument(document));
+
+        CustomerResponse response = customerControllerAdapter.findByDocument(document);
+
+        logger.info("Customer found by document");
+
+        return ResponseEntity.ok(response);
     }
 
     @Override

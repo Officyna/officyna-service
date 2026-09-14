@@ -53,6 +53,11 @@ RUN csplit -z -f /tmp/aws-cert- /tmp/global-bundle.pem \
 RUN groupadd -r officyna && \
     useradd -r -g officyna officyna
 
+# New Relic Configuration
+RUN mkdir -p /usr/local/newrelic
+ADD ./newrelic/newrelic.jar /usr/local/newrelic/newrelic.jar
+ADD ./newrelic/newrelic.yml /usr/local/newrelic/newrelic.yml
+
 
 USER officyna
 
@@ -67,4 +72,4 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
     CMD curl -f http://localhost:8080/actuator/health || exit 1
 
 
-ENTRYPOINT ["java", "-Djavax.net.ssl.trustStore=/opt/java/openjdk/lib/security/cacerts", "-Djavax.net.ssl.trustStorePassword=changeit", "-Djava.security.egd=file:/dev/./urandom", "-jar", "app.jar"]
+ENTRYPOINT ["java","-javaagent:/usr/local/newrelic/newrelic.jar","-Djavax.net.ssl.trustStore=/opt/java/openjdk/lib/security/cacerts", "-Djavax.net.ssl.trustStorePassword=changeit", "-Djava.security.egd=file:/dev/./urandom", "-jar", "app.jar"]

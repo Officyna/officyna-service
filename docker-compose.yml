@@ -63,6 +63,34 @@ services:
     networks:
       - officyna-network
 
+  kong:
+    image: kong:latest
+    container_name: kong-gateway
+    restart: on-failure
+    depends_on:
+      app:
+       condition: service_healthy
+    environment:
+      KONG_DECLARATIVE_CONFIG: /kong/declarative/kong.yml
+      KONG_DATABASE: off
+      KONG_PG_USER: kong
+      KONG_PG_PASSWORD: kong
+      KONG_PG_DATABASE: kong
+      KONG_PROXY_ACCESS_LOG: /dev/stdout
+      KONG_ADMIN_ACCESS_LOG: /dev/stdout
+      KONG_PROXY_ERROR_LOG: /dev/stderr
+      KONG_ADMIN_ERROR_LOG: /dev/stderr
+      KONG_ADMIN_LISTEN: 0.0.0.0:8001, 0.0.0.0:8444 ssl
+      KONG_ADMIN_GUI_URL: http://localhost:8002
+    ports:
+      - "8000:8000"
+      - "8001:8001"
+      - "8002:8002"
+    networks:
+      - officyna-network
+    volumes:
+      - ./kong.yml:/kong/declarative/kong.yml
+
 #  sonarqube:
 #    image: sonarqube:community
 #    container_name: officyna-sonarqube

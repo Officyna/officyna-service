@@ -4,6 +4,7 @@ metadata:
   name: officyna-service
   labels:
     app.kubernetes.io/name: officyna
+  namespace: officyna
 spec:
   scaleTargetRef:
     apiVersion: apps/v1

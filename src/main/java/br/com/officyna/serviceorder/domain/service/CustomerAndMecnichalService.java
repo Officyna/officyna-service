@@ -6,11 +6,12 @@ import br.com.officyna.administrative.user.domain.entity.User;
 import br.com.officyna.administrative.user.domain.service.UserService;
 import br.com.officyna.serviceorder.domain.dto.CustomerDTO;
 import br.com.officyna.serviceorder.domain.dto.MechanicDTO;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 public class CustomerAndMecnichalService {
 
     private final UserService userService;
-
     private final CustomerService customerService;
 
     public CustomerAndMecnichalService(UserService userService, CustomerService customerService) {
@@ -19,8 +20,14 @@ public class CustomerAndMecnichalService {
     }
 
     CustomerDTO getCustomer(String id) {
+        log.info("Finding customer by id: {}", id);
+
         Customer customer = customerService.findById(id);
-        return new CustomerDTO(customer.getId(),
+
+        log.debug("Customer found by id: {}", id);
+
+        return new CustomerDTO(
+                customer.getId(),
                 customer.getName(),
                 customer.getPhone(),
                 customer.getAddress().getStreet(),
@@ -29,15 +36,27 @@ public class CustomerAndMecnichalService {
                 customer.getAddress().getCity(),
                 customer.getAddress().getState(),
                 customer.getAddress().getZipCode(),
-                customer.getAddress().getComplement());
+                customer.getAddress().getComplement()
+        );
     }
 
     Customer getCustomerByDocument(String document) {
-        return customerService.findByDocument(document);
+        log.info("Finding customer by document: {}", document);
+
+        Customer customer = customerService.findByDocument(document);
+
+        log.debug("Customer found by document: {}", document);
+
+        return customer;
     }
 
     MechanicDTO getMechanic(String id) {
+        log.info("Finding mechanic by id: {}", id);
+
         User user = userService.findById(id);
+
+        log.debug("Mechanic found by id: {}", id);
+
         return new MechanicDTO(user.getId(), user.getName());
     }
 }
