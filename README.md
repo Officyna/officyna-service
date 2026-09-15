@@ -276,7 +276,7 @@ kubectl apply -f k8s/hpa.yaml
 > **Permissão:** Confirmado o acesso do usuário `soat-architecture` como colaborador em todos os 4 repositórios.
 
 ### Vídeo de Demonstração (YouTube / Vimeo):
-* 🎥 **Link do Vídeo (máx 15 min):** [Assistir Demonstração da Fase 3 no YouTube](https://youtube.com)
+* 🎥 **Link do Vídeo (máx 15 min):** [Assistir Demonstração da Fase 3 no YouTube](https://youtu.be/NySPR-1aqHA)
 * **Conteúdo demonstrado no vídeo:**
   1. Autenticação com CPF via Function Serverless.
   2. Execução da pipeline de CI/CD e deploy automatizado.
